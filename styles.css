@@ -1,4 +1,3 @@
-/* Reset & Typography */
 *,
 ::before,
 ::after {
@@ -7,24 +6,49 @@
     box-sizing: border-box;
 }
 
+
 body {
     font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
     line-height: 1.6;
-    background-color: #f7f9fc;
+    background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%);
     color: #333;
-    padding: 20px;
+    padding: 0;
+    min-height: 100vh;
+}
+
+.header-bar {
+    width: 100%;
+    background: #4a90e2;
+    color: #fff;
+    padding: 24px 0 18px 0;
+    text-align: center;
+    font-size: 2.2em;
+    font-weight: 700;
+    letter-spacing: 1px;
+    box-shadow: 0 2px 8px rgba(74, 144, 226, 0.08);
+    margin-bottom: 32px;
 }
 
 .container {
-    max-width: 1200px;
-    margin: 0 auto;
-    background: #ffffff;
-    padding: 30px;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    max-width: 900px;
+    margin: 32px auto 0 auto;
+    background: #fff;
+    padding: 36px 32px 32px 32px;
+    border-radius: 18px;
+    box-shadow: 0 8px 32px rgba(74, 144, 226, 0.10);
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
 }
 
-/* Toggle Visibility */
+section {
+    background: #f7faff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(74, 144, 226, 0.04);
+    padding: 24px 20px 20px 20px;
+    margin-bottom: 0;
+}
+
 .hidden {
     display: none;
 }
@@ -33,24 +57,23 @@ body {
     margin-bottom: 10px;
 }
 
-/* Headings */
-h1,
-h2 {
-    color: #4a4a4a;
-    font-weight: 600;
-    margin-bottom: 20px;
+h1, h2 {
+    color: #357abd;
+    font-weight: 700;
+    margin-bottom: 18px;
+    letter-spacing: 0.5px;
 }
 
 h1 {
-    font-size: 2em;
+    font-size: 2.1em;
+    margin-bottom: 10px;
 }
 
 h2 {
-    font-size: 1.5em;
-    margin-bottom: 15px;
+    font-size: 1.3em;
+    margin-bottom: 10px;
 }
 
-/* Form Container */
 .entry-container {
     transition: max-height 0.5s ease-out;
     overflow: hidden;
@@ -65,14 +88,15 @@ h2 {
 .entry {
     display: grid;
     grid-template-columns: 1fr 3fr 1fr;
-    gap: 15px;
+    gap: 18px;
     align-items: center;
-    margin-bottom: 10px;
-    padding: 10px;
-    background: #f9f9f9;
-    border: 1px solid #e0e0e0;
-    border-radius: 6px;
+    margin-bottom: 12px;
+    padding: 14px 12px;
+    background: #f4f8fb;
+    border: 1px solid #e3eaf3;
+    border-radius: 8px;
     position: relative;
+    box-shadow: 0 2px 8px rgba(74, 144, 226, 0.04);
 }
 
 .entry input[type="text"],
@@ -83,15 +107,12 @@ h2 {
     border: 1px solid #ccc;
 }
 
-
-
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
     -webkit-appearance: none;
     margin: 0;
 }
 
-/* Months Grid */
 .months {
     display: grid;
     grid-template-columns: repeat(12, 1fr);
@@ -128,40 +149,47 @@ input[type="number"]::-webkit-outer-spin-button {
     color: #333;
 }
 
-/* Buttons */
 button {
-    padding: 10px 20px;
-    border-radius: 5px;
+    padding: 12px 28px;
+    border-radius: 6px;
     border: none;
-    font-size: 1em;
+    font-size: 1.08em;
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    transition: background 0.2s, box-shadow 0.2s;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(74, 144, 226, 0.08);
 }
 
 .btn-primary {
-    background-color: #4a90e2;
-    color: white;
+    background: linear-gradient(90deg, #4a90e2 60%, #357abd 100%);
+    color: #fff;
+    letter-spacing: 0.5px;
+    border: none;
 }
 
 .btn-primary:hover {
-    background-color: #357abd;
+    background: linear-gradient(90deg, #357abd 60%, #4a90e2 100%);
+    box-shadow: 0 4px 16px rgba(74, 144, 226, 0.18);
 }
 
 .remove-btn {
-    background-color: #ff5c5c;
-    color: white;
+    background: linear-gradient(90deg, #ff5c5c 60%, #d9534f 100%);
+    color: #fff;
     font-weight: bold;
     position: absolute;
-    right: 4px;
-    top: 4px;
-    padding: 0.1rem 0.3rem 0.2rem 0.4rem;
+    right: 8px;
+    top: 8px;
+    padding: 0.2rem 0.7rem 0.3rem 0.7rem;
+    font-size: 1.1em;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(255, 92, 92, 0.10);
 }
 
 .remove-btn:hover {
-    background-color: #d9534f;
+    background: linear-gradient(90deg, #d9534f 60%, #ff5c5c 100%);
+    box-shadow: 0 4px 16px rgba(255, 92, 92, 0.18);
 }
 
-/* Summary Section */
 .summary-section p {
     font-size: 1.2em;
     text-align: center;
@@ -179,23 +207,25 @@ button {
     gap: 10px;
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
+    .container {
+        padding: 12px 2vw;
+    }
+    section {
+        padding: 14px 6px 10px 6px;
+    }
     .entry {
         grid-template-columns: 1fr;
         gap: 10px;
     }
-
     .months {
         grid-template-columns: repeat(4, 1fr);
         gap: 10px;
     }
-
     .monthly-balance-section .months {
         grid-template-columns: repeat(4, 1fr);
         gap: 10px;
     }
-
     .remove-btn {
         top: 87%;
         right: 90%;
@@ -205,16 +235,20 @@ button {
 }
 
 @media (max-width: 480px) {
+    .container {
+        padding: 4px 0.5vw;
+    }
+    section {
+        padding: 8px 2px 6px 2px;
+    }
     .months {
         grid-template-columns: repeat(2, 1fr);
         gap: 10px;
     }
-
     .monthly-balance-section .months {
         grid-template-columns: repeat(2, 1fr);
         gap: 10px;
     }
-
     .remove-btn {
         top: 93%;
         right: 88%;
