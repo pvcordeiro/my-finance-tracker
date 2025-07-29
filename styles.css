@@ -1,3 +1,13 @@
+.entry.income {
+    background: #e6f9ec;
+    border-color: #b6e7c9;
+}
+
+.entry.expense {
+    background: #fdeaea;
+    border-color: #f5bcbc;
+}
+
 *,
 ::before,
 ::after {
@@ -123,10 +133,10 @@ h2 {
 }
 
 .entry {
-    display: grid;
-    grid-template-columns: 1fr 3fr 1fr;
-    gap: 18px;
-    align-items: center;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
     margin-bottom: 12px;
     padding: 14px 12px;
     background: #f4f8fb;
@@ -152,8 +162,8 @@ input[type="number"]::-webkit-outer-spin-button {
 
 .months {
     display: grid;
-    grid-template-columns: repeat(12, 1fr);
-    gap: 10px;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 18px 12px;
 }
 
 .month-container {
@@ -171,19 +181,42 @@ input[type="number"]::-webkit-outer-spin-button {
     color: #4a90e2;
 }
 
-.month-container input[type="number"] {
-    width: 100%;
-    padding: 6px;
-    font-size: 0.9em;
-    text-align: center;
+.euro-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+.euro-input-wrapper .euro-prefix {
+    position: absolute;
+    left: 8px;
+    color: #357abd;
+    font-size: 1em;
+    pointer-events: none;
+    z-index: 2;
+}
+.euro-input-wrapper input[type="number"] {
+    width: 80px;
+    min-width: 60px;
+    max-width: 120px;
+    padding: 6px 6px 6px 24px;
+    font-size: 1.05em;
+    text-align: left;
     border: 1px solid #ccc;
     border-radius: 4px;
+    box-sizing: border-box;
+    background: #fff;
 }
 
 .annual-total {
     text-align: right;
     font-weight: bold;
+	margin: 10px 0 0 0;
     color: #333;
+    font-size: 1.08em;
+    padding-right: 2px;
+	order: 3;
+    align-self: flex-end;
+
 }
 
 button {
@@ -213,13 +246,14 @@ button {
     background: linear-gradient(90deg, #ff5c5c 60%, #d9534f 100%);
     color: #fff;
     font-weight: bold;
-    position: absolute;
-    right: 8px;
-    top: 8px;
+    position: static;
     padding: 0.2rem 0.7rem 0.3rem 0.7rem;
     font-size: 1.1em;
     border-radius: 4px;
     box-shadow: 0 2px 8px rgba(255, 92, 92, 0.10);
+    order: 2;
+    align-self: flex-start;
+    margin-top: 10px;
 }
 
 .remove-btn:hover {
@@ -252,22 +286,40 @@ button {
         padding: 14px 6px 10px 6px;
     }
     .entry {
+        display: grid;
         grid-template-columns: 1fr;
         gap: 10px;
+        align-items: stretch;
+    }
+    .annual-total {
+        order: 3;
+        text-align: right;
+        margin: 0;
+        padding-left: 0;
     }
     .months {
         grid-template-columns: repeat(4, 1fr);
         gap: 10px;
+    }
+    .euro-input-wrapper input[type="number"] {
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        font-size: 0.9em;
     }
     .monthly-balance-section .months {
         grid-template-columns: repeat(4, 1fr);
         gap: 10px;
     }
     .remove-btn {
+        position: absolute;
         top: 87%;
         right: 90%;
         left: 2%;
         bottom: 3%;
+        align-self: auto;
+        order: unset;
+        margin-top: 0;
     }
 }
 

@@ -1,3 +1,28 @@
+// Utility: Add or remove .negative class on all number inputs based on value
+function updateNegativeInputs() {
+    document.querySelectorAll('input[type="number"]').forEach(input => {
+        if (parseFloat(input.value) < 0) {
+            input.classList.add('negative');
+        } else {
+            input.classList.remove('negative');
+        }
+    });
+}
+
+// Attach input event listeners to all number inputs (including dynamically created ones)
+function attachNegativeInputListeners(container=document) {
+    container.querySelectorAll('input[type="number"]').forEach(input => {
+        input.addEventListener('input', updateNegativeInputs);
+    });
+}
+
+// Initial call on page load
+document.addEventListener('DOMContentLoaded', () => {
+    attachNegativeInputListeners();
+    updateNegativeInputs();
+});
+
+// If you dynamically add entries/inputs, call attachNegativeInputListeners(newContainer) after adding them
 async function loadData() {
     const response = await fetch("/data", {
         credentials: "include"
@@ -91,32 +116,35 @@ function addEntry(
         "Dec",
     ];
 
+
     entry.innerHTML = `
-        <input type="text" value="${
-            data.description
-        }" placeholder="Description">
+        <input type="text" value="${data.description}" placeholder="Description">
+        <div class="annual-total">€0</div>
         <div class="months">
             ${monthLabels
                 .map(
                     (label, index) => `
                 <div class="month-container">
                     <label>${label}</label>
-                    <input type="number" placeholder="€0" value="${data.amounts[index]}">
+                    <div class="euro-input-wrapper">
+                        <span class="euro-prefix">€</span>
+                        <input type="number" placeholder="0" value="${data.amounts[index] !== undefined && data.amounts[index] !== "" ? data.amounts[index] : ""}">
+                    </div>
                 </div>
             `
                 )
                 .join("")}
         </div>
         <button class="remove-btn" onclick="removeEntry(this)">x</button>
-        <div class="annual-total">€0</div>
-        
     `;
 
     container.appendChild(entry);
     entry.querySelectorAll("input").forEach((input) => {
         input.addEventListener("input", calculateTotals);
     });
-
+    // Attach negative listeners and update negative state for new inputs
+    attachNegativeInputListeners(entry);
+    updateNegativeInputs();
     calculateTotals();
 }
 
@@ -184,6 +212,8 @@ function calculateTotals() {
     monthlyBalance.forEach((balance, index) => {
         document.getElementById(monthIds[index]).textContent = `€${balance}`;
     });
+    // Update negative class after all calculations
+    updateNegativeInputs();
 }
 
 
