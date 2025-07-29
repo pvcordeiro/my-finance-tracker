@@ -186,20 +186,24 @@ function calculateTotals() {
     });
 }
 
-function toggleVisibility(containerId, buttonId) {
-    const container = document.getElementById(containerId);
-    const button = document.getElementById(buttonId);
-    container.classList.toggle("hidden");
-    button.classList.toggle("hidden");
+
+function toggleDropdown(type) {
+    const dropdown = document.getElementById(type + 'Dropdown');
+    const arrow = document.getElementById(type + 'Arrow');
+    dropdown.classList.toggle('open');
+    if (dropdown.classList.contains('open')) {
+        arrow.textContent = '▲';
+    } else {
+        arrow.textContent = '▼';
+    }
 }
 
 // Load existing data when the page loads
 window.onload = function () {
     loadData();
-
-    // Initially hide the entry containers and buttons
-    document.getElementById("incomeContainer").classList.add("hidden");
-    document.getElementById("addIncomeBtn").classList.add("hidden");
-    document.getElementById("expenseContainer").classList.add("hidden");
-    document.getElementById("addExpenseBtn").classList.add("hidden");
+    // Start with dropdowns closed on mobile
+    document.getElementById("incomeDropdown").classList.remove("open");
+    document.getElementById("incomeArrow").textContent = '▼';
+    document.getElementById("expenseDropdown").classList.remove("open");
+    document.getElementById("expenseArrow").textContent = '▼';
 };

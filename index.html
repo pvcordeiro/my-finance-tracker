@@ -17,39 +17,25 @@
             <h1>Income and Expense Tracker</h1>
 
             <section class="income-section">
-                <h2>Income</h2>
-                <button
-                    class="btn-primary toggle-btn"
-                    onclick="toggleVisibility('incomeContainer', 'addIncomeBtn')"
-                >
-                    Hide/Show Income Fields
+                <button class="dropdown-btn" id="incomeDropdownBtn" onclick="toggleDropdown('income')">
+                    <span>Income</span>
+                    <span class="dropdown-arrow" id="incomeArrow">▼</span>
                 </button>
-                <div class="entry-container" id="incomeContainer"></div>
-                <button
-                    class="btn-primary"
-                    id="addIncomeBtn"
-                    onclick="addEntry('incomeContainer')"
-                >
-                    Add Income
-                </button>
+                <div class="dropdown-content" id="incomeDropdown">
+                    <div class="entry-container" id="incomeContainer"></div>
+                    <button class="btn-primary" id="addIncomeBtn" onclick="addEntry('incomeContainer')">Add Income</button>
+                </div>
             </section>
 
             <section class="expense-section">
-                <h2>Expenses</h2>
-                <button
-                    class="btn-primary toggle-btn"
-                    onclick="toggleVisibility('expenseContainer', 'addExpenseBtn')"
-                >
-                    Hide/Show Expense Fields
+                <button class="dropdown-btn" id="expenseDropdownBtn" onclick="toggleDropdown('expense')">
+                    <span>Expenses</span>
+                    <span class="dropdown-arrow" id="expenseArrow">▼</span>
                 </button>
-                <div class="entry-container" id="expenseContainer"></div>
-                <button
-                    class="btn-primary"
-                    id="addExpenseBtn"
-                    onclick="addEntry('expenseContainer')"
-                >
-                    Add Expense
-                </button>
+                <div class="dropdown-content" id="expenseDropdown">
+                    <div class="entry-container" id="expenseContainer"></div>
+                    <button class="btn-primary" id="addExpenseBtn" onclick="addEntry('expenseContainer')">Add Expense</button>
+                </div>
             </section>
 
             <section class="monthly-balance-section">
