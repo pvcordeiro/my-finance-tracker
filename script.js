@@ -1,17 +1,20 @@
 async function loadData() {
-    const response = await fetch("http://localhost:3000/data");
+    const response = await fetch("/data", {
+        credentials: "include"
+    });
     const data = await response.json();
     populateData(data);
 }
 
 async function saveData() {
     const data = collectData();
-    await fetch("http://localhost:3000/data", {
+    await fetch("/data", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
         },
         body: JSON.stringify(data),
+        credentials: "include"
     });
     alert("Data saved successfully!");
 }
