@@ -10,6 +10,9 @@ app.use(cors());
 app.use(bodyParser.json());
 
 
+
+// Apply basic authentication to all routes (including static files)
+app.use(basicAuth);
 app.use(express.static(path.join(__dirname)));
 
 // --- Basic Authentication Middleware ---
