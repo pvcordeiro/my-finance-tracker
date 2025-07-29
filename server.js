@@ -16,8 +16,8 @@ app.use(basicAuth);
 app.use(express.static(path.join(__dirname)));
 
 // --- Basic Authentication Middleware ---
-const BASIC_AUTH_USER = process.env.FINANCE_USER || "user";
-const BASIC_AUTH_PASS = process.env.FINANCE_PASS || "changeme";
+const BASIC_AUTH_USER = process.env.FINANCE_USER || "pv";
+const BASIC_AUTH_PASS = process.env.FINANCE_PASS || "cordeiro";
 
 function basicAuth(req, res, next) {
     const auth = req.headers['authorization'];
