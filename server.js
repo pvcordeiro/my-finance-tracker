@@ -12,6 +12,27 @@ app.use(bodyParser.json());
 
 app.use(express.static(path.join(__dirname)));
 
+// --- Basic Authentication Middleware ---
+const BASIC_AUTH_USER = process.env.FINANCE_USER || "user";
+const BASIC_AUTH_PASS = process.env.FINANCE_PASS || "changeme";
+
+function basicAuth(req, res, next) {
+    const auth = req.headers['authorization'];
+    if (!auth || !auth.startsWith('Basic ')) {
+        res.set('WWW-Authenticate', 'Basic realm="FinanceTracker"');
+        return res.status(401).send('Authentication required.');
+    }
+    const base64 = auth.split(' ')[1];
+    const [user, pass] = Buffer.from(base64, 'base64').toString().split(':');
+    if (user === BASIC_AUTH_USER && pass === BASIC_AUTH_PASS) {
+        return next();
+    }
+    res.set('WWW-Authenticate', 'Basic realm="FinanceTracker"');
+    return res.status(401).send('Invalid credentials.');
+}
+
+// --- End Basic Authentication Middleware ---
+
 const db = new sqlite3.Database("./financeTracker.db", (err) => {
     if (err) {
         console.error("Error opening database", err);
@@ -34,7 +55,7 @@ const db = new sqlite3.Database("./financeTracker.db", (err) => {
 
 
 
-app.get("/data", (req, res) => {
+app.get("/data", basicAuth, (req, res) => {
     db.get("SELECT * FROM finance WHERE id = 1", (err, row) => {
         if (err) {
             res.status(500).json({ error: "Database error" });
@@ -50,7 +71,7 @@ app.get("/data", (req, res) => {
 });
 
 
-app.post("/data", (req, res) => {
+app.post("/data", basicAuth, (req, res) => {
     const incomes = JSON.stringify(req.body.incomes || []);
     const expenses = JSON.stringify(req.body.expenses || []);
     db.run(
@@ -68,6 +89,6 @@ app.post("/data", (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server is running on port ${PORT}`);
 });
