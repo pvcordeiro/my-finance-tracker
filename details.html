@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Detailed Incomes & Expenses</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 72 72'%3E%3Ctext y='58' font-size='58'%3E%F0%9F%92%B8%3C/text%3E%3C/svg%3E">
+    <style>
+        .details-table th, .details-table td {
+            padding: 6px 4px;
+            text-align: center;
+        }
+        .details-table {
+            width: 100%;
+            max-width: 950px;
+            margin: 24px auto;
+            border-collapse: collapse;
+            background: #fff;
+            box-shadow: 0 2px 8px #0001;
+        }
+        .details-table th {
+            background: #1a237e;
+            color: #fff;
+            font-weight: 600;
+        }
+        .details-table tr:nth-child(even) {
+            background: #f5f7fa;
+        }
+        .details-section {
+            margin-bottom: 36px;
+        }
+        .back-link {
+            display: inline-block;
+            margin: 18px 0 0 18px;
+            color: #1a237e;
+            font-weight: bold;
+            text-decoration: none;
+            font-size: 1.08em;
+        }
+    </style>
+</head>
+<body style="background:#e3eafc;min-height:100vh;">
+    <div class="header-bar">
+        <span>💸 Income & Expense Tracker</span>
+    </div>
+    <div class="container">
+        <a href="index.html" class="back-link">← Back</a>
+        <h1 style="margin-top:18px;">Detailed Incomes & Expenses</h1>
+        <div id="details-scroll" style="overflow-x:auto;max-width:100vw;padding-bottom:8px;">
+    		<div id="details-container"></div>
+		</div>
+    </div>
+    <script>
+    async function fetchData() {
+        const res = await fetch('/data', { credentials: 'include' });
+        if (!res.ok) throw new Error('Failed to load data');
+        return await res.json();
+    }
+    function monthLabels() {
+        return ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    }
+    function renderDetails(data) {
+        const now = new Date();
+        const year = now.getFullYear();
+        const months = monthLabels();
+        let html = '';
+        // Incomes
+        html += '<div class="details-section">';
+        html += '<h2 style="color:#357abd;">Incomes</h2>';
+        html += '<table class="details-table">';
+        html += '<thead><tr><th>Description</th>';
+        months.forEach(m => html += `<th>${m}</th>`);
+        html += '</tr></thead><tbody>';
+        // Find current month data
+        const ym = `${year}-${('0'+(now.getMonth()+1)).slice(-2)}`;
+        const monthData = data[ym] || { incomes: [], expenses: [] };
+        (monthData.incomes || []).forEach(inc => {
+            html += `<tr><td style="text-align:left;font-weight:500;">${inc.description || ''}</td>`;
+            for (let i = 0; i < 12; i++) {
+                html += `<td style="color:#357abd;">${inc.amounts && inc.amounts[i] !== undefined && inc.amounts[i] !== '' ? '€ ' + Number(inc.amounts[i]).toFixed(2) : '-'}</td>`;
+            }
+            html += '</tr>';
+        });
+        html += '</tbody></table></div>';
+        // Expenses
+        html += '<div class="details-section">';
+        html += '<h2 style="color:#c62828;">Expenses</h2>';
+        html += '<table class="details-table">';
+        html += '<thead><tr><th>Description</th>';
+        months.forEach(m => html += `<th>${m}</th>`);
+        html += '</tr></thead><tbody>';
+        (monthData.expenses || []).forEach(exp => {
+            html += `<tr><td style="text-align:left;font-weight:500;">${exp.description || ''}</td>`;
+            for (let i = 0; i < 12; i++) {
+                html += `<td style="color:#c62828;">${exp.amounts && exp.amounts[i] !== undefined && exp.amounts[i] !== '' ? '€ ' + Number(exp.amounts[i]).toFixed(2) : '-'}</td>`;
+            }
+            html += '</tr>';
+        });
+        html += '</tbody></table></div>';
+        document.getElementById('details-container').innerHTML = html;
+    }
+    fetchData().then(renderDetails).catch(e => {
+        document.getElementById('details-container').textContent = 'Error loading details: ' + e.message;
+    });
+    </script>
+</body>
+</html>
