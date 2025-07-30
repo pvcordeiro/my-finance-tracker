@@ -20,6 +20,16 @@ function attachNegativeInputListeners(container=document) {
 document.addEventListener('DOMContentLoaded', () => {
     attachNegativeInputListeners();
     updateNegativeInputs();
+    // Restore Save button color on any input change
+    const saveBtn = document.getElementById('saveBtn');
+    if (saveBtn) {
+        document.body.addEventListener('input', function (e) {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                saveBtn.style.background = '#59cf4e';
+                saveBtn.style.color = '#fff';
+            }
+        }, true);
+    }
 });
 
 // If you dynamically add entries/inputs, call attachNegativeInputListeners(newContainer) after adding them
@@ -58,7 +68,16 @@ async function saveData() {
         body: JSON.stringify(allData),
         credentials: "include"
     });
-    alert("Data saved successfully!");
+    // Change Save button background to #1a237e
+    const saveBtn = document.getElementById('saveBtn');
+    if (saveBtn) {
+        saveBtn.style.background = '#1a237e';
+        saveBtn.style.color = '#fff';
+        saveBtn.disabled = true;
+        setTimeout(() => {
+            saveBtn.disabled = false;
+        }, 1200);
+    }
 }
 
 function collectData() {
