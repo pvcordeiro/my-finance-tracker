@@ -36,6 +36,7 @@ function basicAuth(req, res, next) {
 
 // --- End Basic Authentication Middleware ---
 
+
 const db = new sqlite3.Database("./financeTracker.db", (err) => {
     if (err) {
         console.error("Error opening database", err);
@@ -43,9 +44,7 @@ const db = new sqlite3.Database("./financeTracker.db", (err) => {
         db.run(
             `CREATE TABLE IF NOT EXISTS finance (
                 id INTEGER PRIMARY KEY,
-                incomes TEXT,
-                expenses TEXT,
-                bankAmount REAL DEFAULT 0
+                months TEXT
             )`,
             (err) => {
                 if (err) {
@@ -54,15 +53,26 @@ const db = new sqlite3.Database("./financeTracker.db", (err) => {
             }
         );
 
-        // Migration: add bankAmount column if it doesn't exist
-        db.get("PRAGMA table_info(finance)", (err, info) => {
-            if (!err && info && Array.isArray(info)) {
-                const hasBankAmount = info.some(col => col.name === 'bankAmount');
-                if (!hasBankAmount) {
-                    db.run("ALTER TABLE finance ADD COLUMN bankAmount REAL DEFAULT 0", (err) => {
-                        if (err) console.error("Migration error (bankAmount):", err);
-                    });
-                }
+        // --- MIGRATION: Convert old flat data to new per-month format if needed ---
+        db.get("SELECT months FROM finance WHERE id = 1", (err, row) => {
+            if (!err && row && row.months) {
+                try {
+                    const data = JSON.parse(row.months);
+                    // If old format (flat incomes/expenses/bankAmount), migrate
+                    if (data && (Array.isArray(data.incomes) || Array.isArray(data.expenses) || typeof data.bankAmount === 'number')) {
+                        // Use current year-month as key
+                        const now = new Date();
+                        const ym = `${now.getFullYear()}-${('0'+(now.getMonth()+1)).slice(-2)}`;
+                        const newData = {};
+                        newData[ym] = {
+                            incomes: data.incomes || [],
+                            expenses: data.expenses || [],
+                            bankAmount: typeof data.bankAmount === 'number' ? data.bankAmount : 0
+                        };
+                        db.run("UPDATE finance SET months = ? WHERE id = 1", [JSON.stringify(newData)]);
+                        console.log("[MIGRATION] Converted flat data to per-month format.");
+                    }
+                } catch (e) { /* ignore */ }
             }
         });
     }
@@ -72,30 +82,28 @@ const db = new sqlite3.Database("./financeTracker.db", (err) => {
 
 
 app.get("/data", basicAuth, (req, res) => {
-    db.get("SELECT * FROM finance WHERE id = 1", (err, row) => {
+    db.get("SELECT months FROM finance WHERE id = 1", (err, row) => {
         if (err) {
             res.status(500).json({ error: "Database error" });
-        } else if (row) {
-            res.json({
-                incomes: JSON.parse(row.incomes),
-                expenses: JSON.parse(row.expenses),
-                bankAmount: row.bankAmount !== undefined ? row.bankAmount : 0
-            });
+        } else if (row && row.months) {
+            try {
+                res.json(JSON.parse(row.months));
+            } catch (e) {
+                res.status(500).json({ error: "Corrupt data" });
+            }
         } else {
-            res.json({ incomes: [], expenses: [], bankAmount: 0 });
+            res.json({}); // No data yet
         }
     });
 });
 
 
 app.post("/data", basicAuth, (req, res) => {
-    const incomes = JSON.stringify(req.body.incomes || []);
-    const expenses = JSON.stringify(req.body.expenses || []);
-    const bankAmount = typeof req.body.bankAmount === 'number' ? req.body.bankAmount : 0;
-    // Try update first, if no row updated, then insert
+    // Expecting req.body to be the full months object: { "2025-07": { incomes: [...], expenses: [...], bankAmount: ... }, ... }
+    const months = JSON.stringify(req.body || {});
     db.run(
-        `UPDATE finance SET incomes = ?, expenses = ?, bankAmount = ? WHERE id = 1`,
-        [incomes, expenses, bankAmount],
+        `UPDATE finance SET months = ? WHERE id = 1`,
+        [months],
         function (err) {
             if (err) {
                 console.error("DB UPDATE error:", err);
@@ -104,8 +112,8 @@ app.post("/data", basicAuth, (req, res) => {
             if (this.changes === 0) {
                 // No row updated, insert new
                 db.run(
-                    `INSERT INTO finance (id, incomes, expenses, bankAmount) VALUES (1, ?, ?, ?)`,
-                    [incomes, expenses, bankAmount],
+                    `INSERT INTO finance (id, months) VALUES (1, ?)`,
+                    [months],
                     function (err2) {
                         if (err2) {
                             console.error("DB INSERT error:", err2);

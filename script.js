@@ -27,25 +27,35 @@ async function loadData() {
     const response = await fetch("/data", {
         credentials: "include"
     });
-    const data = await response.json();
-    const bankInput = document.getElementById('bankAmount');
-    if (data.bankAmount !== undefined && data.bankAmount !== 0 && data.bankAmount !== "") {
-        bankInput.value = data.bankAmount;
-    } else {
-        bankInput.value = "";
+    const allData = await response.json();
+    const now = new Date();
+    const ym = `${now.getFullYear()}-${('0'+(now.getMonth()+1)).slice(-2)}`;
+    let data = allData[ym];
+    if (!data) {
+        // If no data for this month, initialize
+        data = { incomes: [], expenses: [], bankAmount: 0 };
     }
+    const bankInput = document.getElementById('bankAmount');
+    bankInput.value = data.bankAmount || "";
     populateData(data);
+    // Store allData for later use in saveData
+    window._allMonthsData = allData;
 }
 
 async function saveData() {
+    const now = new Date();
+    const ym = `${now.getFullYear()}-${('0'+(now.getMonth()+1)).slice(-2)}`;
     const data = collectData();
     data.bankAmount = parseFloat(document.getElementById('bankAmount').value) || 0;
+    // Use all months data, update just this month
+    let allData = window._allMonthsData || {};
+    allData[ym] = data;
     await fetch("/data", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(allData),
         credentials: "include"
     });
     alert("Data saved successfully!");
@@ -211,11 +221,18 @@ function calculateTotals() {
         });
     });
 
-    document.getElementById("totalIncome").textContent = totalIncome;
-    document.getElementById("totalExpenses").textContent = totalExpenses;
-    const bankAmount = parseFloat(document.getElementById('bankAmount').value) || 0;
-    document.getElementById("netSavings").textContent = bankAmount + totalIncome - totalExpenses;
-    document.getElementById('bankAmount').addEventListener('input', calculateTotals);
+    const totalIncomeElem = document.getElementById("totalIncome");
+    if (totalIncomeElem) totalIncomeElem.textContent = totalIncome;
+    const totalExpensesElem = document.getElementById("totalExpenses");
+    if (totalExpensesElem) totalExpensesElem.textContent = totalExpenses;
+    const bankAmountInput = document.getElementById('bankAmount');
+    const bankAmount = bankAmountInput ? parseFloat(bankAmountInput.value) || 0 : 0;
+    const netSavingsElem = document.getElementById("netSavings");
+    if (netSavingsElem) netSavingsElem.textContent = bankAmount + totalIncome - totalExpenses;
+    if (bankAmountInput && !bankAmountInput._listenerAdded) {
+        bankAmountInput.addEventListener('input', calculateTotals);
+        bankAmountInput._listenerAdded = true;
+    }
 
     monthlyIncome.forEach((income, index) => {
         monthlyBalance[index] = income - monthlyExpenses[index];
@@ -226,6 +243,7 @@ function calculateTotals() {
     const currentMonth = now.getMonth(); // 0 = Jan
     monthlyBalance[currentMonth] += bankAmount;
 
+    // Only update monthly balance fields if they exist
     const monthIds = [
         "balanceJan",
         "balanceFeb",
@@ -240,9 +258,9 @@ function calculateTotals() {
         "balanceNov",
         "balanceDec",
     ];
-
     monthlyBalance.forEach((balance, index) => {
-        document.getElementById(monthIds[index]).textContent = `€${balance}`;
+        const elem = document.getElementById(monthIds[index]);
+        if (elem) elem.textContent = `€${balance}`;
     });
     // Update negative class after all calculations
     updateNegativeInputs();

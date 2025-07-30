@@ -44,71 +44,11 @@
                     <button class="btn-primary" id="addExpenseBtn" onclick="addEntry('expenseContainer')">Add Expense</button>
                 </div>
             </section>
-
-            <section class="monthly-balance-section">
-                <h2>Monthly Balances</h2>
-                <div class="months">
-                    <div class="month-container">
-                        <label>Jan</label>
-                        <p id="balanceJan">€0</p>
-                    </div>
-                    <div class="month-container">
-                        <label>Feb</label>
-                        <p id="balanceFeb">€0</p>
-                    </div>
-                    <div class="month-container">
-                        <label>Mar</label>
-                        <p id="balanceMar">€0</p>
-                    </div>
-                    <div class="month-container">
-                        <label>Apr</label>
-                        <p id="balanceApr">€0</p>
-                    </div>
-                    <div class="month-container">
-                        <label>May</label>
-                        <p id="balanceMay">€0</p>
-                    </div>
-                    <div class="month-container">
-                        <label>Jun</label>
-                        <p id="balanceJun">€0</p>
-                    </div>
-                    <div class="month-container">
-                        <label>Jul</label>
-                        <p id="balanceJul">€0</p>
-                    </div>
-                    <div class="month-container">
-                        <label>Aug</label>
-                        <p id="balanceAug">€0</p>
-                    </div>
-                    <div class="month-container">
-                        <label>Sep</label>
-                        <p id="balanceSep">€0</p>
-                    </div>
-                    <div class="month-container">
-                        <label>Oct</label>
-                        <p id="balanceOct">€0</p>
-                    </div>
-                    <div class="month-container">
-                        <label>Nov</label>
-                        <p id="balanceNov">€0</p>
-                    </div>
-                    <div class="month-container">
-                        <label>Dec</label>
-                        <p id="balanceDec">€0</p>
-                    </div>
-                </div>
-            </section>
-            <section class="summary-section">
-                <h2>Summary</h2>
-                <p>Total Income: €<span id="totalIncome">0</span></p>
-                <p>Total Expenses: €<span id="totalExpenses">0</span></p>
-                <p>Net Savings: €<span id="netSavings">0</span></p>
-                <button class="btn-primary" onclick="saveData()">
-                    Save Data
-                </button>
-            </section>
+            <!-- Monthly balance and summary sections removed as requested -->
         </div>
 
         <script src="script.js"></script>
-    </body>
+    <button onclick="saveData()" style="position:fixed;bottom:10px;left:10px;z-index:1000;background:#1a237e;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:bold;box-shadow:0 2px 8px #0002;border:none;cursor:pointer;">Save Data</button>
+    <a href="summary.html" style="position:fixed;bottom:10px;right:10px;z-index:1000;background:#1a237e;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:bold;box-shadow:0 2px 8px #0002;">View Summary</a>
+</body>
 </html>
