@@ -82,12 +82,12 @@ function populateData(data) {
     incomeContainer.innerHTML = "";
     expenseContainer.innerHTML = "";
 
-    data.incomes.forEach((income) => {
-        addEntry("incomeContainer", income);
+    data.incomes.forEach((income, idx) => {
+        addEntry("incomeContainer", income, idx === 0);
     });
 
-    data.expenses.forEach((expense) => {
-        addEntry("expenseContainer", expense);
+    data.expenses.forEach((expense, idx) => {
+        addEntry("expenseContainer", expense, idx === 0);
     });
 
     calculateTotals();
@@ -95,35 +95,30 @@ function populateData(data) {
 
 function addEntry(
     containerId,
-    data = { description: "", amounts: new Array(12).fill("") }
+    data = { description: "", amounts: new Array(12).fill("") }, expanded = false
 ) {
     const container = document.getElementById(containerId);
     const entry = document.createElement("div");
-    entry.className = "entry";
+    entry.className = "entry" + (expanded ? " expanded" : "");
 
     const monthLabels = [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec",
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
     ];
 
+    // Header (description/title)
+    const header = document.createElement("div");
+    header.className = "entry-header";
+    header.textContent = data.description || "(No description)";
+    if (expanded) header.classList.add("active");
 
-    entry.innerHTML = `
-        <input type="text" value="${data.description}" placeholder="Description">
+    // Content (hidden unless expanded)
+    const content = document.createElement("div");
+    content.className = "entry-content";
+    content.innerHTML = `
+        <input type="text" value="${data.description}" placeholder="Description" class="desc-input">
         <div class="annual-total">€0</div>
         <div class="months">
-            ${monthLabels
-                .map(
-                    (label, index) => `
+            ${monthLabels.map((label, index) => `
                 <div class="month-container">
                     <label>${label}</label>
                     <div class="euro-input-wrapper">
@@ -131,26 +126,50 @@ function addEntry(
                         <input type="number" placeholder="0" value="${data.amounts[index] !== undefined && data.amounts[index] !== "" ? data.amounts[index] : ""}">
                     </div>
                 </div>
-            `
-                )
-                .join("")}
+            `).join("")}
         </div>
         <button class="remove-btn" onclick="removeEntry(this)">x</button>
     `;
 
-    container.appendChild(entry);
-    entry.querySelectorAll("input").forEach((input) => {
+    // Toggle expand/collapse logic
+    header.addEventListener("click", () => {
+        const isExpanded = entry.classList.contains('expanded');
+        // Collapse all others
+        container.querySelectorAll('.entry').forEach(e => {
+            e.classList.remove('expanded');
+            e.querySelector('.entry-header').classList.remove('active');
+        });
+        // If not already expanded, expand this one
+        if (!isExpanded) {
+            entry.classList.add('expanded');
+            header.classList.add('active');
+        }
+        // If already expanded, leave it collapsed (toggle off)
+    });
+
+    // Update header text when description changes
+    content.querySelector('.desc-input').addEventListener('input', function() {
+        header.textContent = this.value || "(No description)";
+        calculateTotals();
+    });
+
+    // Add listeners for totals and negative input
+    content.querySelectorAll("input").forEach((input) => {
         input.addEventListener("input", calculateTotals);
     });
-    // Attach negative listeners and update negative state for new inputs
-    attachNegativeInputListeners(entry);
+    attachNegativeInputListeners(content);
     updateNegativeInputs();
-    calculateTotals();
+
+    entry.appendChild(header);
+    entry.appendChild(content);
+    container.appendChild(entry);
+    if (expanded) calculateTotals();
 }
 
 function removeEntry(button) {
-    const entry = button.parentElement;
-    entry.remove();
+    // If button is inside entry-content, go up two levels
+    let entry = button.closest('.entry');
+    if (entry) entry.remove();
     calculateTotals();
 }
 

@@ -123,7 +123,13 @@ h2 {
 
 .entry-container {
     transition: max-height 0.5s ease-out;
-    overflow: hidden;
+    overflow-y: auto;
+    max-height: 340px;
+    min-height: 60px;
+    padding-right: 2px;
+    border: 1px solid #e3eaf3;
+    background: #fafdff;
+    border-radius: 8px;
 }
 .entry-container.hidden {
     max-height: 0;
@@ -137,13 +143,42 @@ h2 {
     flex-direction: column;
     gap: 10px;
     align-items: stretch;
-    margin-bottom: 12px;
-    padding: 14px 12px;
+    margin-bottom: 10px;
+    padding: 0;
+    background: none;
+    border: none;
+    border-radius: 0;
+    position: relative;
+    box-shadow: none;
+}
+
+.entry-header {
     background: #f4f8fb;
     border: 1px solid #e3eaf3;
     border-radius: 8px;
-    position: relative;
-    box-shadow: 0 2px 8px rgba(74, 144, 226, 0.04);
+    padding: 14px 12px;
+    font-weight: bold;
+    font-size: 1.08em;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: background 0.2s;
+    margin-bottom: 0;
+}
+.entry-header:hover, .entry-header.active {
+    background: #e0eafc;
+}
+.entry-content {
+    display: none;
+    background: #f4f8fb;
+    border: 1px solid #e3eaf3;
+    border-radius: 0 0 8px 8px;
+    padding: 12px 12px 8px 12px;
+    margin-bottom: 0;
+}
+.entry.expanded .entry-content {
+    display: block;
 }
 
 .entry input[type="text"],
@@ -210,11 +245,11 @@ input[type="number"]::-webkit-outer-spin-button {
 .annual-total {
     text-align: right;
     font-weight: bold;
-	margin: 10px 0 0 0;
+    margin: 10px 0 0 0;
     color: #333;
     font-size: 1.08em;
     padding-right: 2px;
-	order: 3;
+    order: 3;
     align-self: flex-end;
 
 }
