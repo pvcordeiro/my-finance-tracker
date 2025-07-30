@@ -275,6 +275,15 @@ function toggleDropdown(type) {
         arrow.textContent = '▲';
     } else {
         arrow.textContent = '▼';
+        // Also collapse all entries inside this dropdown
+        const entryContainer = document.getElementById(type + 'Container');
+        if (entryContainer) {
+            entryContainer.querySelectorAll('.entry').forEach(e => {
+                e.classList.remove('expanded');
+                const header = e.querySelector('.entry-header');
+                if (header) header.classList.remove('active');
+            });
+        }
     }
 }
 
