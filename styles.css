@@ -48,7 +48,7 @@ body {
     box-shadow: 0 8px 32px rgba(74, 144, 226, 0.10);
     display: flex;
     flex-direction: column;
-    gap: 32px;
+    gap: 20px;
 }
 
 section {

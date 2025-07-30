@@ -99,12 +99,12 @@ function populateData(data) {
     incomeContainer.innerHTML = "";
     expenseContainer.innerHTML = "";
 
-    data.incomes.forEach((income, idx) => {
-        addEntry("incomeContainer", income, idx === 0);
+    data.incomes.forEach((income) => {
+        addEntry("incomeContainer", income, false);
     });
 
-    data.expenses.forEach((expense, idx) => {
-        addEntry("expenseContainer", expense, idx === 0);
+    data.expenses.forEach((expense) => {
+        addEntry("expenseContainer", expense, false);
     });
 
     calculateTotals();
@@ -148,20 +148,16 @@ function addEntry(
         <button class="remove-btn" onclick="removeEntry(this)">x</button>
     `;
 
-    // Toggle expand/collapse logic
+    // Toggle expand/collapse logic (allow multiple open)
     header.addEventListener("click", () => {
         const isExpanded = entry.classList.contains('expanded');
-        // Collapse all others
-        container.querySelectorAll('.entry').forEach(e => {
-            e.classList.remove('expanded');
-            e.querySelector('.entry-header').classList.remove('active');
-        });
-        // If not already expanded, expand this one
         if (!isExpanded) {
             entry.classList.add('expanded');
             header.classList.add('active');
+        } else {
+            entry.classList.remove('expanded');
+            header.classList.remove('active');
         }
-        // If already expanded, leave it collapsed (toggle off)
     });
 
     // Update header text when description changes
