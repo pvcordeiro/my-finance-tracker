@@ -1,54 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Income and Expense Tracker</title>
-        <link rel="stylesheet" href="styles.css" />
-        <!-- Favicon: Money with Wings Emoji -->
-        <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 72 72'%3E%3Ctext y='58' font-size='58'%3E%F0%9F%92%B8%3C/text%3E%3C/svg%3E">
-    </head>
-
-    <body>
-        <div class="header-bar">
-            <span>💸 Income & Expense Tracker</span>
-        </div>
-        <div class="container">
-            <div style="margin-top: 22px; margin-bottom: 0px; margin-left: 20px; display: flex; align-items: center; gap: 16px;">
-                <label for="bankAmount" style="font-weight: bold; font-size: 0.98em; color: #357abd;">Current Bank Amount:</label>
-                <div class="euro-input-wrapper">
-                    <span class="euro-prefix">€</span>
-                    <input type="number" id="bankAmount" placeholder="0" style="width: 110px; font-size: 0.98em;" autocomplete="off">
-                </div>
-            </div>
-
-            <section class="income-section">
-                <button class="dropdown-btn" id="incomeDropdownBtn" onclick="toggleDropdown('income')">
-                    <span>Income</span>
-                    <span class="dropdown-arrow" id="incomeArrow">▼</span>
-                </button>
-                <div class="dropdown-content" id="incomeDropdown">
-                    <div class="entry-container" id="incomeContainer"></div>
-                    <button class="btn-primary" id="addIncomeBtn" onclick="addEntry('incomeContainer')">Add Income</button>
-                </div>
-            </section>
-
-            <section class="expense-section">
-                <button class="dropdown-btn" id="expenseDropdownBtn" onclick="toggleDropdown('expense')">
-                    <span>Expenses</span>
-                    <span class="dropdown-arrow" id="expenseArrow">▼</span>
-                </button>
-                <div class="dropdown-content" id="expenseDropdown">
-                    <div class="entry-container" id="expenseContainer"></div>
-                    <button class="btn-primary" id="addExpenseBtn" onclick="addEntry('expenseContainer')">Add Expense</button>
-                </div>
-            </section>
-            <!-- Monthly balance and summary sections removed as requested -->
-        </div>
-
-        <script src="script.js"></script>
-    <button onclick="saveData()" style="position:fixed;bottom:120px;right:10px;z-index:1000;background:#59cf4e;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:bold;box-shadow:0 2px 8px #0002;border:none;cursor:pointer;">Save</button>
-    <a href="summary.html" style="position:fixed;bottom:10px;right:10px;z-index:1000;background:#1a237e;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:bold;box-shadow:0 2px 8px #0002;">Summary</a>
-    <a href="details.html" style="position:fixed;bottom:65px;right:10px;z-index:1000;background:#1a237e;color:#fff;padding:8px 18px;border-radius:6px;text-decoration:none;font-weight:bold;box-shadow:0 2px 8px #0002;border:2px solid #1a237e;">Details</a>
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Finance Summary</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 72 72'%3E%3Ctext y='58' font-size='58'%3E%F0%9F%92%B8%3C/text%3E%3C/svg%3E">
+</head>
+<body>
+    <div class="header-bar">
+        <span>💸 Income & Expense Tracker</span>
+    </div>
+    <div class="container">
+        <h1 class="summh1">Finance Summary</h1>
+        <div id="summary-container"></div>
+    </div>
+    <script src="summary.js"></script>
+    <a href="edit.html" style="position:fixed;bottom:10px;right:10px;z-index:1000;background:#1a237e;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:bold;box-shadow:0 2px 8px #0002;">Edit</a>
+    <a href="details.html" style="position:fixed;bottom:10px;right:90px;z-index:1000;background:#1a237e;color:#fff;padding:8px 18px;border-radius:6px;text-decoration:none;font-weight:bold;box-shadow:0 2px 8px #0002;border:2px solid #1a237e;">Details</a>
 </body>
 </html>
