@@ -15,6 +15,13 @@
         </div>
         <div class="container">
             <h1>Income and Expense Tracker</h1>
+            <div style="margin-bottom: 18px; display: flex; align-items: center; gap: 16px;">
+                <label for="bankAmount" style="font-weight: bold; font-size: 1.08em; color: #357abd;">Current Bank Amount:</label>
+                <div class="euro-input-wrapper">
+                    <span class="euro-prefix">€</span>
+<input type="number" id="bankAmount" placeholder="0" style="width: 120px; font-size: 1.08em;" autocomplete="off">
+                </div>
+            </div>
 
             <section class="income-section">
                 <button class="dropdown-btn" id="incomeDropdownBtn" onclick="toggleDropdown('income')">

@@ -44,7 +44,8 @@ const db = new sqlite3.Database("./financeTracker.db", (err) => {
             `CREATE TABLE IF NOT EXISTS finance (
                 id INTEGER PRIMARY KEY,
                 incomes TEXT,
-                expenses TEXT
+                expenses TEXT,
+                bankAmount REAL DEFAULT 0
             )`,
             (err) => {
                 if (err) {
@@ -66,9 +67,10 @@ app.get("/data", basicAuth, (req, res) => {
             res.json({
                 incomes: JSON.parse(row.incomes),
                 expenses: JSON.parse(row.expenses),
+                bankAmount: row.bankAmount !== undefined ? row.bankAmount : 0
             });
         } else {
-            res.json({ incomes: [], expenses: [] });
+            res.json({ incomes: [], expenses: [], bankAmount: 0 });
         }
     });
 });
@@ -77,10 +79,11 @@ app.get("/data", basicAuth, (req, res) => {
 app.post("/data", basicAuth, (req, res) => {
     const incomes = JSON.stringify(req.body.incomes || []);
     const expenses = JSON.stringify(req.body.expenses || []);
+    const bankAmount = typeof req.body.bankAmount === 'number' ? req.body.bankAmount : 0;
     db.run(
-        `INSERT INTO finance (id, incomes, expenses) VALUES (1, ?, ?)
-        ON CONFLICT(id) DO UPDATE SET incomes=excluded.incomes, expenses=excluded.expenses`,
-        [incomes, expenses],
+        `INSERT INTO finance (id, incomes, expenses, bankAmount) VALUES (1, ?, ?, ?)
+        ON CONFLICT(id) DO UPDATE SET incomes=excluded.incomes, expenses=excluded.expenses, bankAmount=excluded.bankAmount`,
+        [incomes, expenses, bankAmount],
         function (err) {
             if (err) {
                 res.status(500).json({ error: "Database error" });

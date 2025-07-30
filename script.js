@@ -28,11 +28,18 @@ async function loadData() {
         credentials: "include"
     });
     const data = await response.json();
+    const bankInput = document.getElementById('bankAmount');
+    if (data.bankAmount !== undefined && data.bankAmount !== 0 && data.bankAmount !== "") {
+        bankInput.value = data.bankAmount;
+    } else {
+        bankInput.value = "";
+    }
     populateData(data);
 }
 
 async function saveData() {
     const data = collectData();
+    data.bankAmount = parseFloat(document.getElementById('bankAmount').value) || 0;
     await fetch("/data", {
         method: "POST",
         headers: {
@@ -206,12 +213,18 @@ function calculateTotals() {
 
     document.getElementById("totalIncome").textContent = totalIncome;
     document.getElementById("totalExpenses").textContent = totalExpenses;
-    document.getElementById("netSavings").textContent =
-        totalIncome - totalExpenses;
+    const bankAmount = parseFloat(document.getElementById('bankAmount').value) || 0;
+    document.getElementById("netSavings").textContent = bankAmount + totalIncome - totalExpenses;
+    document.getElementById('bankAmount').addEventListener('input', calculateTotals);
 
     monthlyIncome.forEach((income, index) => {
         monthlyBalance[index] = income - monthlyExpenses[index];
     });
+
+    // Add bank amount to the current month only
+    const now = new Date();
+    const currentMonth = now.getMonth(); // 0 = Jan
+    monthlyBalance[currentMonth] += bankAmount;
 
     const monthIds = [
         "balanceJan",
