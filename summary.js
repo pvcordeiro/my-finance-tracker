@@ -14,8 +14,8 @@ function renderSummary(data) {
     const now = new Date();
     const year = now.getFullYear();
     const monthLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    let html = '<table class="summary-table" style="width:100%;max-width:900px;margin:auto;border-collapse:collapse;box-shadow:0 2px 8px #0001;background:#fff;">';
-    html += '<thead style="background:#1a237e;color:#fff;"><tr><th style="padding:6px 2px;">Month</th><th style="padding:6px 2px;">| Income</th><th style="padding:6px 2px;">| Expenses |</th><th style="padding:6px 2px;">Net</th></tr></thead><tbody>';
+    let html = '<table class="summary-table">';
+    html += '<thead class="summary-thead"><tr><th class="summary-td-month">Month</th><th class="summary-td-income">| Income</th><th class="summary-td-expense">| Expenses |</th><th class="summary-td-net">Net</th></tr></thead><tbody>';
     let annualIncome = 0, annualExpenses = 0;
     let runningBalance = 0;
     let bankAmountAdded = false;
@@ -62,18 +62,18 @@ function renderSummary(data) {
         }
         annualIncome += totalIncome;
         annualExpenses += totalExpenses;
-        html += `<tr style="text-align:center;">
-            <td style="padding:4px 2px;">${monthLabels[m]} ${year}</td>
-            <td style="padding:4px 2px;color:#357abd;font-weight:500;">€ ${totalIncome.toFixed(2)}</td>
-            <td style="padding:4px 2px;color:#c62828;font-weight:500;">€ ${totalExpenses.toFixed(2)}</td>
-            <td style="padding:4px 2px;color:${runningBalance>=0?'#388e3c':'#c62828'};font-weight:600;">€ ${runningBalance.toFixed(2)}</td>
+        html += `<tr class="summary-row">
+            <td class="summary-td-month">${monthLabels[m]} ${year}</td>
+            <td class="summary-td-income">€ ${totalIncome.toFixed(2)}</td>
+            <td class="summary-td-expense">€ ${totalExpenses.toFixed(2)}</td>
+            <td class="summary-td-net" style="color:${runningBalance>=0?'#388e3c':'#c62828'};font-weight:600;">€ ${runningBalance.toFixed(2)}</td>
         </tr>`;
     }
-    html += `</tbody><tfoot style="background:#e3eafc;font-weight:bold;"><tr>
-        <th style="padding:6px 2px;">Total</th>
-        <th style="padding:6px 2px;">€ ${annualIncome.toFixed(2)}</th>
-        <th style="padding:6px 2px;">€ ${annualExpenses.toFixed(2)}</th>
-        <th style="padding:6px 2px;">€ ${runningBalance.toFixed(2)}</th>
+    html += `</tbody><tfoot class="summary-tfoot"><tr>
+        <th class="summary-td-total">Total</th>
+        <th class="summary-td-income">€ ${annualIncome.toFixed(2)}</th>
+        <th class="summary-td-expense">€ ${annualExpenses.toFixed(2)}</th>
+        <th class="summary-td-net">€ ${runningBalance.toFixed(2)}</th>
         <th></th>
     </tr></tfoot></table>`;
     document.getElementById('summary-container').innerHTML = html;
