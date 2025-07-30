@@ -83,6 +83,14 @@ section {
     box-shadow: 0 2px 8px rgba(74, 144, 226, 0.08);
     transition: background 0.2s;
 }
+#incomeDropdownBtn {
+    background: #59cf4e;
+}
+
+#expenseDropdownBtn {
+    background: #cf4e4e;
+}
+
 .dropdown-btn:active, .dropdown-btn:focus {
     background: #285a8c;
 }
@@ -176,6 +184,7 @@ h2 {
     border-radius: 0 0 8px 8px;
     padding: 12px 12px 8px 12px;
     margin-bottom: 0;
+    position: relative;
 }
 .entry.expanded .entry-content {
     display: block;
@@ -245,12 +254,16 @@ input[type="number"]::-webkit-outer-spin-button {
 .annual-total {
     text-align: right;
     font-weight: bold;
-    margin: 10px 0 0 0;
+    margin: 0;
     color: #333;
     font-size: 1.08em;
-    padding-right: 2px;
-    order: 3;
-    align-self: flex-end;
+    padding-right: 0;
+    position: absolute;
+    top: 10px;
+    right: 52px;
+    z-index: 2;
+    order: unset;
+    align-self: unset;
 
 }
 
@@ -281,14 +294,16 @@ button {
     background: linear-gradient(90deg, #ff5c5c 60%, #d9534f 100%);
     color: #fff;
     font-weight: bold;
-    position: static;
+    position: absolute;
+    top: 10px;
+    right: 10px;
     padding: 0.2rem 0.7rem 0.3rem 0.7rem;
     font-size: 1.1em;
     border-radius: 4px;
     box-shadow: 0 2px 8px rgba(255, 92, 92, 0.10);
-    order: 2;
-    align-self: flex-start;
-    margin-top: 10px;
+    order: unset;
+    align-self: unset;
+    margin-top: 0;
 }
 
 .remove-btn:hover {
@@ -346,16 +361,6 @@ button {
         grid-template-columns: repeat(4, 1fr);
         gap: 10px;
     }
-    .remove-btn {
-        position: absolute;
-        top: 87%;
-        right: 90%;
-        left: 2%;
-        bottom: 3%;
-        align-self: auto;
-        order: unset;
-        margin-top: 0;
-    }
 }
 
 @media (max-width: 480px) {
@@ -372,11 +377,5 @@ button {
     .monthly-balance-section .months {
         grid-template-columns: repeat(2, 1fr);
         gap: 10px;
-    }
-    .remove-btn {
-        top: 93%;
-        right: 88%;
-        left: 3%;
-        bottom: 2%;
     }
 }
