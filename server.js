@@ -53,6 +53,18 @@ const db = new sqlite3.Database("./financeTracker.db", (err) => {
                 }
             }
         );
+
+        // Migration: add bankAmount column if it doesn't exist
+        db.get("PRAGMA table_info(finance)", (err, info) => {
+            if (!err && info && Array.isArray(info)) {
+                const hasBankAmount = info.some(col => col.name === 'bankAmount');
+                if (!hasBankAmount) {
+                    db.run("ALTER TABLE finance ADD COLUMN bankAmount REAL DEFAULT 0", (err) => {
+                        if (err) console.error("Migration error (bankAmount):", err);
+                    });
+                }
+            }
+        });
     }
 });
 
@@ -80,15 +92,30 @@ app.post("/data", basicAuth, (req, res) => {
     const incomes = JSON.stringify(req.body.incomes || []);
     const expenses = JSON.stringify(req.body.expenses || []);
     const bankAmount = typeof req.body.bankAmount === 'number' ? req.body.bankAmount : 0;
+    // Try update first, if no row updated, then insert
     db.run(
-        `INSERT INTO finance (id, incomes, expenses, bankAmount) VALUES (1, ?, ?, ?)
-        ON CONFLICT(id) DO UPDATE SET incomes=excluded.incomes, expenses=excluded.expenses, bankAmount=excluded.bankAmount`,
+        `UPDATE finance SET incomes = ?, expenses = ?, bankAmount = ? WHERE id = 1`,
         [incomes, expenses, bankAmount],
         function (err) {
             if (err) {
-                res.status(500).json({ error: "Database error" });
+                console.error("DB UPDATE error:", err);
+                return res.status(500).json({ error: "Database error (update)" });
+            }
+            if (this.changes === 0) {
+                // No row updated, insert new
+                db.run(
+                    `INSERT INTO finance (id, incomes, expenses, bankAmount) VALUES (1, ?, ?, ?)`,
+                    [incomes, expenses, bankAmount],
+                    function (err2) {
+                        if (err2) {
+                            console.error("DB INSERT error:", err2);
+                            return res.status(500).json({ error: "Database error (insert)" });
+                        }
+                        res.status(200).json({ message: "Data saved successfully! (insert)" });
+                    }
+                );
             } else {
-                res.status(200).json({ message: "Data saved successfully!" });
+                res.status(200).json({ message: "Data saved successfully! (update)" });
             }
         }
     );
