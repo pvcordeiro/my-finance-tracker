@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (saveBtn) {
         document.body.addEventListener('input', function (e) {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
-				saveBtn.style.display = 'block';
+                saveBtn.style.display = 'block';
                 saveBtn.style.background = '#59cf4e';
                 saveBtn.style.color = '#fff';
             }
@@ -71,7 +71,7 @@ async function saveData() {
     });
     const saveBtn = document.getElementById('saveBtn');
     if (saveBtn) {
-		saveBtn.style.display = 'none';
+        saveBtn.style.display = 'none';
         saveBtn.disabled = true;
         setTimeout(() => {
             saveBtn.disabled = false;
@@ -154,9 +154,9 @@ function addEntry(
         <div class="annual-total">€0</div>
         <div class="months">
             ${monthLabels.map((label, index) => `
-                <div class="month-container">
-                    <label>${label}</label>
-                    <div class="euro-input-wrapper">
+                <div class="month-container" style="display:flex;align-items:center;gap:0.1em;">
+                    <label style="min-width:2.5em;">${label}</label>
+                    <div class="euro-input-wrapper" style="flex:1;">
                         <span class="euro-prefix">€</span>
                         <input type="number" placeholder="0" value="${data.amounts[index] !== undefined && data.amounts[index] !== "" ? data.amounts[index] : ""}">
                     </div>
@@ -289,7 +289,6 @@ function toggleDropdown(type) {
         arrow.textContent = '▲';
     } else {
         arrow.textContent = '▼';
-        // Also collapse all entries inside this dropdown
         const entryContainer = document.getElementById(type + 'Container');
         if (entryContainer) {
             entryContainer.querySelectorAll('.entry').forEach(e => {
@@ -304,7 +303,6 @@ function toggleDropdown(type) {
 // Load existing data when the page loads
 window.onload = function () {
     loadData();
-    // Start with dropdowns closed on mobile
     document.getElementById("incomeDropdown").classList.remove("open");
     document.getElementById("incomeArrow").textContent = '▼';
     document.getElementById("expenseDropdown").classList.remove("open");
