@@ -18,8 +18,9 @@ function renderSummary(data) {
     html += '<thead class="summary-thead"><tr><th class="summary-td-month">Month</th><th class="summary-td-income">| Income</th><th class="summary-td-expense">| Expenses |</th><th class="summary-td-net">Net</th></tr></thead><tbody>';
     let annualIncome = 0, annualExpenses = 0;
     let runningBalance = 0;
-    let bankAmountAdded = false;
+    let prevBalance = 0;
     const nowMonth = now.getMonth();
+    let bankAmountForCurrentMonth = 0;
     for (let m = 0; m < 12; m++) {
         let totalIncome = 0, totalExpenses = 0;
         let bankAmount = 0;
@@ -45,20 +46,20 @@ function renderSummary(data) {
                     }
                 }
             }
-            // Use the bankAmount from the current month (if present)
-            if (!bankAmountAdded && m === nowMonth && typeof monthData.bankAmount === 'number' && monthData.bankAmount !== 0) {
+            // Get the bankAmount for the current month
+            if (m === nowMonth && typeof monthData.bankAmount === 'number') {
                 bankAmount = monthData.bankAmount;
-                bankAmountAdded = true;
+                bankAmountForCurrentMonth = bankAmount;
             }
         }
         let net = totalIncome - totalExpenses;
-        if (m === nowMonth) {
-            net += bankAmount;
-            runningBalance = net;
-        } else if (m > nowMonth) {
+        if (m < nowMonth) {
+            prevBalance += net;
+            runningBalance = prevBalance;
+        } else if (m === nowMonth) {
+            runningBalance = prevBalance + net + bankAmount;
+        } else {
             runningBalance += net;
-        } else if (m < nowMonth) {
-            runningBalance = net;
         }
         annualIncome += totalIncome;
         annualExpenses += totalExpenses;

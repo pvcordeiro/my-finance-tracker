@@ -21,7 +21,17 @@ function renderDetails(data) {
     html += '</tr></thead><tbody>';
     // Find current month data
     const ym = `${year}-${('0'+(now.getMonth()+1)).slice(-2)}`;
-    const monthData = data[ym] || { incomes: [], expenses: [] };
+    const monthData = data[ym] || { incomes: [], expenses: [], bankAmount: 0 };
+    // Add Bank Amount rows
+    html += `<tr><td class="sticky-col" style="text-align:left;font-weight:500;">Bank Amount</td>`;
+    for (let i = 0; i < 12; i++) {
+        if (i === now.getMonth()) {
+            html += `<td class="month-cell" style="color:#357abd;font-weight:bold;">€ ${monthData.bankAmount !== undefined ? Number(monthData.bankAmount).toFixed(2) : '-'}</td>`;
+        } else {
+            html += '<td class="month-cell">-</td>';
+        }
+    }
+    html += '</tr>';
     (monthData.incomes || []).forEach(inc => {
         html += `<tr><td class="sticky-col" style="text-align:left;font-weight:500;">${inc.description || ''}</td>`;
         for (let i = 0; i < 12; i++) {
