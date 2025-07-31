@@ -158,6 +158,9 @@ h2 {
     border: 1px solid #e3eaf3;
     background: #fafdff;
     border-radius: 0.5rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
 }
 .entry-container.hidden {
     max-height: 0;
@@ -193,7 +196,7 @@ h2 {
 }
 .entry-header.active {
     background: #e0eafc;
-	border-radius: 0.5rem 0.5rem 0 0;
+    border-radius: 0.5rem 0.5rem 0 0;
 }
 .entry-content {
     display: none;
@@ -226,7 +229,7 @@ input[type="number"]::-webkit-outer-spin-button {
     display: grid;
     grid-template-columns: repeat(6, 1fr);
     gap: 1.125rem 0.75rem;
-    padding: 0.5rem 0.2rem;
+    padding: 0.5rem 0rem;
 }
 
 .month-container {
@@ -273,13 +276,12 @@ input[type="number"]::-webkit-outer-spin-button {
 .annual-total {
     text-align: right;
     font-weight: bold;
-    /* margin: 0; */
     color: #333;
     font-size: 1.08em;
     padding-right: 0;
     position: absolute;
-    top: 0.625rem;
-    right: 3.25rem;
+    top: 12px;
+    right: 4rem;
     z-index: 2;
     order: unset;
     align-self: unset;
@@ -318,8 +320,8 @@ button {
     color: #fff;
     font-weight: bold;
     position: absolute;
-    top: 0.625rem;
-    right: 0.625rem;
+    top: 12px;
+    right: 12px;
     padding: 0.2em 0.7em 0.3em 0.7em;
     font-size: 1.1em;
     border-radius: 0.25rem;
