@@ -330,25 +330,8 @@ button {
     box-shadow: 0 4px 16px rgba(255, 92, 92, 0.18);
 }
 
-.summary-section p {
-    font-size: 1.2em;
-    text-align: center;
-    margin: 10px 0;
-}
-
 .summh1 {
 	padding-left: 16.5rem;
-}
-
-.monthly-balance-section {
-    text-align: center;
-    margin: 20px 0;
-}
-
-.monthly-balance-section .months {
-    display: grid;
-    grid-template-columns: repeat(12, 1fr);
-    gap: 10px;
 }
 
 .fab-btn {
