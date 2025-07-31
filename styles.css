@@ -509,7 +509,7 @@ button {
 
 @media (max-width: 480px) {
     .container {
-        padding: 1rem 2vw;
+        padding: 1rem 2vw 4rem;
     }
     section {
         padding: 0.5rem 0.125rem 0.375rem 0.125rem;
