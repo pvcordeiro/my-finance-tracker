@@ -1,21 +1,35 @@
-
-
-// Initial call on page load
 document.addEventListener('DOMContentLoaded', () => {
-    // Display save button on input change detected
     const saveBtn = document.getElementById('saveBtn');
-    if (saveBtn) {
-        document.body.addEventListener('input', function (e) {
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
-                saveBtn.style.display = 'block';
-                saveBtn.style.background = '#59cf4e';
-                saveBtn.style.color = '#fff';
-            }
+    function showSaveBtn()
+	{
+        if (saveBtn)
+		{
+            saveBtn.style.display = 'block';
+            saveBtn.style.background = '#59cf4e';
+            saveBtn.style.color = '#fff';
+        }
+    }
+    if (saveBtn)
+	{
+        document.body.addEventListener('input', function (e)
+		{
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')
+                showSaveBtn();
+        }, true);
+        const addIncomeBtn = document.getElementById('addIncomeBtn');
+        if (addIncomeBtn)
+            addIncomeBtn.addEventListener('click', showSaveBtn);
+        const addExpenseBtn = document.getElementById('addExpenseBtn');
+        if (addExpenseBtn)
+            addExpenseBtn.addEventListener('click', showSaveBtn);
+        document.body.addEventListener('click', function(e)
+		{
+            if (e.target.classList && e.target.classList.contains('remove-btn'))
+                showSaveBtn();
         }, true);
     }
 });
 
-// If you dynamically add entries/inputs, call attachNegativeInputListeners(newContainer) after adding them
 async function loadData() {
     const response = await fetch("/data", {
         credentials: "include"
@@ -24,14 +38,11 @@ async function loadData() {
     const now = new Date();
     const ym = `${now.getFullYear()}-${('0'+(now.getMonth()+1)).slice(-2)}`;
     let data = allData[ym];
-    if (!data) {
-        // If no data for this month, initialize
+    if (!data)
         data = { incomes: [], expenses: [], bankAmount: 0 };
-    }
     const bankInput = document.getElementById('bankAmount');
     bankInput.value = data.bankAmount || "";
     populateData(data);
-    // Store allData for later use in saveData
     window._allMonthsData = allData;
 }
 
@@ -40,7 +51,6 @@ async function saveData() {
     const ym = `${now.getFullYear()}-${('0'+(now.getMonth()+1)).slice(-2)}`;
     const data = collectData();
     data.bankAmount = parseFloat(document.getElementById('bankAmount').value) || 0;
-    // Use all months data, update just this month
     let allData = window._allMonthsData || {};
     allData[ym] = data;
     await fetch("/data", {
@@ -52,7 +62,8 @@ async function saveData() {
         credentials: "include"
     });
     const saveBtn = document.getElementById('saveBtn');
-    if (saveBtn) {
+    if (saveBtn)
+	{
         saveBtn.style.display = 'none';
         saveBtn.disabled = true;
         setTimeout(() => {
@@ -61,7 +72,8 @@ async function saveData() {
     }
 }
 
-function collectData() {
+function collectData()
+{
     const incomeEntries = document.querySelectorAll("#incomeContainer .entry");
     const expenseEntries = document.querySelectorAll(
         "#expenseContainer .entry"
@@ -92,7 +104,8 @@ function collectData() {
     return { incomes, expenses };
 }
 
-function populateData(data) {
+function populateData(data)
+{
     const incomeContainer = document.getElementById("incomeContainer");
     const expenseContainer = document.getElementById("expenseContainer");
     const addIncomeBtn = document.getElementById("addIncomeBtn");
@@ -101,24 +114,34 @@ function populateData(data) {
     incomeContainer.innerHTML = "";
     expenseContainer.innerHTML = "";
 
-    // Hide containers and buttons if no entries
-    if (!data.incomes || data.incomes.length === 0) {
+    // only show input field if there's an input to be fielded
+    if (!data.incomes || data.incomes.length === 0)
+	{
         incomeContainer.style.display = 'none';
-        if (addIncomeBtn) addIncomeBtn.style.display = '';
-    } else {
+        if (addIncomeBtn)
+			addIncomeBtn.style.display = '';
+    }
+	else
+	{
         incomeContainer.style.display = '';
-        if (addIncomeBtn) addIncomeBtn.style.display = '';
+        if (addIncomeBtn)
+			addIncomeBtn.style.display = '';
         data.incomes.forEach((income) => {
             addEntry("incomeContainer", income, false);
         });
     }
 
-    if (!data.expenses || data.expenses.length === 0) {
+    if (!data.expenses || data.expenses.length === 0)
+	{
         expenseContainer.style.display = 'none';
-        if (addExpenseBtn) addExpenseBtn.style.display = '';
-    } else {
+        if (addExpenseBtn)
+			addExpenseBtn.style.display = '';
+    }
+	else
+	{
         expenseContainer.style.display = '';
-        if (addExpenseBtn) addExpenseBtn.style.display = '';
+        if (addExpenseBtn)
+			addExpenseBtn.style.display = '';
         data.expenses.forEach((expense) => {
             addEntry("expenseContainer", expense, false);
         });
@@ -130,7 +153,8 @@ function populateData(data) {
 function addEntry(
     containerId,
     data = { description: "", amounts: new Array(12).fill("") }, expanded = false
-) {
+)
+{
     const container = document.getElementById(containerId);
     container.style.display = '';
     const entry = document.createElement("div");
@@ -140,7 +164,7 @@ function addEntry(
         "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
     ];
 
-    // Header (description/title + annual total + delete button)
+    // input field header with total and remove button
     const header = document.createElement("div");
     header.className = "entry-header";
     header.innerHTML = `
@@ -148,9 +172,10 @@ function addEntry(
         <span class="annual-total">€0</span>
         <button class="remove-btn" onclick="removeEntry(this)">x</button>
     `;
-    if (expanded) header.classList.add("active");
+    if (expanded)
+		header.classList.add("active");
 
-    // Content (hidden unless expanded)
+	//entry field toggler
     const content = document.createElement("div");
     content.className = "entry-content";
     content.innerHTML = `
@@ -168,25 +193,27 @@ function addEntry(
         </div>
     `;
 
-    // Toggle expand/collapse logic (allow multiple open)
+    // toggler too
     header.addEventListener("click", () => {
         const isExpanded = entry.classList.contains('expanded');
-        if (!isExpanded) {
+        if (!isExpanded)
+		{
             entry.classList.add('expanded');
             header.classList.add('active');
-        } else {
+        }
+		else
+		{
             entry.classList.remove('expanded');
             header.classList.remove('active');
         }
     });
 
-    // Update header text when description changes
+    // instant description updator
     content.querySelector('.desc-input').addEventListener('input', function() {
         header.querySelector('.entry-desc').textContent = this.value || "(No description)";
         calculateTotals();
     });
 
-    // Add listeners for totals
     content.querySelectorAll("input").forEach((input) => {
         input.addEventListener("input", calculateTotals);
     });
@@ -194,26 +221,27 @@ function addEntry(
     entry.appendChild(header);
     entry.appendChild(content);
     container.appendChild(entry);
-    if (expanded) calculateTotals();
+    if (expanded)
+		calculateTotals();
 }
 
-function removeEntry(button) {
-    // If button is inside entry-content, go up two levels
+function removeEntry(button)
+{
     let entry = button.closest('.entry');
-    if (entry) entry.remove();
-    // Hide container if no entries left
+    if (entry)
+		entry.remove();
+    // Hide container if no entries
     const incomeContainer = document.getElementById('incomeContainer');
     const expenseContainer = document.getElementById('expenseContainer');
-    if (incomeContainer && incomeContainer.querySelectorAll('.entry').length === 0) {
+    if (incomeContainer && incomeContainer.querySelectorAll('.entry').length === 0)
         incomeContainer.style.display = 'none';
-    }
-    if (expenseContainer && expenseContainer.querySelectorAll('.entry').length === 0) {
+    if (expenseContainer && expenseContainer.querySelectorAll('.entry').length === 0)
         expenseContainer.style.display = 'none';
-    }
     calculateTotals();
 }
 
-function calculateTotals() {
+function calculateTotals()
+{
     let totalIncome = 0;
     let totalExpenses = 0;
     const monthlyIncome = new Array(12).fill(0);
@@ -226,7 +254,8 @@ function calculateTotals() {
         ).map((input) => parseFloat(input.value) || 0);
         const total = amounts.reduce((a, b) => a + b, 0);
         const headerTotal = entry.querySelector(".entry-header .annual-total");
-        if (headerTotal) headerTotal.textContent = `€${total}`;
+        if (headerTotal)
+			headerTotal.textContent = `€${total}`;
         totalIncome += total;
         amounts.forEach((amount, index) => {
             monthlyIncome[index] += amount;
@@ -239,7 +268,8 @@ function calculateTotals() {
         ).map((input) => parseFloat(input.value) || 0);
         const total = amounts.reduce((a, b) => a + b, 0);
         const headerTotal = entry.querySelector(".entry-header .annual-total");
-        if (headerTotal) headerTotal.textContent = `€${total}`;
+        if (headerTotal)
+			headerTotal.textContent = `€${total}`;
         totalExpenses += total;
         amounts.forEach((amount, index) => {
             monthlyExpenses[index] += amount;
@@ -247,14 +277,18 @@ function calculateTotals() {
     });
 
     const totalIncomeElem = document.getElementById("totalIncome");
-    if (totalIncomeElem) totalIncomeElem.textContent = totalIncome;
+    if (totalIncomeElem)
+		totalIncomeElem.textContent = totalIncome;
     const totalExpensesElem = document.getElementById("totalExpenses");
-    if (totalExpensesElem) totalExpensesElem.textContent = totalExpenses;
+    if (totalExpensesElem)
+		totalExpensesElem.textContent = totalExpenses;
     const bankAmountInput = document.getElementById('bankAmount');
     const bankAmount = bankAmountInput ? parseFloat(bankAmountInput.value) || 0 : 0;
     const netSavingsElem = document.getElementById("netSavings");
-    if (netSavingsElem) netSavingsElem.textContent = bankAmount + totalIncome - totalExpenses;
-    if (bankAmountInput && !bankAmountInput._listenerAdded) {
+    if (netSavingsElem)
+		netSavingsElem.textContent = bankAmount + totalIncome - totalExpenses;
+    if (bankAmountInput && !bankAmountInput._listenerAdded)
+	{
         bankAmountInput.addEventListener('input', calculateTotals);
         bankAmountInput._listenerAdded = true;
     }
@@ -263,12 +297,10 @@ function calculateTotals() {
         monthlyBalance[index] = income - monthlyExpenses[index];
     });
 
-    // Add bank amount to the current month only
     const now = new Date();
-    const currentMonth = now.getMonth(); // 0 = Jan
+    const currentMonth = now.getMonth();
     monthlyBalance[currentMonth] += bankAmount;
 
-    // Only update monthly balance fields if they exist
     const monthIds = [
         "balanceJan",
         "balanceFeb",
@@ -285,7 +317,8 @@ function calculateTotals() {
     ];
     monthlyBalance.forEach((balance, index) => {
         const elem = document.getElementById(monthIds[index]);
-        if (elem) elem.textContent = `€${balance}`;
+        if (elem)
+			elem.textContent = `€${balance}`;
     });
 
 }
@@ -295,22 +328,24 @@ function toggleDropdown(type) {
     const dropdown = document.getElementById(type + 'Dropdown');
     const arrow = document.getElementById(type + 'Arrow');
     dropdown.classList.toggle('open');
-    if (dropdown.classList.contains('open')) {
+    if (dropdown.classList.contains('open'))
         arrow.textContent = '▲';
-    } else {
+    else
+	{
         arrow.textContent = '▼';
         const entryContainer = document.getElementById(type + 'Container');
-        if (entryContainer) {
+        if (entryContainer)
+		{
             entryContainer.querySelectorAll('.entry').forEach(e => {
                 e.classList.remove('expanded');
                 const header = e.querySelector('.entry-header');
-                if (header) header.classList.remove('active');
+                if (header)
+					header.classList.remove('active');
             });
         }
     }
 }
 
-// Load existing data when the page loads
 window.onload = function () {
     loadData();
     document.getElementById("incomeDropdown").classList.remove("open");
