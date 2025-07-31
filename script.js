@@ -140,10 +140,13 @@ function addEntry(
         "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
     ];
 
-    // Header (description/title)
+    // Header (description/title + annual total)
     const header = document.createElement("div");
     header.className = "entry-header";
-    header.textContent = data.description || "(No description)";
+    header.innerHTML = `
+        <span class="entry-desc">${data.description || "(No description)"}</span>
+        <span class="annual-total">€0</span>
+    `;
     if (expanded) header.classList.add("active");
 
     // Content (hidden unless expanded)
@@ -151,7 +154,6 @@ function addEntry(
     content.className = "entry-content";
     content.innerHTML = `
         <input type="text" value="${data.description}" placeholder="Description" class="desc-input">
-        <div class="annual-total">€0</div>
         <div class="months">
             ${monthLabels.map((label, index) => `
                 <div class="month-container" style="display:flex;align-items:center;gap:0.1em;">
@@ -180,7 +182,7 @@ function addEntry(
 
     // Update header text when description changes
     content.querySelector('.desc-input').addEventListener('input', function() {
-        header.textContent = this.value || "(No description)";
+        header.querySelector('.entry-desc').textContent = this.value || "(No description)";
         calculateTotals();
     });
 
@@ -216,7 +218,8 @@ function calculateTotals() {
             entry.querySelectorAll('.months input[type="number"]')
         ).map((input) => parseFloat(input.value) || 0);
         const total = amounts.reduce((a, b) => a + b, 0);
-        entry.querySelector(".annual-total").textContent = `€${total}`;
+        const headerTotal = entry.querySelector(".entry-header .annual-total");
+        if (headerTotal) headerTotal.textContent = `€${total}`;
         totalIncome += total;
         amounts.forEach((amount, index) => {
             monthlyIncome[index] += amount;
@@ -228,7 +231,8 @@ function calculateTotals() {
             entry.querySelectorAll('.months input[type="number"]')
         ).map((input) => parseFloat(input.value) || 0);
         const total = amounts.reduce((a, b) => a + b, 0);
-        entry.querySelector(".annual-total").textContent = `€${total}`;
+        const headerTotal = entry.querySelector(".entry-header .annual-total");
+        if (headerTotal) headerTotal.textContent = `€${total}`;
         totalExpenses += total;
         amounts.forEach((amount, index) => {
             monthlyExpenses[index] += amount;
