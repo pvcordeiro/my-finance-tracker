@@ -103,7 +103,7 @@ A modern, mobile-friendly, and secure personal finance tracker for managing inco
 This is an ongoing project, since I use it myself by hosting it on a raspberry pi.  
 So it'll be probably updated regularly. 
 
-TODO: a proper login screen, more features, improve design, maybe change it to a framework.
+TODO: organize folder structure, more features, improve design, maybe move it to a framework.
 
 ## License
 MIT
