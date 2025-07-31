@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
@@ -16,8 +17,8 @@ app.use(basicAuth);
 app.use(express.static(path.join(__dirname)));
 
 // --- Basic Authentication Middleware ---
-const BASIC_AUTH_USER = process.env.FINANCE_USER || "pv";
-const BASIC_AUTH_PASS = process.env.FINANCE_PASS || "cordeiro";
+const BASIC_AUTH_USER = process.env.FINANCE_USER;
+const BASIC_AUTH_PASS = process.env.FINANCE_PASS;
 
 function basicAuth(req, res, next) {
     const auth = req.headers['authorization'];
