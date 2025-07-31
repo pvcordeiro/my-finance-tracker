@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (saveBtn) {
         document.body.addEventListener('input', function (e) {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+				saveBtn.style.display = 'block';
                 saveBtn.style.background = '#59cf4e';
                 saveBtn.style.color = '#fff';
             }
@@ -68,11 +69,9 @@ async function saveData() {
         body: JSON.stringify(allData),
         credentials: "include"
     });
-    // Change Save button background to #1a237e
     const saveBtn = document.getElementById('saveBtn');
     if (saveBtn) {
-        saveBtn.style.background = '#1a237e';
-        saveBtn.style.color = '#fff';
+		saveBtn.style.display = 'none';
         saveBtn.disabled = true;
         setTimeout(() => {
             saveBtn.disabled = false;
