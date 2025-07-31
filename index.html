@@ -18,5 +18,8 @@
     <script src="summary.js"></script>
     <a href="edit.html" class="fab-btn fab-edit">Edit</a>
     <a href="details.html" class="fab-btn fab-details">Details</a>
+    <script>
+        fetch('/data').then(r => { if (r.status === 401) window.location.href = '/login.html'; });
+    </script>
 </body>
 </html>

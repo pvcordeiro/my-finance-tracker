@@ -3,45 +3,27 @@ const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const sqlite3 = require("sqlite3").verbose();
+const cookieParser = require('cookie-parser');
 
 
 const path = require("path");
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
+app.use(cookieParser());
 
-
-
-app.use(basicAuth);
 app.use(express.static(path.join(__dirname)));
 
-const BASIC_AUTH_USER = process.env.FINANCE_USER;
-const BASIC_AUTH_PASS = process.env.FINANCE_PASS;
-
-function basicAuth(req, res, next)
-{
-    const auth = req.headers['authorization'];
-    if (!auth || !auth.startsWith('Basic '))
-	{
-        res.set('WWW-Authenticate', 'Basic realm="FinanceTracker"');
-        return res.status(401).send('Authentication required.');
-    }
-    const base64 = auth.split(' ')[1];
-    const [user, pass] = Buffer.from(base64, 'base64').toString().split(':');
-    if (user === BASIC_AUTH_USER && pass === BASIC_AUTH_PASS)
-        return next();
-    res.set('WWW-Authenticate', 'Basic realm="FinanceTracker"');
-    return res.status(401).send('Invalid credentials.');
+const SESSION_SECRET = process.env.SESSION_SECRET;
+if (!SESSION_SECRET) {
+    throw new Error('SESSION_SECRET is not set. Please add it to your .env file.');
 }
-
-// --- End Basic Authentication Middleware ---
-
 
 const db = new sqlite3.Database("./financeTracker.db", (err) => {
     if (err)
         console.error("Error opening database", err);
     else
-	{
+    {
         db.run(
             `CREATE TABLE IF NOT EXISTS finance (
                 id INTEGER PRIMARY KEY,
@@ -55,12 +37,29 @@ const db = new sqlite3.Database("./financeTracker.db", (err) => {
     }
 });
 
-app.get("/data", basicAuth, (req, res) => {
+function requireLogin(req, res, next)
+{
+    if (req.cookies && req.cookies.session && req.cookies.session === SESSION_SECRET)
+        return next();
+    res.status(401).json({ error: 'Not authenticated' });
+}
+
+app.post('/login', (req, res) => {
+    const { username, password } = req.body;
+    if (username === process.env.FINANCE_USER && password === process.env.FINANCE_PASS)
+    {
+        res.cookie('session', SESSION_SECRET, { httpOnly: true, sameSite: 'lax' });
+        return res.status(200).json({ message: 'Login successful' });
+    }
+    res.status(401).json({ error: 'Invalid credentials' });
+});
+
+app.get("/data", requireLogin, (req, res) => {
     db.get("SELECT months FROM finance WHERE id = 1", (err, row) => {
         if (err)
             res.status(500).json({ error: "Database error" });
         else if (row && row.months)
-		{
+        {
             try {
                 res.json(JSON.parse(row.months));
             } catch (e) {
@@ -71,27 +70,27 @@ app.get("/data", basicAuth, (req, res) => {
     });
 });
 
-app.post("/data", basicAuth, (req, res) => {
+app.post("/data", requireLogin, (req, res) => {
     const months = JSON.stringify(req.body || {});
     db.run(
         `UPDATE finance SET months = ? WHERE id = 1`,
         [months],
         function (err)
-		{
+        {
             if (err)
-			{
+            {
                 console.error("DB UPDATE error:", err);
                 return res.status(500).json({ error: "Database error (update)" });
             }
             if (this.changes === 0)
-			{
+            {
                 db.run(
                     `INSERT INTO finance (id, months) VALUES (1, ?)`,
                     [months],
                     function (err2)
-					{
+                    {
                         if (err2)
-						{
+                        {
                             console.error("DB INSERT error:", err2);
                             return res.status(500).json({ error: "Database error (insert)" });
                         }
@@ -99,7 +98,7 @@ app.post("/data", basicAuth, (req, res) => {
                     }
                 );
             }
-			else
+            else
                 res.status(200).json({ message: "Data saved successfully! (update)" });
         }
     );

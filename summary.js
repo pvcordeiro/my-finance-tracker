@@ -1,8 +1,8 @@
 async function fetchData()
 {
-    const res = await fetch('/data', { credentials: 'include' });
+    const res = await fetch('/data');
     if (!res.ok)
-		throw new Error('Failed to load data');
+        throw new Error('Failed to load data');
     return await res.json();
 }
 
@@ -23,11 +23,11 @@ function renderSummary(data) {
     let prevBalance = 0;
     const nowMonth = now.getMonth();
     for (let m = 0; m < 12; m++)
-	{
+    {
         let totalIncome = 0, totalExpenses = 0;
         let bankAmount = 0;
         for (const key in data)
-		{
+        {
             let monthData = data[key];
             if (typeof monthData === 'number')
                 monthData = { bankAmount: monthData };
@@ -46,11 +46,11 @@ function renderSummary(data) {
         }
         let net = totalIncome - totalExpenses;
         if (m < nowMonth)
-		{
+        {
             prevBalance += net;
             runningBalance = prevBalance;
         }
-		else if (m === nowMonth)
+        else if (m === nowMonth)
             runningBalance = prevBalance + net + bankAmount;
         else
             runningBalance += net;

@@ -1,18 +1,18 @@
 document.addEventListener('DOMContentLoaded', () => {
     const saveBtn = document.getElementById('saveBtn');
     function showSaveBtn()
-	{
+    {
         if (saveBtn)
-		{
+        {
             saveBtn.style.display = 'block';
             saveBtn.style.background = '#59cf4e';
             saveBtn.style.color = '#fff';
         }
     }
     if (saveBtn)
-	{
+    {
         document.body.addEventListener('input', function (e)
-		{
+        {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')
                 showSaveBtn();
         }, true);
@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (addExpenseBtn)
             addExpenseBtn.addEventListener('click', showSaveBtn);
         document.body.addEventListener('click', function(e)
-		{
+        {
             if (e.target.classList && e.target.classList.contains('remove-btn'))
                 showSaveBtn();
         }, true);
@@ -31,9 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function loadData() {
-    const response = await fetch("/data", {
-        credentials: "include"
-    });
+    const response = await fetch("/data");
     const allData = await response.json();
     const now = new Date();
     const ym = `${now.getFullYear()}-${('0'+(now.getMonth()+1)).slice(-2)}`;
@@ -58,12 +56,11 @@ async function saveData() {
         headers: {
             "Content-Type": "application/json",
         },
-        body: JSON.stringify(allData),
-        credentials: "include"
+        body: JSON.stringify(allData)
     });
     const saveBtn = document.getElementById('saveBtn');
     if (saveBtn)
-	{
+    {
         saveBtn.style.display = 'none';
         saveBtn.disabled = true;
         setTimeout(() => {
@@ -116,32 +113,32 @@ function populateData(data)
 
     // only show input field if there's an input to be fielded
     if (!data.incomes || data.incomes.length === 0)
-	{
+    {
         incomeContainer.style.display = 'none';
         if (addIncomeBtn)
-			addIncomeBtn.style.display = '';
+            addIncomeBtn.style.display = '';
     }
-	else
-	{
+    else
+    {
         incomeContainer.style.display = '';
         if (addIncomeBtn)
-			addIncomeBtn.style.display = '';
+            addIncomeBtn.style.display = '';
         data.incomes.forEach((income) => {
             addEntry("incomeContainer", income, false);
         });
     }
 
     if (!data.expenses || data.expenses.length === 0)
-	{
+    {
         expenseContainer.style.display = 'none';
         if (addExpenseBtn)
-			addExpenseBtn.style.display = '';
+            addExpenseBtn.style.display = '';
     }
-	else
-	{
+    else
+    {
         expenseContainer.style.display = '';
         if (addExpenseBtn)
-			addExpenseBtn.style.display = '';
+            addExpenseBtn.style.display = '';
         data.expenses.forEach((expense) => {
             addEntry("expenseContainer", expense, false);
         });
@@ -173,9 +170,9 @@ function addEntry(
         <button class="remove-btn" onclick="removeEntry(this)">x</button>
     `;
     if (expanded)
-		header.classList.add("active");
+        header.classList.add("active");
 
-	//entry field toggler
+    //entry field toggler
     const content = document.createElement("div");
     content.className = "entry-content";
     content.innerHTML = `
@@ -197,12 +194,12 @@ function addEntry(
     header.addEventListener("click", () => {
         const isExpanded = entry.classList.contains('expanded');
         if (!isExpanded)
-		{
+        {
             entry.classList.add('expanded');
             header.classList.add('active');
         }
-		else
-		{
+        else
+        {
             entry.classList.remove('expanded');
             header.classList.remove('active');
         }
@@ -222,14 +219,14 @@ function addEntry(
     entry.appendChild(content);
     container.appendChild(entry);
     if (expanded)
-		calculateTotals();
+        calculateTotals();
 }
 
 function removeEntry(button)
 {
     let entry = button.closest('.entry');
     if (entry)
-		entry.remove();
+        entry.remove();
     // Hide container if no entries
     const incomeContainer = document.getElementById('incomeContainer');
     const expenseContainer = document.getElementById('expenseContainer');
@@ -255,7 +252,7 @@ function calculateTotals()
         const total = amounts.reduce((a, b) => a + b, 0);
         const headerTotal = entry.querySelector(".entry-header .annual-total");
         if (headerTotal)
-			headerTotal.textContent = `€${total}`;
+            headerTotal.textContent = `€${total}`;
         totalIncome += total;
         amounts.forEach((amount, index) => {
             monthlyIncome[index] += amount;
@@ -269,7 +266,7 @@ function calculateTotals()
         const total = amounts.reduce((a, b) => a + b, 0);
         const headerTotal = entry.querySelector(".entry-header .annual-total");
         if (headerTotal)
-			headerTotal.textContent = `€${total}`;
+            headerTotal.textContent = `€${total}`;
         totalExpenses += total;
         amounts.forEach((amount, index) => {
             monthlyExpenses[index] += amount;
@@ -278,17 +275,17 @@ function calculateTotals()
 
     const totalIncomeElem = document.getElementById("totalIncome");
     if (totalIncomeElem)
-		totalIncomeElem.textContent = totalIncome;
+        totalIncomeElem.textContent = totalIncome;
     const totalExpensesElem = document.getElementById("totalExpenses");
     if (totalExpensesElem)
-		totalExpensesElem.textContent = totalExpenses;
+        totalExpensesElem.textContent = totalExpenses;
     const bankAmountInput = document.getElementById('bankAmount');
     const bankAmount = bankAmountInput ? parseFloat(bankAmountInput.value) || 0 : 0;
     const netSavingsElem = document.getElementById("netSavings");
     if (netSavingsElem)
-		netSavingsElem.textContent = bankAmount + totalIncome - totalExpenses;
+        netSavingsElem.textContent = bankAmount + totalIncome - totalExpenses;
     if (bankAmountInput && !bankAmountInput._listenerAdded)
-	{
+    {
         bankAmountInput.addEventListener('input', calculateTotals);
         bankAmountInput._listenerAdded = true;
     }
@@ -318,7 +315,7 @@ function calculateTotals()
     monthlyBalance.forEach((balance, index) => {
         const elem = document.getElementById(monthIds[index]);
         if (elem)
-			elem.textContent = `€${balance}`;
+            elem.textContent = `€${balance}`;
     });
 
 }
@@ -331,16 +328,16 @@ function toggleDropdown(type) {
     if (dropdown.classList.contains('open'))
         arrow.textContent = '▲';
     else
-	{
+    {
         arrow.textContent = '▼';
         const entryContainer = document.getElementById(type + 'Container');
         if (entryContainer)
-		{
+        {
             entryContainer.querySelectorAll('.entry').forEach(e => {
                 e.classList.remove('expanded');
                 const header = e.querySelector('.entry-header');
                 if (header)
-					header.classList.remove('active');
+                    header.classList.remove('active');
             });
         }
     }

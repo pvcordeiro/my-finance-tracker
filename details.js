@@ -1,8 +1,8 @@
 async function fetchData()
 {
-    const res = await fetch('/data', { credentials: 'include' });
+    const res = await fetch('/data');
     if (!res.ok)
-		throw new Error('Failed to load data');
+        throw new Error('Failed to load data');
     return await res.json();
 }
 function monthLabels()
@@ -28,10 +28,10 @@ function renderDetails(data)
     const monthData = data[ym] || { incomes: [], expenses: [], bankAmount: 0 };
     // Add Bank Amount row in details page, check if its not 0 first
     if (monthData.bankAmount !== undefined && Number(monthData.bankAmount) !== 0)
-	{
+    {
         html += `<tr><td class="sticky-col" style="text-align:left;font-weight:500;">Bank Amount</td>`;
         for (let i = 0; i < 12; i++)
-		{
+        {
             if (i === now.getMonth())
                 html += `<td class="month-cell" style="color:#357abd;font-weight:bold;">€ ${Number(monthData.bankAmount).toFixed(2)}</td>`;
             else
