@@ -126,10 +126,10 @@ section {
     transition: max-height 0.4s cubic-bezier(0.4,0,0.2,1);
     background: #f7faff;
     border-radius: 0 0 12px 12px;
+	padding-top: 0.625rem;
 }
 .dropdown-content.open {
     max-height: 62.5rem;
-    padding-top: 0.625rem;
     transition: max-height 0.5s cubic-bezier(0.4,0,0.2,1);
 }
 
