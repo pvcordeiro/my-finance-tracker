@@ -1,26 +1,8 @@
-// Utility: Add or remove .negative class on all number inputs based on value
-function updateNegativeInputs() {
-    document.querySelectorAll('input[type="number"]').forEach(input => {
-        if (parseFloat(input.value) < 0) {
-            input.classList.add('negative');
-        } else {
-            input.classList.remove('negative');
-        }
-    });
-}
 
-// Attach input event listeners to all number inputs (including dynamically created ones)
-function attachNegativeInputListeners(container=document) {
-    container.querySelectorAll('input[type="number"]').forEach(input => {
-        input.addEventListener('input', updateNegativeInputs);
-    });
-}
 
 // Initial call on page load
 document.addEventListener('DOMContentLoaded', () => {
-    attachNegativeInputListeners();
-    updateNegativeInputs();
-    // Restore Save button color on any input change
+    // Display save button on input change detected
     const saveBtn = document.getElementById('saveBtn');
     if (saveBtn) {
         document.body.addEventListener('input', function (e) {
@@ -113,17 +95,34 @@ function collectData() {
 function populateData(data) {
     const incomeContainer = document.getElementById("incomeContainer");
     const expenseContainer = document.getElementById("expenseContainer");
+    const addIncomeBtn = document.getElementById("addIncomeBtn");
+    const addExpenseBtn = document.getElementById("addExpenseBtn");
 
     incomeContainer.innerHTML = "";
     expenseContainer.innerHTML = "";
 
-    data.incomes.forEach((income) => {
-        addEntry("incomeContainer", income, false);
-    });
+    // Hide containers and buttons if no entries
+    if (!data.incomes || data.incomes.length === 0) {
+        incomeContainer.style.display = 'none';
+        if (addIncomeBtn) addIncomeBtn.style.display = '';
+    } else {
+        incomeContainer.style.display = '';
+        if (addIncomeBtn) addIncomeBtn.style.display = '';
+        data.incomes.forEach((income) => {
+            addEntry("incomeContainer", income, false);
+        });
+    }
 
-    data.expenses.forEach((expense) => {
-        addEntry("expenseContainer", expense, false);
-    });
+    if (!data.expenses || data.expenses.length === 0) {
+        expenseContainer.style.display = 'none';
+        if (addExpenseBtn) addExpenseBtn.style.display = '';
+    } else {
+        expenseContainer.style.display = '';
+        if (addExpenseBtn) addExpenseBtn.style.display = '';
+        data.expenses.forEach((expense) => {
+            addEntry("expenseContainer", expense, false);
+        });
+    }
 
     calculateTotals();
 }
@@ -133,6 +132,7 @@ function addEntry(
     data = { description: "", amounts: new Array(12).fill("") }, expanded = false
 ) {
     const container = document.getElementById(containerId);
+    container.style.display = '';
     const entry = document.createElement("div");
     entry.className = "entry" + (expanded ? " expanded" : "");
 
@@ -140,12 +140,13 @@ function addEntry(
         "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
     ];
 
-    // Header (description/title + annual total)
+    // Header (description/title + annual total + delete button)
     const header = document.createElement("div");
     header.className = "entry-header";
     header.innerHTML = `
         <span class="entry-desc">${data.description || "(No description)"}</span>
         <span class="annual-total">€0</span>
+        <button class="remove-btn" onclick="removeEntry(this)">x</button>
     `;
     if (expanded) header.classList.add("active");
 
@@ -165,7 +166,6 @@ function addEntry(
                 </div>
             `).join("")}
         </div>
-        <button class="remove-btn" onclick="removeEntry(this)">x</button>
     `;
 
     // Toggle expand/collapse logic (allow multiple open)
@@ -186,12 +186,10 @@ function addEntry(
         calculateTotals();
     });
 
-    // Add listeners for totals and negative input
+    // Add listeners for totals
     content.querySelectorAll("input").forEach((input) => {
         input.addEventListener("input", calculateTotals);
     });
-    attachNegativeInputListeners(content);
-    updateNegativeInputs();
 
     entry.appendChild(header);
     entry.appendChild(content);
@@ -203,6 +201,15 @@ function removeEntry(button) {
     // If button is inside entry-content, go up two levels
     let entry = button.closest('.entry');
     if (entry) entry.remove();
+    // Hide container if no entries left
+    const incomeContainer = document.getElementById('incomeContainer');
+    const expenseContainer = document.getElementById('expenseContainer');
+    if (incomeContainer && incomeContainer.querySelectorAll('.entry').length === 0) {
+        incomeContainer.style.display = 'none';
+    }
+    if (expenseContainer && expenseContainer.querySelectorAll('.entry').length === 0) {
+        expenseContainer.style.display = 'none';
+    }
     calculateTotals();
 }
 
@@ -280,8 +287,7 @@ function calculateTotals() {
         const elem = document.getElementById(monthIds[index]);
         if (elem) elem.textContent = `€${balance}`;
     });
-    // Update negative class after all calculations
-    updateNegativeInputs();
+
 }
 
 
