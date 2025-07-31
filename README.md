@@ -2,15 +2,6 @@
 
 A simple, mobile-friendly personal finance tracker built with Node.js, Express, and SQLite. Track your income, expenses, and balances with a clean, responsive UI.
 
-## Features
-
-- Add, edit, and remove income/expense entries
-- Monthly and annual summary tables with running balances
-- Details view for all entries
-- Responsive design for mobile and desktop
-- SQLite database for persistent storage
-- **Session-based authentication with a custom login page**
-
 ## Setup
 
 1. Clone the repository
@@ -38,11 +29,6 @@ A simple, mobile-friendly personal finance tracker built with Node.js, Express, 
 - Database file is ignored by git
 - Session-based authentication with secure login page
 
-## License
-
-MIT
-
-A modern, mobile-friendly, and secure personal finance tracker for managing incomes, expenses, and bank balances. Designed for easy use on both desktop and mobile devices.
 
 ## Features
 
@@ -55,48 +41,6 @@ A modern, mobile-friendly, and secure personal finance tracker for managing inco
 - **Secure**: Credentials and database stored locally on your server
 - **.env Support**: Store sensitive config in `.env`
 - **Modern UI**: Clean, beautiful, and easy to use
-
-## Getting Started
-
-### Prerequisites
-- Node.js (v16+ recommended)
-- npm
-
-### Installation
-1. Clone the repository:
-   ```sh
-   git clone https://github.com/yourusername/another-personal-finance-tracker.git
-   cd another-personal-finance-tracker
-   ```
-2. Install dependencies:
-   ```sh
-   npm install
-   ```
-3. Create a `.env` file for your secrets (see `.env.example` if available).
-4. Start the server:
-   ```sh
-   node server.js
-   ```
-5. Open `http://localhost:3000` in your browser.
-
-## Project Structure
-
-- `server.js` — Express backend, serves API and static files
-- `financeTracker.db` — SQLite database
-- `index.html` — Summary page
-- `edit.html` — Main data entry page
-- `details.html` — Detailed breakdown page
-- `styles.css` — All site styles
-- `script.js` — Main frontend logic for edit page
-- `summary.js`, `details.js` — Logic for summary/details pages
-
-## Security
-- `.env` and `financeTracker.db` are in `.gitignore` and not tracked
-- Credentials and sensitive data should be stored in `.env`
-
-## Customization
-- Adjust styles in `styles.css` for your branding
-- Add new features or tweak UI as needed
 
 ---
 
