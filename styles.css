@@ -377,9 +377,10 @@ button {
 }
 
 .bank-row {
-	padding: 0.5rem 0 0 1.25rem;
+    padding: 0.5rem 0 0 1.25rem;
     display: flex;
     align-items: center;
+	justify-content: center;
     gap: 1rem;
 }
 .bank-label {
@@ -407,8 +408,13 @@ button {
     background: #1a237e;
     color: #fff;
 }
+
+.summary-table thead th {
+    color: #fff;
+    font-weight: 700;
+}
 .summary-tfoot {
-    background: #84aabf;
+    background: #c9f5b0;
     font-weight: bold;
     border-radius: 0 0 0.5rem 0.5rem;
 }
