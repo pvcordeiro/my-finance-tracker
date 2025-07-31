@@ -71,11 +71,9 @@ body {
   }
 
 section {
-    background: #f7faff;
     border-radius: 0.75rem;
     box-shadow: 0 0.125rem 0.5rem rgba(74, 144, 226, 0.04);
     padding: 1.5rem 1.25rem 1.25rem 1.25rem;
-    /* margin-bottom: 0; */
 }
 
 .hidden {
@@ -124,7 +122,6 @@ section {
     max-height: 0;
     overflow: hidden;
     transition: max-height 0.4s cubic-bezier(0.4,0,0.2,1);
-    background: #f7faff;
     border-radius: 0 0 12px 12px;
 	padding-top: 0.625rem;
 }
