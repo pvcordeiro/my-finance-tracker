@@ -377,7 +377,7 @@ button {
 }
 
 .bank-row {
-    padding: 0.5rem 0 0 1.25rem;
+    padding: 0 1.25rem;
     display: flex;
     align-items: center;
 	justify-content: center;
@@ -503,12 +503,6 @@ button {
     .months {
         grid-template-columns: repeat(4, 1fr);
         gap: 0.625rem;
-    }
-    .euro-input-wrapper input[type="number"] {
-        width: 100%;
-        min-width: 0;
-        max-width: 100%;
-        font-size: 0.9em;
     }
     .monthly-balance-section .months {
         grid-template-columns: repeat(4, 1fr);
