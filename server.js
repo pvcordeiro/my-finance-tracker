@@ -8,6 +8,10 @@ const cookieParser = require('cookie-parser');
 
 const path = require("path");
 const app = express();
+app.get('/edit.html', (req, res) => res.redirect(301, '/edit'));
+app.get('/details.html', (req, res) => res.redirect(301, '/details'));
+app.get('/login.html', (req, res) => res.redirect(301, '/login'));
+app.get('/index.html', (req, res) => res.redirect(301, '/index'));
 app.use(cors());
 app.use(bodyParser.json());
 app.use(cookieParser());
@@ -105,6 +109,11 @@ app.post("/data", requireLogin, (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
+app.get('/edit', (req, res) => res.sendFile(path.join(__dirname, 'edit.html')));
+app.get('/details', (req, res) => res.sendFile(path.join(__dirname, 'details.html')));
+app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
+app.get('/index', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server is running on port ${PORT}`);
 });
