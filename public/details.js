@@ -12,7 +12,7 @@ function getRollingMonths(startDate)
     let year = startDate.getFullYear();
     let month = startDate.getMonth();
     for (let i = 0; i < 12; i++)
-	{
+    {
         months.push({
             label: labels[month],
             year: year,
@@ -20,7 +20,7 @@ function getRollingMonths(startDate)
         });
         month++;
         if (month > 11)
-		{
+        {
             month = 0;
             year++;
         }
@@ -41,14 +41,12 @@ function renderDetails(data)
     html += '<div style="overflow-x:auto;max-width:100vw;padding-bottom:8px;">';
     html += '<table class="details-table">';
     html += '<thead><tr><th class="sticky-col">Description</th>';
-    html += `<th>${prevMonthDisplay.split(' ')[0]}</th>`;
     months.forEach(m => html += `<th>${m.label}</th>`);
     html += '</tr></thead><tbody>';
     // Add Bank Amount row in details page, check if its not 0 first
     if (data.bankAmount !== undefined && Number(data.bankAmount) !== 0)
     {
         html += `<tr><td class="sticky-col" style="text-align:left;font-weight:500;">Bank Amount</td>`;
-        html += `<td class="month-cell">-</td>`;
         for (let i = 0; i < 12; i++)
         {
             let showMonth = months[i];
@@ -61,9 +59,6 @@ function renderDetails(data)
     }
     (data.incomes || []).forEach(inc => {
         html += `<tr><td class="sticky-col" style="text-align:left;font-weight:500;">${inc.description || ''}</td>`;
-        let prevIdx = (now.getMonth() - 1 + 12) % 12;
-        let prevVal = inc.amounts && inc.amounts[prevIdx] !== undefined && inc.amounts[prevIdx] !== '' ? '€ ' + Number(inc.amounts[prevIdx]).toFixed(2) : '-';
-        html += `<td class="month-cell">${prevVal}</td>`;
         for (let i = 0; i < 12; i++)
         {
             let m = months[i];
@@ -80,14 +75,10 @@ function renderDetails(data)
     html += '<div style="overflow-x:auto;max-width:100vw;padding-bottom:8px;">';
     html += '<table class="details-table">';
     html += '<thead><tr><th class="sticky-col">Description</th>';
-    html += `<th>${prevMonthDisplay.split(' ')[0]}</th>`;
     months.forEach(m => html += `<th>${m.label}</th>`);
     html += '</tr></thead><tbody>';
     (data.expenses || []).forEach(exp => {
         html += `<tr><td class="sticky-col" style="text-align:left;font-weight:500;">${exp.description || ''}</td>`;
-        let prevIdx = (now.getMonth() - 1 + 12) % 12;
-        let prevVal = exp.amounts && exp.amounts[prevIdx] !== undefined && exp.amounts[prevIdx] !== '' ? '€ ' + Number(exp.amounts[prevIdx]).toFixed(2) : '-';
-        html += `<td class="month-cell">${prevVal}</td>`;
         for (let i = 0; i < 12; i++)
         {
             let m = months[i];
