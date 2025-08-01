@@ -26,24 +26,16 @@ function renderSummary(data) {
     {
         let totalIncome = 0, totalExpenses = 0;
         let bankAmount = 0;
-        for (const key in data)
-        {
-            let monthData = data[key];
-            if (typeof monthData === 'number')
-                monthData = { bankAmount: monthData };
-            else if (typeof monthData !== 'object' || monthData === null)
-                monthData = {};
-            if (monthData.incomes)
-                for (const inc of monthData.incomes)
-                    if (Array.isArray(inc.amounts) && inc.amounts[m] !== undefined && inc.amounts[m] !== "")
-                        totalIncome += Number(inc.amounts[m]) || 0;
-            if (monthData.expenses)
-                for (const exp of monthData.expenses)
-                    if (Array.isArray(exp.amounts) && exp.amounts[m] !== undefined && exp.amounts[m] !== "")
-                        totalExpenses += Number(exp.amounts[m]) || 0;
-            if (m === nowMonth && typeof monthData.bankAmount === 'number')
-                bankAmount = monthData.bankAmount;
-        }
+        if (Array.isArray(data.incomes))
+            for (const inc of data.incomes)
+                if (Array.isArray(inc.amounts) && inc.amounts[m] !== undefined && inc.amounts[m] !== "")
+                    totalIncome += Number(inc.amounts[m]) || 0;
+        if (Array.isArray(data.expenses))
+            for (const exp of data.expenses)
+                if (Array.isArray(exp.amounts) && exp.amounts[m] !== undefined && exp.amounts[m] !== "")
+                    totalExpenses += Number(exp.amounts[m]) || 0;
+        if (m === nowMonth && typeof data.bankAmount === 'number')
+            bankAmount = data.bankAmount;
         let net = totalIncome - totalExpenses;
         if (m < nowMonth)
         {

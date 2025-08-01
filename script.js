@@ -31,32 +31,22 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function loadData() {
-    const response = await fetch("/data");
-    const allData = await response.json();
-    const now = new Date();
-    const ym = `${now.getFullYear()}-${('0'+(now.getMonth()+1)).slice(-2)}`;
-    let data = allData[ym];
-    if (!data)
-        data = { incomes: [], expenses: [], bankAmount: 0 };
+    const data = await (await fetch("/data")).json();
     const bankInput = document.getElementById('bankAmount');
     bankInput.value = data.bankAmount || "";
     populateData(data);
-    window._allMonthsData = allData;
+    window._allMonthsData = data;
 }
 
 async function saveData() {
-    const now = new Date();
-    const ym = `${now.getFullYear()}-${('0'+(now.getMonth()+1)).slice(-2)}`;
     const data = collectData();
     data.bankAmount = parseFloat(document.getElementById('bankAmount').value) || 0;
-    let allData = window._allMonthsData || {};
-    allData[ym] = data;
     await fetch("/data", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
         },
-        body: JSON.stringify(allData)
+        body: JSON.stringify(data)
     });
     const saveBtn = document.getElementById('saveBtn');
     if (saveBtn)
