@@ -188,12 +188,16 @@ h2 {
     background: #f4f8fb;
     border: 1px solid #e3eaf3;
     border-radius: 0 0 0.5rem 0.5rem;
-    padding: 0.75rem 0.75rem 0.5rem 0.75rem;
+    padding: 0.75rem 0.75rem 0.5rem 0;
     margin-top: 0;
     position: relative;
 }
 .entry.expanded .entry-content {
     display: block;
+}
+
+.desc-input {
+	margin-left: 0.5rem;
 }
 
 .entry input[type="text"],
@@ -479,7 +483,7 @@ button {
   }
 }
 
-@media (max-width: 883px) {
+@media (max-width: 870px) {
     .container {
         padding: 0 2vw 4rem;
     }
@@ -505,13 +509,13 @@ button {
         gap: 0.625rem;
     }
 }
-@media (max-width: 550px) {
+@media (max-width: 535px) {
 	.months {
 		grid-template-columns: repeat(3, 1fr);
         gap: 0.625rem;
 	}
 }
-@media (max-width: 420px) {
+@media (max-width: 400px) {
     .container {
         padding: 0 2vw 4rem;
     }
