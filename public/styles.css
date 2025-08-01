@@ -463,26 +463,6 @@ button {
     background: #f5f7fa;
 }
 
-@media (max-width: 700px) {
-  .details-table {
-    font-size: 0.98em;
-    min-width: 700px;
-  }
-  .container {
-    padding: 0 2px;
-  }
-  .details-table th.sticky-col {
-    background: #1a237e !important;
-    color: #fff;
-    z-index: 4;
-
-  }
-  .details-table td.sticky-col {
-    background: #f5f7fa;
-    z-index: 3;
-  }
-}
-
 @media (max-width: 870px) {
     .container {
         padding: 0 2vw 4rem;
@@ -509,12 +489,34 @@ button {
         gap: 0.625rem;
     }
 }
+
+@media (max-width: 700px) {
+  .details-table {
+    font-size: 0.98em;
+    min-width: 700px;
+  }
+  .container {
+    padding: 0 2px;
+  }
+  .details-table th.sticky-col {
+    background: #1a237e !important;
+    color: #fff;
+    z-index: 4;
+
+  }
+  .details-table td.sticky-col {
+    background: #f5f7fa;
+    z-index: 3;
+  }
+}
+
 @media (max-width: 535px) {
 	.months {
 		grid-template-columns: repeat(3, 1fr);
         gap: 0.625rem;
 	}
 }
+
 @media (max-width: 400px) {
     .container {
         padding: 0 2vw 4rem;
@@ -533,4 +535,20 @@ button {
         grid-template-columns: repeat(2, 1fr);
         gap: 0.625rem;
     }
+}
+@media (max-width: 320px) {
+  .summary-table,
+  .summary-table th,
+  .summary-table td,
+  .summary-thead,
+  .summary-tfoot {
+    font-size: 0.8rem;
+  }
+  h1, h2 {
+    font-size: 1.5rem;
+  }
+  .header-bar
+  {
+	font-size: 1.75rem;
+  }
 }
