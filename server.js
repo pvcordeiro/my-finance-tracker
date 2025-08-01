@@ -16,7 +16,7 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(cookieParser());
 
-app.use(express.static(path.join(__dirname)));
+app.use(express.static(path.join(__dirname, 'public')));
 
 const SESSION_SECRET = process.env.SESSION_SECRET;
 if (!SESSION_SECRET) {
@@ -61,16 +61,16 @@ app.post('/login', (req, res) => {
 app.get("/data", requireLogin, (req, res) => {
     db.get("SELECT months FROM finance WHERE id = 1", (err, row) => {
         if (err)
-			return res.status(500).json({ error: "Database error" });
+            return res.status(500).json({ error: "Database error" });
         if (row && row.months)
-		{
+        {
             try {
                 res.json(JSON.parse(row.months));
             } catch (e) {
                 res.status(500).json({ error: "Corrupt data" });
             }
         }
-		else
+        else
             res.json({ incomes: [], expenses: [], bankAmount: 0 });
     });
 });
@@ -82,21 +82,21 @@ app.post("/data", requireLogin, (req, res) => {
         `UPDATE finance SET months = ? WHERE id = 1`,
         [dataStr],
         function (err)
-		{
+        {
             if (err)
-			{
+            {
                 console.error("DB UPDATE error:", err);
                 return res.status(500).json({ error: "Database error (update)" });
             }
             if (this.changes === 0)
-			{
+            {
                 db.run(
                     `INSERT INTO finance (id, months) VALUES (1, ?)`,
                     [dataStr],
                     function (err2)
-					{
+                    {
                         if (err2)
-						{
+                        {
                             console.error("DB INSERT error:", err2);
                             return res.status(500).json({ error: "Database error (insert)" });
                         }
@@ -104,7 +104,7 @@ app.post("/data", requireLogin, (req, res) => {
                     }
                 );
             }
-			else
+            else
                 res.status(200).json({ message: "Data saved successfully! (update)" });
         }
     );
