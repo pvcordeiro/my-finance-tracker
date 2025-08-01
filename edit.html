@@ -45,9 +45,9 @@
         </div>
 
         <script src="/script.js"></script>
-        <button id="saveBtn" onclick="saveData()" style="display:none;position:fixed;bottom:120px;right:10px;z-index:1000;background:#1a237e;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:bold;box-shadow:0 2px 8px #0002;border:none;cursor:pointer;">Save</button>
+        <button id="saveBtn" onclick="saveData()" style="display:none;position:fixed;bottom:10px;right:235px;z-index:1000;padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:bold;box-shadow:0 2px 8px #0002;border:3px solid #59cf4e;cursor:pointer;">Save</button>
         <a href="/index" style="position:fixed;bottom:10px;right:10px;z-index:1000;background:#1a237e;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:bold;box-shadow:0 2px 8px #0002;">Summary</a>
-        <a href="/details" style="position:fixed;bottom:65px;right:10px;z-index:1000;background:#1a237e;color:#fff;padding:8px 18px;border-radius:6px;text-decoration:none;font-weight:bold;box-shadow:0 2px 8px #0002;border:2px solid #1a237e;">Details</a>
+        <a href="/details" style="position:fixed;bottom:10px;right:130px;z-index:1000;background:#1a237e;color:#fff;padding:8px 18px;border-radius:6px;text-decoration:none;font-weight:bold;box-shadow:0 2px 8px #0002;border:2px solid #1a237e;">Details</a>
         <script>
             fetch('/data').then(r => { if (r.status === 401) window.location.href = '/login.html'; });
         </script>
