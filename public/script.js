@@ -67,13 +67,42 @@ function collectData()
     );
 
     const incomes = [];
+    const monthMap = { Jan:0, Feb:1, Mar:2, Apr:3, May:4, Jun:5, Jul:6, Aug:7, Sep:8, Oct:9, Nov:10, Dec:11 };
+    const now = new Date();
+    const rollingMonths = (function(startDate)
+	{
+        const labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        let months = [];
+        let year = startDate.getFullYear();
+        let month = startDate.getMonth();
+        for (let i = 0; i < 12; i++)
+		{
+            months.push({
+                label: labels[month],
+                year: year,
+                month: month
+            });
+            month++;
+            if (month > 11)
+			{
+                month = 0;
+                year++;
+            }
+        }
+        return months;
+    })(now);
+
     incomeEntries.forEach((entry) => {
         const incomeData = {
             description: entry.querySelector('input[type="text"]').value,
-            amounts: Array.from(
-                entry.querySelectorAll('.months input[type="number"]')
-            ).map((input) => parseFloat(input.value) || ""),
+            amounts: new Array(12).fill("")
         };
+        const inputs = entry.querySelectorAll('.months input[type="number"]');
+        inputs.forEach((input, i) => {
+            const monthLabel = rollingMonths[i].label;
+            const idx = monthMap[monthLabel];
+            incomeData.amounts[idx] = parseFloat(input.value) || "";
+        });
         incomes.push(incomeData);
     });
 
@@ -81,10 +110,14 @@ function collectData()
     expenseEntries.forEach((entry) => {
         const expenseData = {
             description: entry.querySelector('input[type="text"]').value,
-            amounts: Array.from(
-                entry.querySelectorAll('.months input[type="number"]')
-            ).map((input) => parseFloat(input.value) || ""),
+            amounts: new Array(12).fill("")
         };
+        const inputs = entry.querySelectorAll('.months input[type="number"]');
+        inputs.forEach((input, i) => {
+            const monthLabel = rollingMonths[i].label;
+            const idx = monthMap[monthLabel];
+            expenseData.amounts[idx] = parseFloat(input.value) || "";
+        });
         expenses.push(expenseData);
     });
 
@@ -147,9 +180,31 @@ function addEntry(
     const entry = document.createElement("div");
     entry.className = "entry" + (expanded ? " expanded" : "");
 
-    const monthLabels = [
-        "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-    ];
+    function getRollingMonths(startDate)
+	{
+        const labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        let months = [];
+        let year = startDate.getFullYear();
+        let month = startDate.getMonth();
+        for (let i = 0; i < 12; i++)
+		{
+            months.push({
+                label: labels[month],
+                year: year,
+                month: month
+            });
+            month++;
+            if (month > 11)
+			{
+                month = 0;
+                year++;
+            }
+        }
+        return months;
+    }
+    const monthMap = { Jan:0, Feb:1, Mar:2, Apr:3, May:4, Jun:5, Jul:6, Aug:7, Sep:8, Oct:9, Nov:10, Dec:11 };
+    const now = new Date();
+    const rollingMonths = getRollingMonths(now);
 
     // input field header with total and remove button
     const header = document.createElement("div");
@@ -168,12 +223,12 @@ function addEntry(
     content.innerHTML = `
         <input type="text" value="${data.description}" placeholder="Description" class="desc-input">
         <div class="months">
-            ${monthLabels.map((label, index) => `
+            ${rollingMonths.map((m, index) => `
                 <div class="month-container" style="display:flex;align-items:center;gap:0.1em;">
-                    <label style="min-width:2.5em;">${label}</label>
+                    <label style="min-width:2.5em;">${m.label}</label>
                     <div class="euro-input-wrapper" style="flex:1;">
                         <span class="euro-prefix">€</span>
-                        <input type="number" placeholder="0" value="${data.amounts[index] !== undefined && data.amounts[index] !== "" ? data.amounts[index] : ""}">
+                        <input type="number" placeholder="0" value="${data.amounts[monthMap[m.label]] !== undefined && data.amounts[monthMap[m.label]] !== "" ? data.amounts[monthMap[m.label]] : ""}">
                     </div>
                 </div>
             `).join("")}
