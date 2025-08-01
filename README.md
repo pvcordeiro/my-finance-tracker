@@ -2,6 +2,12 @@
 
 A simple, mobile-friendly personal finance tracker built with Node.js, Express, and SQLite. Track your income, expenses, and balances with a clean, responsive UI.
 
+
+
+https://github.com/user-attachments/assets/16664ba5-b257-47e8-b00e-9dc0a72217c7
+
+
+
 ## Setup
 
 1. Clone the repository
@@ -32,7 +38,7 @@ A simple, mobile-friendly personal finance tracker built with Node.js, Express, 
 
 ## Features
 
-- **Add/Edit/Delete Incomes and Expenses** for each month
+- **Add/Edit/Delete Incomes and Expenses** from the current month onwards
 - **Bank Amount**: Track your real bank balance alongside monthly entries
 - **Summary and Details Views**: See annual summaries and detailed breakdowns
 - **Responsive Design**: Optimized for phones, tablets, and desktops
@@ -40,14 +46,15 @@ A simple, mobile-friendly personal finance tracker built with Node.js, Express, 
 - **Save Button UX**: Save button appears only when changes are made
 - **Secure**: Credentials and database stored locally on your server
 - **.env Support**: Store sensitive config in `.env`
-- **Modern UI**: Clean, beautiful, and easy to use
+- **Modern UI**: Clean, simple, and easy to use
+- **Simple code**: Made with vanilla Javascript for the frontend and Express for the backend
 
 ---
 
 This is an ongoing project, since I use it myself by hosting it on a raspberry pi.  
 So it'll be probably updated regularly. 
 
-TODO: organize folder structure, more features, improve design, maybe move it to a framework.
+TODO: add more features, improve design, port it to a js framework.
 
 ## License
 MIT
