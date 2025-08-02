@@ -284,7 +284,13 @@ function addEntry(
         header.classList.add('active');
         calculateTotals();
         setTimeout(() => {
-            entry.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            const rect = entry.getBoundingClientRect();
+            const isVisible = (
+                rect.top >= 0 &&
+                rect.bottom <= (window.innerHeight || document.documentElement.clientHeight)
+            );
+            if (!isVisible)
+                entry.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }, 100);
     }
 }
