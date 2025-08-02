@@ -270,7 +270,7 @@ function addEntry(
     entry.appendChild(content);
     container.appendChild(entry);
     if (expanded)
-	{
+    {
         entry.classList.add('expanded');
         header.classList.add('active');
         calculateTotals();
@@ -384,9 +384,26 @@ function toggleDropdown(type) {
     const arrow = document.getElementById(type + 'Arrow');
     dropdown.classList.toggle('open');
     if (dropdown.classList.contains('open'))
+	{
         arrow.textContent = '▲';
-    else
-    {
+        setTimeout(() => {
+            const dropdownBtn = document.getElementById(type + 'DropdownBtn');
+            if (dropdownBtn)
+			{
+                const rect = dropdownBtn.getBoundingClientRect();
+                const absoluteY = window.scrollY + (rect.top - 10);
+                window.scrollTo({ top: absoluteY, behavior: 'smooth' });
+            }
+			else
+			{
+                const entryContainer = document.getElementById(type + 'Container');
+                if (entryContainer)
+                    entryContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }, 200);
+    }
+	else
+	{
         arrow.textContent = '▼';
         const entryContainer = document.getElementById(type + 'Container');
         if (entryContainer)
@@ -401,7 +418,8 @@ function toggleDropdown(type) {
     }
 }
 
-window.onload = function () {
+window.onload = function ()
+{
     loadData();
     document.getElementById("incomeDropdown").classList.remove("open");
     document.getElementById("incomeArrow").textContent = '▼';
