@@ -496,7 +496,7 @@ button {
     min-width: 700px;
   }
   .container {
-    padding: 0 2px;
+    padding: 0 2vw 4rem;
   }
   .details-table th.sticky-col {
     background: #1a237e !important;
