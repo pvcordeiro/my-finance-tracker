@@ -248,6 +248,15 @@ function addEntry(
         {
             entry.classList.add('expanded');
             header.classList.add('active');
+            setTimeout(() => {
+                const rect = entry.getBoundingClientRect();
+                const isVisible = (
+                    rect.top >= 0 &&
+                    rect.bottom <= (window.innerHeight || document.documentElement.clientHeight)
+                );
+                if (!isVisible)
+                    entry.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
         }
         else
         {
