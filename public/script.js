@@ -18,10 +18,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }, true);
         const addIncomeBtn = document.getElementById('addIncomeBtn');
         if (addIncomeBtn)
-            addIncomeBtn.addEventListener('click', showSaveBtn);
+            addIncomeBtn.addEventListener('click', function() {
+                addEntry('incomeContainer', undefined, true);
+                showSaveBtn();
+            });
         const addExpenseBtn = document.getElementById('addExpenseBtn');
         if (addExpenseBtn)
-            addExpenseBtn.addEventListener('click', showSaveBtn);
+            addExpenseBtn.addEventListener('click', function() {
+                addEntry('expenseContainer', undefined, true);
+                showSaveBtn();
+            });
         document.body.addEventListener('click', function(e)
         {
             if (e.target.classList && e.target.classList.contains('remove-btn'))
@@ -70,13 +76,13 @@ function collectData()
     const monthMap = { Jan:0, Feb:1, Mar:2, Apr:3, May:4, Jun:5, Jul:6, Aug:7, Sep:8, Oct:9, Nov:10, Dec:11 };
     const now = new Date();
     const rollingMonths = (function(startDate)
-	{
+    {
         const labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
         let months = [];
         let year = startDate.getFullYear();
         let month = startDate.getMonth();
         for (let i = 0; i < 12; i++)
-		{
+        {
             months.push({
                 label: labels[month],
                 year: year,
@@ -84,7 +90,7 @@ function collectData()
             });
             month++;
             if (month > 11)
-			{
+            {
                 month = 0;
                 year++;
             }
@@ -181,13 +187,13 @@ function addEntry(
     entry.className = "entry" + (expanded ? " expanded" : "");
 
     function getRollingMonths(startDate)
-	{
+    {
         const labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
         let months = [];
         let year = startDate.getFullYear();
         let month = startDate.getMonth();
         for (let i = 0; i < 12; i++)
-		{
+        {
             months.push({
                 label: labels[month],
                 year: year,
@@ -195,7 +201,7 @@ function addEntry(
             });
             month++;
             if (month > 11)
-			{
+            {
                 month = 0;
                 year++;
             }
@@ -264,7 +270,14 @@ function addEntry(
     entry.appendChild(content);
     container.appendChild(entry);
     if (expanded)
+	{
+        entry.classList.add('expanded');
+        header.classList.add('active');
         calculateTotals();
+        setTimeout(() => {
+            entry.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+    }
 }
 
 function removeEntry(button)
