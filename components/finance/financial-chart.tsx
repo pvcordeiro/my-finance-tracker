@@ -1,0 +1,118 @@
+"use client"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts"
+import type { FinanceData } from "@/hooks/use-finance-data"
+
+interface FinancialChartProps {
+  data: FinanceData
+}
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+function getRollingMonths(): Array<{ label: string; month: number }> {
+  const now = new Date()
+  const currentMonth = now.getMonth()
+  const months = []
+
+  for (let i = 0; i < 12; i++) {
+    const monthIndex = (currentMonth + i) % 12
+    months.push({
+      label: MONTHS[monthIndex],
+      month: monthIndex,
+    })
+  }
+
+  return months
+}
+
+export function FinancialChart({ data }: FinancialChartProps) {
+  const months = getRollingMonths()
+
+  const chartData = months.map((month) => {
+    let income = 0
+    let expenses = 0
+
+    // Calculate totals for this month
+    data.incomes.forEach((incomeEntry) => {
+      income += incomeEntry.amounts[month.month] || 0
+    })
+
+    data.expenses.forEach((expenseEntry) => {
+      expenses += expenseEntry.amounts[month.month] || 0
+    })
+
+    return {
+      month: month.label,
+      income,
+      expenses,
+      net: income - expenses,
+    }
+  })
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Income vs Expenses Bar Chart */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Income vs Expenses</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+              <XAxis dataKey="month" className="text-xs" />
+              <YAxis className="text-xs" />
+              <Tooltip
+                formatter={(value: number, name: string) => [
+                  `€${value.toFixed(2)}`,
+                  name === "income" ? "Income" : "Expenses",
+                ]}
+                labelFormatter={(label) => `Month: ${label}`}
+                contentStyle={{
+                  backgroundColor: "hsl(var(--card))",
+                  border: "1px solid hsl(var(--border))",
+                  borderRadius: "8px",
+                }}
+              />
+              <Bar dataKey="income" fill="hsl(var(--chart-1))" name="income" radius={[2, 2, 0, 0]} />
+              <Bar dataKey="expenses" fill="hsl(var(--chart-2))" name="expenses" radius={[2, 2, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+
+      {/* Net Balance Line Chart */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Monthly Net Balance</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+              <XAxis dataKey="month" className="text-xs" />
+              <YAxis className="text-xs" />
+              <Tooltip
+                formatter={(value: number) => [`€${value.toFixed(2)}`, "Net Balance"]}
+                labelFormatter={(label) => `Month: ${label}`}
+                contentStyle={{
+                  backgroundColor: "hsl(var(--card))",
+                  border: "1px solid hsl(var(--border))",
+                  borderRadius: "8px",
+                }}
+              />
+              <Line
+                type="monotone"
+                dataKey="net"
+                stroke="hsl(var(--primary))"
+                strokeWidth={3}
+                dot={{ fill: "hsl(var(--primary))", strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6, stroke: "hsl(var(--primary))", strokeWidth: 2 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
