@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { DM_Sans } from "next/font/google"
 import "./globals.css"
 import { AuthProvider } from "@/hooks/use-auth"
+import { ErrorBoundary } from "@/components/error-boundary"
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -32,7 +33,9 @@ html {
         `}</style>
       </head>
       <body className={`${dmSans.variable} font-sans antialiased`}>
-        <AuthProvider>{children}</AuthProvider>
+        <ErrorBoundary>
+          <AuthProvider>{children}</AuthProvider>
+        </ErrorBoundary>
       </body>
     </html>
   )

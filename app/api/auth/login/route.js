@@ -1,14 +1,32 @@
 import { NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
 import { getDatabase } from "../../../../lib/database.js"
+import { loginSchema } from "../../../../lib/validations.ts"
+import { rateLimit, getClientIp } from "../../../../lib/rate-limit.ts"
 
 export async function POST(request) {
   try {
-    const { username, password } = await request.json()
-
-    if (!username || !password) {
-      return NextResponse.json({ error: "Username and password required" }, { status: 400 })
+    // Rate limiting
+    const clientIp = getClientIp(request)
+    if (!rateLimit(clientIp, { maxRequests: 5, windowMs: 15 * 60 * 1000 })) {
+      return NextResponse.json(
+        { error: "Too many login attempts. Please try again later." },
+        { status: 429 }
+      )
     }
+
+    const body = await request.json()
+    
+    // Validate input
+    const validation = loginSchema.safeParse(body)
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: "Invalid input", details: validation.error.errors },
+        { status: 400 }
+      )
+    }
+
+    const { username, password } = validation.data
 
     const db = getDatabase()
     const user = db.prepare("SELECT * FROM users WHERE username = ?").get(username)
@@ -17,8 +35,7 @@ export async function POST(request) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
     }
 
-    // For demo purposes, allow simple password comparison
-    const isValid = password === "demo" || (await bcrypt.compare(password, user.password_hash))
+    const isValid = await bcrypt.compare(password, user.password_hash)
 
     if (!isValid) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })

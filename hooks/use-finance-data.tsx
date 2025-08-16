@@ -74,7 +74,7 @@ export function useFinanceData() {
       const userId = user?.id || 1
 
       // Save bank amount
-      await fetch("/api/bank-amount", {
+      const bankResponse = await fetch("/api/bank-amount", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -85,21 +85,29 @@ export function useFinanceData() {
         }),
       })
 
-      // Transform and save entries
+      if (!bankResponse.ok) {
+        console.error("Bank amount save failed:", await bankResponse.text())
+      }
+
+      // Transform and save entries (only save entries with descriptions)
       const allEntries = [
-        ...data.incomes.map((entry) => ({
-          name: entry.description,
-          type: "income",
-          amounts: entry.amounts,
-        })),
-        ...data.expenses.map((entry) => ({
-          name: entry.description,
-          type: "expense",
-          amounts: entry.amounts,
-        })),
+        ...data.incomes
+          .filter((entry) => entry.description.trim() !== "")
+          .map((entry) => ({
+            name: entry.description,
+            type: "income",
+            amounts: JSON.stringify(entry.amounts),
+          })),
+        ...data.expenses
+          .filter((entry) => entry.description.trim() !== "")
+          .map((entry) => ({
+            name: entry.description,
+            type: "expense",
+            amounts: JSON.stringify(entry.amounts),
+          })),
       ]
 
-      await fetch("/api/entries", {
+      const entriesResponse = await fetch("/api/entries", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -110,9 +118,16 @@ export function useFinanceData() {
         }),
       })
 
+      if (!entriesResponse.ok) {
+        const errorText = await entriesResponse.text()
+        console.error("Entries save failed:", errorText)
+        throw new Error(`Failed to save entries: ${errorText}`)
+      }
+
       setHasChanges(false)
     } catch (error) {
       console.error("Error saving data to server:", error)
+      throw error // Re-throw so UI can handle it
     }
   }
 

@@ -5,7 +5,8 @@ const nextConfig = {
   
   // Optimize for production
   experimental: {
-    optimizeCss: true,
+    // Disabled due to critters dependency issue
+    // optimizeCss: true,
   },
   
   // Configure for network access
@@ -15,12 +16,12 @@ const nextConfig = {
   
   // ESLint configuration
   eslint: {
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: false,
   },
   
   // TypeScript configuration
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
   
   // Images configuration

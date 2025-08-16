@@ -9,6 +9,7 @@ import { BankAmount } from "@/components/finance/bank-amount"
 import { EntryForm } from "@/components/finance/entry-form"
 import { Button } from "@/components/ui/button"
 import { Save, BarChart3, FileText } from "lucide-react"
+import { FullPageLoader } from "@/components/ui/loading"
 
 function HomePage() {
   const { user, isLoading } = useAuth()
@@ -24,14 +25,7 @@ function HomePage() {
   }, [user, isLoading, router])
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen finance-gradient flex items-center justify-center p-4">
-        <div className="text-center">
-          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    )
+    return <FullPageLoader message="Loading your financial data..." />
   }
 
   if (!user) {

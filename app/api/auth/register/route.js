@@ -1,18 +1,31 @@
 import { NextResponse } from "next/server"
-import bcrypt from "bcryptjs"
-import { getDatabase } from "../../../../lib/database.js"
+import { getDatabase, hashPassword } from "../../../../lib/database.js"
+import { registerSchema } from "../../../../lib/validations.ts"
+import { rateLimit, getClientIp } from "../../../../lib/rate-limit.ts"
 
 export async function POST(request) {
   try {
-    const { username, password } = await request.json()
-
-    if (!username || !password) {
-      return NextResponse.json({ error: "Username and password required" }, { status: 400 })
+    // Rate limiting
+    const clientIp = getClientIp(request)
+    if (!rateLimit(`register_${clientIp}`, { maxRequests: 3, windowMs: 60 * 60 * 1000 })) {
+      return NextResponse.json(
+        { error: "Too many registration attempts. Please try again later." },
+        { status: 429 }
+      )
     }
 
-    if (password.length < 4) {
-      return NextResponse.json({ error: "Password must be at least 4 characters" }, { status: 400 })
+    const body = await request.json()
+    
+    // Validate input
+    const validation = registerSchema.safeParse(body)
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: "Invalid input", details: validation.error.errors },
+        { status: 400 }
+      )
     }
+
+    const { username, password } = validation.data
 
     const db = getDatabase()
 
@@ -23,8 +36,7 @@ export async function POST(request) {
     }
 
     // Hash password
-    const saltRounds = 10
-    const hashedPassword = await bcrypt.hash(password, saltRounds)
+    const hashedPassword = hashPassword(password)
 
     // Create user
     const stmt = db.prepare("INSERT INTO users (username, password_hash) VALUES (?, ?)")
