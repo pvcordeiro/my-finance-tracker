@@ -1,42 +1,51 @@
-"use client"
+"use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react"
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
 
 interface AdminUser {
-  isAdmin: boolean
+  isAdmin: boolean;
 }
 
 interface AdminContextType {
-  adminUser: AdminUser | null
-  loginAdmin: (username: string, password: string) => Promise<boolean>
-  logoutAdmin: () => void
-  isLoading: boolean
+  adminUser: AdminUser | null;
+  loginAdmin: (username: string, password: string) => Promise<boolean>;
+  logoutAdmin: () => void;
+  isLoading: boolean;
 }
 
-const AdminContext = createContext<AdminContextType | undefined>(undefined)
+const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
 export function useAdmin() {
-  const context = useContext(AdminContext)
+  const context = useContext(AdminContext);
   if (context === undefined) {
-    throw new Error("useAdmin must be used within an AdminProvider")
+    throw new Error("useAdmin must be used within an AdminProvider");
   }
-  return context
+  return context;
 }
 
 export function AdminProvider({ children }: { children: ReactNode }) {
-  const [adminUser, setAdminUser] = useState<AdminUser | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // Check for existing admin session
-    const savedAdmin = localStorage.getItem("finance-admin")
+    const savedAdmin = localStorage.getItem("finance-admin");
     if (savedAdmin) {
-      setAdminUser(JSON.parse(savedAdmin))
+      setAdminUser(JSON.parse(savedAdmin));
     }
-    setIsLoading(false)
-  }, [])
+    setIsLoading(false);
+  }, []);
 
-  const loginAdmin = async (username: string, password: string): Promise<boolean> => {
+  const loginAdmin = async (
+    username: string,
+    password: string
+  ): Promise<boolean> => {
     try {
       const response = await fetch("/api/admin/auth", {
         method: "POST",
@@ -44,31 +53,36 @@ export function AdminProvider({ children }: { children: ReactNode }) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ username, password }),
-      })
+      });
 
       if (response.ok) {
-        const adminData = { isAdmin: true }
-        setAdminUser(adminData)
-        localStorage.setItem("finance-admin", JSON.stringify(adminData))
-        localStorage.setItem("admin-auth", Buffer.from(`${username}:${password}`).toString('base64'))
-        return true
+        const adminData = { isAdmin: true };
+        setAdminUser(adminData);
+        localStorage.setItem("finance-admin", JSON.stringify(adminData));
+        localStorage.setItem(
+          "admin-auth",
+          Buffer.from(`${username}:${password}`).toString("base64")
+        );
+        return true;
       }
-      return false
+      return false;
     } catch (error) {
-      console.error("Admin login error:", error)
-      return false
+      console.error("Admin login error:", error);
+      return false;
     }
-  }
+  };
 
   const logoutAdmin = () => {
-    setAdminUser(null)
-    localStorage.removeItem("finance-admin")
-    localStorage.removeItem("admin-auth")
-  }
+    setAdminUser(null);
+    localStorage.removeItem("finance-admin");
+    localStorage.removeItem("admin-auth");
+  };
 
   return (
-    <AdminContext.Provider value={{ adminUser, loginAdmin, logoutAdmin, isLoading }}>
+    <AdminContext.Provider
+      value={{ adminUser, loginAdmin, logoutAdmin, isLoading }}
+    >
       {children}
     </AdminContext.Provider>
-  )
+  );
 }

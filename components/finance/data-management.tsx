@@ -7,6 +7,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Download, Trash2, AlertTriangle, CheckCircle } from "lucide-react";
 import type { FinanceData } from "@/hooks/use-finance-data";
 
@@ -25,6 +35,7 @@ export function DataManagement({
         "idle" | "success" | "error"
     >("idle");
     const [importError, setImportError] = useState("");
+    const [clearDialogOpen, setClearDialogOpen] = useState(false);
 
     const exportData = () => {
         const dataStr = JSON.stringify(data, null, 2);
@@ -105,13 +116,12 @@ export function DataManagement({
     };
 
     const handleClearData = () => {
-        if (
-            window.confirm(
-                "Are you sure you want to clear all data? This action cannot be undone."
-            )
-        ) {
-            onClearData();
-        }
+        setClearDialogOpen(true);
+    };
+
+    const confirmClearData = () => {
+        onClearData();
+        setClearDialogOpen(false);
     };
 
     const getDataStats = () => {
@@ -249,6 +259,27 @@ export function DataManagement({
                     </div>
                 </CardContent>
             </Card>
+
+            <AlertDialog open={clearDialogOpen} onOpenChange={setClearDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Clear All Data</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Are you sure you want to clear all financial data? This action cannot be undone.
+                            All your income and expense entries will be permanently deleted.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction 
+                            onClick={confirmClearData}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                            Clear All Data
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

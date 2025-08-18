@@ -8,6 +8,16 @@ import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { 
   Shield, 
   Users, 
@@ -21,118 +31,128 @@ import {
 import { useAdmin } from "@/hooks/use-admin"
 
 interface User {
-  id: number
-  username: string
-  created_at: string
-  entry_count: number
-  last_activity: string | null
+  id: number;
+  username: string;
+  created_at: string;
+  entry_count: number;
+  last_activity: string | null;
 }
 
 interface AdminSettings {
-  allow_registration: boolean
+  allow_registration: boolean;
 }
 
 export function AdminDashboard() {
-  const { logoutAdmin } = useAdmin()
-  const [users, setUsers] = useState<User[]>([])
-  const [settings, setSettings] = useState<AdminSettings>({ allow_registration: true })
-  const [isLoading, setIsLoading] = useState(true)
-  const [message, setMessage] = useState("")
-  const [error, setError] = useState("")
+  const { logoutAdmin } = useAdmin();
+  const [users, setUsers] = useState<User[]>([]);
+  const [settings, setSettings] = useState<AdminSettings>({
+    allow_registration: true,
+  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<number | null>(null);
 
   const getAuthHeader = () => {
-    const auth = localStorage.getItem("admin-auth")
-    return auth ? { "x-admin-auth": auth } : {}
-  }
+    const auth = localStorage.getItem("admin-auth");
+    return auth ? { "x-admin-auth": auth } : {};
+  };
 
   const loadUsers = async () => {
     try {
       const response = await fetch("/api/admin/users", {
-        headers: getAuthHeader()
-      })
+        headers: getAuthHeader(),
+      });
       if (response.ok) {
-        const data = await response.json()
-        setUsers(data.users)
+        const data = await response.json();
+        setUsers(data.users);
       } else {
-        setError("Failed to load users")
+        setError("Failed to load users");
       }
     } catch (error) {
-      setError("Error loading users")
+      setError("Error loading users");
     }
-  }
+  };
 
   const loadSettings = async () => {
     try {
       const response = await fetch("/api/admin/settings", {
-        headers: getAuthHeader()
-      })
+        headers: getAuthHeader(),
+      });
       if (response.ok) {
-        const data = await response.json()
-        setSettings(data.settings)
+        const data = await response.json();
+        setSettings(data.settings);
       } else {
-        setError("Failed to load settings")
+        setError("Failed to load settings");
       }
     } catch (error) {
-      setError("Error loading settings")
+      setError("Error loading settings");
     }
-  }
+  };
 
   useEffect(() => {
     const loadData = async () => {
-      await Promise.all([loadUsers(), loadSettings()])
-      setIsLoading(false)
-    }
-    loadData()
-  }, [])
+      await Promise.all([loadUsers(), loadSettings()]);
+      setIsLoading(false);
+    };
+    loadData();
+  }, []);
 
   const deleteUser = async (userId: number) => {
-    if (!confirm("Are you sure you want to delete this user? This action cannot be undone.")) {
-      return
-    }
+    setUserToDelete(userId);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteUser = async () => {
+    if (!userToDelete) return;
 
     try {
-      const response = await fetch(`/api/admin/users?userId=${userId}`, {
+      const response = await fetch(`/api/admin/users?userId=${userToDelete}`, {
         method: "DELETE",
-        headers: getAuthHeader()
-      })
+        headers: getAuthHeader(),
+      });
 
       if (response.ok) {
-        setMessage("User deleted successfully")
-        loadUsers()
+        setMessage("User deleted successfully");
+        loadUsers();
       } else {
-        setError("Failed to delete user")
+        setError("Failed to delete user");
       }
     } catch (error) {
-      setError("Error deleting user")
+      setError("Error deleting user");
+    } finally {
+      setDeleteDialogOpen(false);
+      setUserToDelete(null);
     }
-  }
+  };
 
   const updateSettings = async (newSettings: Partial<AdminSettings>) => {
     try {
-      const updatedSettings = { ...settings, ...newSettings }
+      const updatedSettings = { ...settings, ...newSettings };
       const response = await fetch("/api/admin/settings", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...getAuthHeader()
+          ...getAuthHeader(),
         },
-        body: JSON.stringify(updatedSettings)
-      })
+        body: JSON.stringify(updatedSettings),
+      });
 
       if (response.ok) {
-        setSettings(updatedSettings)
-        setMessage("Settings updated successfully")
+        setSettings(updatedSettings);
+        setMessage("Settings updated successfully");
       } else {
-        setError("Failed to update settings")
+        setError("Failed to update settings");
       }
     } catch (error) {
-      setError("Error updating settings")
+      setError("Error updating settings");
     }
-  }
+  };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString()
-  }
+    return new Date(dateString).toLocaleDateString();
+  };
 
   if (isLoading) {
     return (
@@ -142,7 +162,7 @@ export function AdminDashboard() {
           <p className="text-muted-foreground">Loading admin dashboard...</p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -155,8 +175,12 @@ export function AdminDashboard() {
                 <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-destructive-foreground" />
               </div>
               <div>
-                <h1 className="text-lg sm:text-xl font-bold text-destructive">Admin Panel</h1>
-                <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">Finance Tracker Administration</p>
+                <h1 className="text-lg sm:text-xl font-bold text-destructive">
+                  Admin Panel
+                </h1>
+                <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
+                  Finance Tracker Administration
+                </p>
               </div>
             </div>
             <Button
@@ -224,7 +248,7 @@ export function AdminDashboard() {
                           <div>
                             <p className="text-sm font-medium">Active Users</p>
                             <p className="text-2xl font-bold">
-                              {users.filter(u => u.entry_count > 0).length}
+                              {users.filter((u) => u.entry_count > 0).length}
                             </p>
                           </div>
                         </div>
@@ -236,8 +260,16 @@ export function AdminDashboard() {
                           <UserPlus className="w-4 h-4 text-blue-600" />
                           <div>
                             <p className="text-sm font-medium">Registration</p>
-                            <Badge variant={settings.allow_registration ? "default" : "destructive"}>
-                              {settings.allow_registration ? "Enabled" : "Disabled"}
+                            <Badge
+                              variant={
+                                settings.allow_registration
+                                  ? "default"
+                                  : "destructive"
+                              }
+                            >
+                              {settings.allow_registration
+                                ? "Enabled"
+                                : "Disabled"}
                             </Badge>
                           </div>
                         </div>
@@ -250,17 +282,29 @@ export function AdminDashboard() {
                       <table className="w-full">
                         <thead className="border-b">
                           <tr>
-                            <th className="text-left p-4 font-medium">Username</th>
-                            <th className="text-left p-4 font-medium">Created</th>
-                            <th className="text-left p-4 font-medium">Entries</th>
-                            <th className="text-left p-4 font-medium">Last Activity</th>
-                            <th className="text-right p-4 font-medium">Actions</th>
+                            <th className="text-left p-4 font-medium">
+                              Username
+                            </th>
+                            <th className="text-left p-4 font-medium">
+                              Created
+                            </th>
+                            <th className="text-left p-4 font-medium">
+                              Entries
+                            </th>
+                            <th className="text-left p-4 font-medium">
+                              Last Activity
+                            </th>
+                            <th className="text-right p-4 font-medium">
+                              Actions
+                            </th>
                           </tr>
                         </thead>
                         <tbody>
                           {users.map((user) => (
                             <tr key={user.id} className="border-b">
-                              <td className="p-4 font-medium">{user.username}</td>
+                              <td className="p-4 font-medium">
+                                {user.username}
+                              </td>
                               <td className="p-4 text-muted-foreground">
                                 <div className="flex items-center space-x-1">
                                   <Calendar className="w-3 h-3" />
@@ -268,10 +312,14 @@ export function AdminDashboard() {
                                 </div>
                               </td>
                               <td className="p-4">
-                                <Badge variant="outline">{user.entry_count}</Badge>
+                                <Badge variant="outline">
+                                  {user.entry_count}
+                                </Badge>
                               </td>
                               <td className="p-4 text-muted-foreground">
-                                {user.last_activity ? formatDate(user.last_activity) : "Never"}
+                                {user.last_activity
+                                  ? formatDate(user.last_activity)
+                                  : "Never"}
                               </td>
                               <td className="p-4 text-right">
                                 <Button
@@ -311,17 +359,23 @@ export function AdminDashboard() {
                 <div className="space-y-6">
                   <div className="flex items-center justify-between space-x-2">
                     <div className="space-y-0.5">
-                      <Label htmlFor="allow-registration" className="text-base font-medium">
+                      <Label
+                        htmlFor="allow-registration"
+                        className="text-base font-medium"
+                      >
                         Allow New User Registration
                       </Label>
                       <p className="text-sm text-muted-foreground">
-                        When enabled, new users can create accounts. When disabled, only existing users can log in.
+                        When enabled, new users can create accounts. When
+                        disabled, only existing users can log in.
                       </p>
                     </div>
                     <Switch
                       id="allow-registration"
                       checked={settings.allow_registration}
-                      onCheckedChange={(checked) => updateSettings({ allow_registration: checked })}
+                      onCheckedChange={(checked) =>
+                        updateSettings({ allow_registration: checked })
+                      }
                     />
                   </div>
                 </div>
@@ -330,6 +384,29 @@ export function AdminDashboard() {
           </TabsContent>
         </Tabs>
       </main>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete User</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this user? This action cannot be undone.
+              All their financial data will be permanently removed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setUserToDelete(null)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDeleteUser}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete User
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
-  )
+  );
 }

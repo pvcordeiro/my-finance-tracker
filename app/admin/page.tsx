@@ -1,19 +1,19 @@
-"use client"
+"use client";
 
-import { useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { AdminProvider, useAdmin } from "@/hooks/use-admin"
-import { AdminLogin } from "@/components/admin/admin-login"
-import { AdminDashboard } from "@/components/admin/admin-dashboard"
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { AdminProvider, useAdmin } from "@/hooks/use-admin";
+import { AdminLogin } from "@/components/admin/admin-login";
+import { AdminDashboard } from "@/components/admin/admin-dashboard";
 
 function AdminPageContent() {
-  const { adminUser, loginAdmin, isLoading } = useAdmin()
-  const router = useRouter()
+  const { adminUser, loginAdmin, isLoading } = useAdmin();
+  const router = useRouter();
 
   const handleLogin = async (username: string, password: string) => {
-    const success = await loginAdmin(username, password)
-    return success
-  }
+    const success = await loginAdmin(username, password);
+    return success;
+  };
 
   if (isLoading) {
     return (
@@ -23,14 +23,14 @@ function AdminPageContent() {
           <p className="text-muted-foreground">Loading...</p>
         </div>
       </div>
-    )
+    );
   }
 
   if (!adminUser) {
-    return <AdminLogin onLogin={handleLogin} />
+    return <AdminLogin onLogin={handleLogin} />;
   }
 
-  return <AdminDashboard />
+  return <AdminDashboard />;
 }
 
 export default function AdminPage() {
@@ -38,5 +38,5 @@ export default function AdminPage() {
     <AdminProvider>
       <AdminPageContent />
     </AdminProvider>
-  )
+  );
 }
