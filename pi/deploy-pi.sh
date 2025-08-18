@@ -114,15 +114,7 @@ deploy_app() {
     # Stop any existing PM2 processes first
     pm2 stop $APP_NAME 2>/dev/null || true
     pm2 delete $APP_NAME 2>/dev/null || true
-    
-    # Remove existing app directory to prevent conflicts
-    if [ -d "$APP_DIR" ]; then
-        print_status "Removing existing application directory..."
-        sudo rm -rf $APP_DIR
-    fi
-    
-    # Create fresh app directory
-    mkdir -p $APP_DIR
+
     
     # Get the current script directory (should be in pi folder)
     SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
