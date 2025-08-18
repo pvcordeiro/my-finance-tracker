@@ -69,9 +69,10 @@ export function useFinanceData() {
     }
   }
 
-  const saveData = async () => {
+  const saveData = async (dataToSave?: FinanceData) => {
     try {
       const userId = user?.id || 1
+      const currentData = dataToSave || data
 
       // Save bank amount
       const bankResponse = await fetch("/api/bank-amount", {
@@ -80,7 +81,7 @@ export function useFinanceData() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          amount: data.bankAmount,
+          amount: currentData.bankAmount,
           userId,
         }),
       })
@@ -91,14 +92,14 @@ export function useFinanceData() {
 
       // Transform and save entries (only save entries with descriptions)
       const allEntries = [
-        ...data.incomes
+        ...currentData.incomes
           .filter((entry) => entry.description.trim() !== "")
           .map((entry) => ({
             name: entry.description,
             type: "income",
             amounts: JSON.stringify(entry.amounts),
           })),
-        ...data.expenses
+        ...currentData.expenses
           .filter((entry) => entry.description.trim() !== "")
           .map((entry) => ({
             name: entry.description,
@@ -182,9 +183,13 @@ export function useFinanceData() {
     setHasChanges(true)
   }
 
-  const setDataForImport = (newData: FinanceData) => {
+  const setDataForImport = async (newData: FinanceData, saveImmediately = false) => {
     setData(newData)
     setHasChanges(true)
+    
+    if (saveImmediately) {
+      await saveData(newData)
+    }
   }
 
   return {

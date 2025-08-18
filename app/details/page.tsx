@@ -23,18 +23,17 @@ function DetailsPage() {
         }
     }, [user, isLoading, router]);
 
-    const handleImportData = (importedData: any) => {
-        setData(importedData);
-        saveData();
+    const handleImportData = async (importedData: any) => {
+        await setData(importedData, true);
     };
 
-    const handleClearData = () => {
-        setData({
+    const handleClearData = async () => {
+        const emptyData = {
             bankAmount: 0,
             incomes: [],
             expenses: [],
-        });
-        saveData();
+        };
+        await setData(emptyData, true);
     };
 
     if (isLoading) {
