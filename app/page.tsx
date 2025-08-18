@@ -44,6 +44,28 @@ function HomePage() {
         <div className="min-h-screen finance-gradient">
             <DashboardHeader />
             <main className="container mx-auto p-3 sm:p-4 space-y-4 sm:space-y-6 pb-24 sm:pb-6">
+                <div className="grid grid-cols-2 gap-2">
+                    <Button
+                        variant="outline"
+                        className="transition-all duration-200 hover:scale-[1.05] active:scale-[0.95] touch-manipulation h-12 sm:h-10 px-4 sm:px-3"
+                        onClick={() => router.push("/summary")}
+                    >
+                        <BarChart3 className="w-4 h-4 mr-2" />
+                        <span className="transition-all duration-200 hover:scale-[1.05]">
+                            Summary
+                        </span>
+                    </Button>
+                    <Button
+                        variant="outline"
+                        className="transition-all duration-200 hover:scale-[1.05] active:scale-[0.95] bg-white/90 backdrop-blur-sm touch-manipulation h-12 sm:h-10 px-4 sm:px-3"
+                        onClick={() => router.push("/details")}
+                    >
+                        <FileText className="w-4 h-4 mr-2" />
+                        <span className="transition-all duration-200 hover:scale-[1.05]">
+                            Details
+                        </span>
+                    </Button>
+                </div>
                 <BankAmount
                     amount={data.bankAmount}
                     onChange={updateBankAmount}
@@ -90,25 +112,11 @@ function HomePage() {
                             className="shadow-lg transition-all duration-200 hover:scale-[1.05] active:scale-[0.95] bg-emerald-600 hover:bg-emerald-700 touch-manipulation h-12 sm:h-10 px-4 sm:px-3"
                         >
                             <Save className="w-4 h-4 mr-2" />
-                            <span className="hidden sm:inline">Save</span>
+                            <span className="transition-all duration-200 hover:scale-[1.05]">
+                                Save
+                            </span>
                         </Button>
                     )}
-                    <Button
-                        variant="outline"
-                        className="transition-all duration-200 hover:scale-[1.05] active:scale-[0.95] touch-manipulation h-12 sm:h-10 px-4 sm:px-3"
-                        onClick={() => router.push("/summary")}
-                    >
-                        <BarChart3 className="w-4 h-4 mr-2" />
-                        <span className="hidden sm:inline">Summary</span>
-                    </Button>
-                    <Button
-                        variant="outline"
-                        className="transition-all duration-200 hover:scale-[1.05] active:scale-[0.95] bg-white/90 backdrop-blur-sm touch-manipulation h-12 sm:h-10 px-4 sm:px-3"
-                        onClick={() => router.push("/details")}
-                    >
-                        <FileText className="w-4 h-4 mr-2" />
-                        <span className="hidden sm:inline">Details</span>
-                    </Button>
                 </div>
             </main>
         </div>

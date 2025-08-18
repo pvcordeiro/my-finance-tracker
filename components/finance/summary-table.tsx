@@ -207,16 +207,16 @@ export function SummaryTable({ data }: SummaryTableProps) {
                         <table className="w-full border-collapse">
                             <thead>
                                 <tr className="border-b bg-muted/50">
-                                    <th className="text-left p-2 sm:p-3 font-semibold text-sm sm:text-base">
+                                    <th className="text-left p-3 sm:p-3 font-semibold text-sm sm:text-base">
                                         Month
                                     </th>
-                                    <th className="text-right p-2 sm:p-3 font-semibold text-emerald-700 text-sm sm:text-base">
+                                    <th className="text-right p-3 sm:p-3 font-semibold text-emerald-700 text-sm sm:text-base">
                                         Income
                                     </th>
-                                    <th className="text-right p-2 sm:p-3 font-semibold text-red-700 text-sm sm:text-base">
+                                    <th className="text-right p-3 sm:p-3 font-semibold text-red-700 text-sm sm:text-base">
                                         Expenses
                                     </th>
-                                    <th className="text-right p-2 sm:p-3 font-semibold text-sm sm:text-base">
+                                    <th className="text-right p-3 sm:p-3 font-semibold text-sm sm:text-base">
                                         Balance
                                     </th>
                                 </tr>
@@ -231,7 +231,7 @@ export function SummaryTable({ data }: SummaryTableProps) {
                                                 "bg-primary/5 border-primary/20"
                                         )}
                                     >
-                                        <td className="p-2 sm:p-3 font-medium">
+                                        <td className="p-3 sm:p-3 font-medium">
                                             <div className="flex items-center gap-1 sm:gap-2">
                                                 <span className="text-sm sm:text-base">
                                                     {row.month}
@@ -246,15 +246,15 @@ export function SummaryTable({ data }: SummaryTableProps) {
                                                 )}
                                             </div>
                                         </td>
-                                        <td className="p-2 sm:p-3 text-right text-emerald-600 font-medium text-sm sm:text-base">
+                                        <td className="p-3 sm:p-3 text-right text-emerald-600 font-medium text-sm sm:text-base">
                                             €{row.income.toFixed(2)}
                                         </td>
-                                        <td className="p-2 sm:p-3 text-right text-red-600 font-medium text-sm sm:text-base">
+                                        <td className="p-3 sm:p-3 text-right text-red-600 font-medium text-sm sm:text-base">
                                             €{row.expenses.toFixed(2)}
                                         </td>
                                         <td
                                             className={cn(
-                                                "p-2 sm:p-3 text-right font-bold text-sm sm:text-base",
+                                                "p-3 sm:p-3 text-right font-bold text-sm sm:text-base",
                                                 row.balance >= 0
                                                     ? "text-emerald-600"
                                                     : "text-red-600"
@@ -267,18 +267,18 @@ export function SummaryTable({ data }: SummaryTableProps) {
                             </tbody>
                             <tfoot>
                                 <tr className="border-t-2 bg-muted/50 font-bold">
-                                    <td className="p-2 sm:p-3 text-sm sm:text-base">
+                                    <td className="p-3 sm:p-3 text-sm sm:text-base">
                                         Total
                                     </td>
-                                    <td className="p-2 sm:p-3 text-right text-emerald-700 text-sm sm:text-base">
+                                    <td className="p-3 sm:p-3 text-right text-emerald-700 text-sm sm:text-base">
                                         €{annualIncome.toFixed(2)}
                                     </td>
-                                    <td className="p-2 sm:p-3 text-right text-red-700 text-sm sm:text-base">
+                                    <td className="p-3 sm:p-3 text-right text-red-700 text-sm sm:text-base">
                                         €{annualExpenses.toFixed(2)}
                                     </td>
                                     <td
                                         className={cn(
-                                            "p-2 sm:p-3 text-right text-sm sm:text-base",
+                                            "p-3 sm:p-3 text-right text-sm sm:text-base",
                                             finalBalance >= 0
                                                 ? "text-emerald-600"
                                                 : "text-red-600"

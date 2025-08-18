@@ -56,7 +56,7 @@ function DetailsPage() {
         <div className="min-h-screen finance-gradient">
             <DashboardHeader />
             <main className="container mx-auto p-4 space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-2">
                     <div>
                         <h1 className="text-3xl font-bold text-primary">
                             Financial Details
@@ -72,6 +72,7 @@ function DetailsPage() {
                     >
                         <ArrowLeft className="w-4 h-4 mr-2" />
                         Back to Dashboard
+                        <Edit className="w-4 h-4 mr-2" />
                     </Button>
                 </div>
 
@@ -105,26 +106,6 @@ function DetailsPage() {
                         />
                     </TabsContent>
                 </Tabs>
-
-                {/* Fixed Action Buttons */}
-                <div className="fixed bottom-4 right-4 flex flex-col gap-2">
-                    <Button
-                        variant="outline"
-                        className="transition-all duration-200 hover:scale-[1.05]"
-                        onClick={() => router.push("/")}
-                    >
-                        <Edit className="w-4 h-4 mr-2" />
-                        Manage
-                    </Button>
-                    <Button
-                        variant="outline"
-                        className="transition-all duration-200 hover:scale-[1.05]"
-                        onClick={() => router.push("/summary")}
-                    >
-                        <BarChart3 className="w-4 h-4 mr-2" />
-                        Summary
-                    </Button>
-                </div>
             </main>
         </div>
     );
