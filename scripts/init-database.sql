@@ -25,6 +25,12 @@ CREATE TABLE IF NOT EXISTS entries (
   FOREIGN KEY (user_id) REFERENCES users (id)
 );
 
--- Insert default demo user
-INSERT OR IGNORE INTO users (username, password_hash) 
-VALUES ('demo', '$2b$10$rQZ9vKzf8xGxJ8yJ8yJ8yOzJ8yJ8yJ8yJ8yJ8yJ8yJ8yJ8yJ8yJ8y');
+CREATE TABLE IF NOT EXISTS settings (
+  id INTEGER PRIMARY KEY,
+  key TEXT UNIQUE NOT NULL,
+  value TEXT NOT NULL,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Insert default settings
+INSERT OR IGNORE INTO settings (key, value) VALUES ('allow_registration', 'true');

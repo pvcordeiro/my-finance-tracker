@@ -30,3 +30,16 @@ export const bankAmountSchema = z.object({
 export const userIdSchema = z.object({
   userId: z.string().transform((val: string) => parseInt(val, 10)).pipe(z.number().positive()),
 })
+
+export const adminLoginSchema = z.object({
+  username: z.string().min(1, "Username is required"),
+  password: z.string().min(1, "Password is required"),
+})
+
+export const deleteUserSchema = z.object({
+  userId: z.string().regex(/^\d+$/, "User ID must be a number"),
+})
+
+export const settingsSchema = z.object({
+  allow_registration: z.boolean(),
+})

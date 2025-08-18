@@ -5,6 +5,14 @@ import { rateLimit, getClientIp } from "../../../../lib/rate-limit.ts"
 
 export async function POST(request) {
   try {
+    // Check if registration is allowed
+    const db = getDatabase()
+    const registrationSetting = db.prepare("SELECT value FROM settings WHERE key = 'allow_registration'").get()
+    
+    if (!registrationSetting || registrationSetting.value !== 'true') {
+      return NextResponse.json({ error: "Account registration is currently disabled" }, { status: 403 })
+    }
+
     // Rate limiting
     const clientIp = getClientIp(request)
     if (!rateLimit(`register_${clientIp}`, { maxRequests: 3, windowMs: 60 * 60 * 1000 })) {
@@ -26,8 +34,6 @@ export async function POST(request) {
     }
 
     const { username, password } = validation.data
-
-    const db = getDatabase()
 
     // Check if user already exists
     const existingUser = db.prepare("SELECT id FROM users WHERE username = ?").get(username)
