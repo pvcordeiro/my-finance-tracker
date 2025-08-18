@@ -201,6 +201,59 @@ deploy_app() {
     fi
 }
 
+# Handle ARM64 native compilation for better-sqlite3
+setup_database_dependencies() {
+    print_status "Setting up database dependencies for ARM64..."
+    cd $APP_DIR
+    
+    # Test if better-sqlite3 works
+    print_status "Testing database connectivity..."
+    if node -e "const Database = require('better-sqlite3'); const db = new Database('./data/finance.db'); console.log('Database connected successfully!'); db.close();" 2>/dev/null; then
+        print_status "Database connectivity test passed!"
+        return 0
+    fi
+    
+    print_warning "Database connectivity failed. Setting up ARM64 native compilation..."
+    
+    # Install build tools if not present
+    if ! command -v gcc &> /dev/null; then
+        print_status "Installing build tools..."
+        sudo apt update
+        sudo apt install -y build-essential python3 python3-dev
+    fi
+    
+    # Use the same package manager for compilation
+    if [ -f "pnpm-lock.yaml" ]; then
+        print_status "Compiling better-sqlite3 for ARM64 using pnpm..."
+        # Allow build scripts and compile better-sqlite3
+        pnpm config set unsafe-perm true
+        pnpm approve-builds better-sqlite3
+        
+        # Wait for compilation with timeout (10 minutes max)
+        print_status "Waiting for native compilation to complete (this may take 3-8 minutes)..."
+        print_warning "This step may appear to hang - this is normal during ARM64 compilation"
+        timeout 600 bash -c 'while ! node -e "const Database = require(\"better-sqlite3\"); const db = new Database(\"./data/finance.db\"); console.log(\"Success!\"); db.close();" 2>/dev/null; do sleep 5; echo -n "."; done' || {
+            print_error "Compilation timed out or failed!"
+            print_warning "You may need to manually run: pnpm approve-builds better-sqlite3"
+            return 1
+        }
+    else
+        print_status "Compiling better-sqlite3 for ARM64 using npm..."
+        # Rebuild better-sqlite3 for ARM64
+        npm rebuild better-sqlite3 --build-from-source
+    fi
+    
+    # Final test
+    print_status "Final database connectivity test..."
+    if node -e "const Database = require('better-sqlite3'); const db = new Database('./data/finance.db'); console.log('Database connected successfully!'); db.close();" 2>/dev/null; then
+        print_status "✅ Database setup completed successfully!"
+        return 0
+    else
+        print_error "❌ Database setup failed!"
+        return 1
+    fi
+}
+
 # Create environment file
 create_env_file() {
     print_status "Creating environment file..."
@@ -339,14 +392,70 @@ start_application() {
     print_status "Starting application with PM2..."
     cd $APP_DIR
     
+    # Stop any existing processes first
+    pm2 stop $APP_NAME 2>/dev/null || true
+    pm2 delete $APP_NAME 2>/dev/null || true
+    
     # Start the application
-    pm2 start ecosystem.config.js --instances 2
+    print_status "Starting application processes..."
+    pm2 start ecosystem.config.js
     
     # Save PM2 configuration
     pm2 save
     
-    # Show status
-    pm2 status
+    # Wait a moment for startup
+    sleep 3
+    
+    # Check if the application started successfully
+    if pm2 list | grep -q "$APP_NAME.*online"; then
+        print_status "✅ Application started successfully!"
+        pm2 status
+    else
+        print_warning "Application may have startup issues. Checking logs..."
+        pm2 logs $APP_NAME --lines 20
+        
+        print_status "Attempting restart..."
+        pm2 restart $APP_NAME
+        sleep 3
+        
+        if pm2 list | grep -q "$APP_NAME.*online"; then
+            print_status "✅ Application recovered successfully!"
+            pm2 status
+        else
+            print_error "❌ Application failed to start. Check logs with: pm2 logs $APP_NAME"
+            return 1
+        fi
+    fi
+}
+
+# Test final deployment
+test_deployment() {
+    print_status "Testing final deployment..."
+    
+    # Test if the app is responding
+    local max_attempts=5
+    local attempt=1
+    
+    while [ $attempt -le $max_attempts ]; do
+        print_status "Testing HTTP response (attempt $attempt/$max_attempts)..."
+        if curl -s -o /dev/null -w "%{http_code}" http://localhost:$PORT | grep -q "200\|302"; then
+            print_status "✅ Application is responding to HTTP requests!"
+            break
+        elif [ $attempt -eq $max_attempts ]; then
+            print_warning "⚠️  Application may not be fully ready yet"
+            print_warning "Check with: pm2 logs $APP_NAME"
+        else
+            sleep 5
+        fi
+        ((attempt++))
+    done
+    
+    # Test admin API endpoint
+    if curl -s http://localhost:$PORT/api/admin/auth | grep -q "Unauthorized\|401"; then
+        print_status "✅ Admin API endpoint is working!"
+    else
+        print_warning "⚠️  Admin API endpoint may not be ready yet"
+    fi
 }
 
 # Setup backup script
@@ -393,9 +502,11 @@ main() {
     stop_existing_services
     deploy_app
     create_env_file
+    setup_database_dependencies
     create_pm2_config
     configure_nginx
     start_application
+    test_deployment
     setup_backup_script
     setup_update_script
     setup_firewall
@@ -408,11 +519,17 @@ main() {
     print_status "Your Finance Tracker is now running at:"
     print_status "  Local: http://localhost"
     print_status "  Network: http://$(hostname -I | awk '{print $1}')"
+    print_status "  Internet: https://anotherfinance.duckdns.org"
     
     echo ""
     print_status "Admin credentials:"
     print_status "  Username: admin"
     print_status "  Password: $(grep ADMIN_PASSWORD $APP_DIR/.env | cut -d'=' -f2 | tr -d '"')"
+    
+    echo ""
+    print_status "Admin panel access:"
+    print_status "  Local: http://$(hostname -I | awk '{print $1}')/admin"
+    print_status "  Internet: https://anotherfinance.duckdns.org/admin"
     
     echo ""
     print_status "Useful commands:"
