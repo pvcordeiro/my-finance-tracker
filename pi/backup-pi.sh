@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Finance Tracker Backup Script
-BACKUP_DIR="/home/pi/finance-tracker-backups"
+BACKUP_DIR="$HOME/finance-tracker-backups"
 DATE=$(date +%Y%m%d_%H%M%S)
-APP_DIR="/home/pi/finance-tracker"
+APP_DIR="$HOME/finance-tracker"
 
 # Create backup directory
 mkdir -p $BACKUP_DIR

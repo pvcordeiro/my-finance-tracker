@@ -9,7 +9,9 @@ echo "🚀 Starting deployment of Finance Tracker..."
 
 # Configuration
 APP_NAME="finance-tracker"
-APP_DIR="/home/pi/finance-tracker"
+CURRENT_USER=$(whoami)
+USER_HOME=$(eval echo ~$CURRENT_USER)
+APP_DIR="$USER_HOME/finance-tracker"
 SERVICE_FILE="/etc/systemd/system/$APP_NAME.service"
 NGINX_CONFIG="/etc/nginx/sites-available/$APP_NAME"
 DOMAIN="your-domain.com"  # Change this to your domain or use IP
@@ -65,7 +67,7 @@ install_pm2() {
         sudo npm install -g pm2
         
         # Setup PM2 to start on boot
-        sudo pm2 startup systemd -u pi --hp /home/pi
+        sudo pm2 startup systemd -u $CURRENT_USER --hp $USER_HOME
         pm2 save
     else
         print_status "PM2 is already installed: $(pm2 --version)"
@@ -86,8 +88,13 @@ install_nginx() {
 # Create application directory and set permissions
 setup_app_directory() {
     print_status "Setting up application directory..."
+    
+    # Get current user and group
+    CURRENT_USER=$(whoami)
+    CURRENT_GROUP=$(id -gn)
+    
     sudo mkdir -p $APP_DIR
-    sudo chown -R pi:pi $APP_DIR
+    sudo chown -R $CURRENT_USER:$CURRENT_GROUP $APP_DIR
     
     # Create data directory for SQLite database
     mkdir -p $APP_DIR/data
@@ -104,8 +111,15 @@ stop_existing_services() {
 deploy_app() {
     print_status "Deploying application files..."
     
-    # Copy all files except node_modules and .git
-    rsync -av --exclude 'node_modules' --exclude '.git' --exclude '.next' --exclude 'data/finance.db*' ./ $APP_DIR/
+    # Copy all files except node_modules and .git from parent directory
+    rsync -av --exclude 'node_modules' --exclude '.git' --exclude '.next' --exclude 'data/finance.db*' --exclude 'pi' ../ $APP_DIR/
+    
+    # Copy management scripts from pi folder
+    mkdir -p $APP_DIR/scripts
+    cp ../pi/backup-pi.sh $APP_DIR/scripts/backup.sh
+    cp ../pi/update-pi.sh $APP_DIR/scripts/update.sh
+    chmod +x $APP_DIR/scripts/backup.sh
+    chmod +x $APP_DIR/scripts/update.sh
     
     cd $APP_DIR
     
@@ -258,66 +272,24 @@ start_application() {
     pm2 status
 }
 
-# Create backup script
-create_backup_script() {
-    print_status "Creating backup script..."
-    cat > $APP_DIR/backup.sh << 'EOF'
-#!/bin/bash
-
-# Finance Tracker Backup Script
-BACKUP_DIR="/home/pi/finance-tracker-backups"
-DATE=$(date +%Y%m%d_%H%M%S)
-APP_DIR="/home/pi/finance-tracker"
-
-# Create backup directory
-mkdir -p $BACKUP_DIR
-
-# Backup database
-cp $APP_DIR/data/finance.db $BACKUP_DIR/finance_backup_$DATE.db
-
-# Keep only last 7 days of backups
-find $BACKUP_DIR -name "finance_backup_*.db" -mtime +7 -delete
-
-echo "Backup completed: finance_backup_$DATE.db"
-EOF
+# Setup backup script
+setup_backup_script() {
+    print_status "Setting up backup script..."
     
-    chmod +x $APP_DIR/backup.sh
+    # The backup script was already copied during deployment
+    # Just need to add it to crontab for daily backups
+    (crontab -l 2>/dev/null; echo "0 2 * * * $APP_DIR/scripts/backup.sh") | crontab -
     
-    # Add to crontab for daily backups
-    (crontab -l 2>/dev/null; echo "0 2 * * * /home/pi/finance-tracker/backup.sh") | crontab -
+    print_status "Daily backup scheduled at 2 AM"
+}
 }
 
-# Create update script
-create_update_script() {
-    print_status "Creating update script..."
-    cat > $APP_DIR/update.sh << 'EOF'
-#!/bin/bash
-
-# Finance Tracker Update Script
-APP_DIR="/home/pi/finance-tracker"
-APP_NAME="finance-tracker"
-
-cd $APP_DIR
-
-echo "🔄 Updating Finance Tracker..."
-
-# Pull latest changes (if using git)
-# git pull origin main
-
-# Install any new dependencies
-npm ci --production
-
-# Build the application
-npm run build
-
-# Restart the application
-pm2 restart $APP_NAME
-
-echo "✅ Update completed!"
-pm2 status
-EOF
-    
-    chmod +x $APP_DIR/update.sh
+# Setup update script
+setup_update_script() {
+    print_status "Setting up update script..."
+    # The update script was already copied during deployment
+    print_status "Update script available at $APP_DIR/scripts/update.sh"
+}
 }
 
 # Setup firewall
@@ -347,8 +319,8 @@ main() {
     create_pm2_config
     configure_nginx
     start_application
-    create_backup_script
-    create_update_script
+    setup_backup_script
+    setup_update_script
     setup_firewall
     
     print_status "=========================================="
@@ -370,8 +342,8 @@ main() {
     print_status "  Check status: pm2 status"
     print_status "  View logs: pm2 logs $APP_NAME"
     print_status "  Restart app: pm2 restart $APP_NAME"
-    print_status "  Update app: $APP_DIR/update.sh"
-    print_status "  Manual backup: $APP_DIR/backup.sh"
+    print_status "  Update app: $APP_DIR/scripts/update.sh"
+    print_status "  Manual backup: $APP_DIR/scripts/backup.sh"
     
     echo ""
     print_warning "Remember to:"

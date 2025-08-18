@@ -3,7 +3,7 @@
 # Finance Tracker Quick Update Script
 # Run this script to update the application on your Raspberry Pi
 
-APP_DIR="/home/pi/finance-tracker"
+APP_DIR="$HOME/finance-tracker"
 APP_NAME="finance-tracker"
 
 cd $APP_DIR
