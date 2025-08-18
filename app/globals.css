@@ -101,6 +101,17 @@
     touch-action: manipulation;
   }
 
+  /* Remove spinner arrows from number inputs */
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
+
   /* Custom scrollbar for mobile - DISABLED (scrollbars hidden globally) */
   /* @media (max-width: 768px) {
     ::-webkit-scrollbar {
