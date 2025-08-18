@@ -111,22 +111,52 @@ stop_existing_services() {
 deploy_app() {
     print_status "Deploying application files..."
     
+    # Stop any existing PM2 processes first
+    pm2 stop $APP_NAME 2>/dev/null || true
+    pm2 delete $APP_NAME 2>/dev/null || true
+    
     # Remove existing app directory to prevent conflicts
     if [ -d "$APP_DIR" ]; then
         print_status "Removing existing application directory..."
-        rm -rf $APP_DIR
+        sudo rm -rf $APP_DIR
     fi
     
     # Create fresh app directory
     mkdir -p $APP_DIR
     
-    # Copy all files except node_modules and .git from parent directory
-    rsync -av --exclude 'node_modules' --exclude '.git' --exclude '.next' --exclude 'data/finance.db*' --exclude 'pi' --exclude '.env' ../ $APP_DIR/
+    # Get the current script directory (should be in pi folder)
+    SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+    PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+    
+    print_status "Copying files from $PROJECT_ROOT to $APP_DIR"
+    
+    # Copy specific directories and files to avoid recursion
+    cp -r "$PROJECT_ROOT/app" "$APP_DIR/" 2>/dev/null || true
+    cp -r "$PROJECT_ROOT/components" "$APP_DIR/" 2>/dev/null || true
+    cp -r "$PROJECT_ROOT/hooks" "$APP_DIR/" 2>/dev/null || true
+    cp -r "$PROJECT_ROOT/lib" "$APP_DIR/" 2>/dev/null || true
+    cp -r "$PROJECT_ROOT/public" "$APP_DIR/" 2>/dev/null || true
+    cp -r "$PROJECT_ROOT/styles" "$APP_DIR/" 2>/dev/null || true
+    
+    # Copy configuration files
+    cp "$PROJECT_ROOT/package.json" "$APP_DIR/" 2>/dev/null || true
+    cp "$PROJECT_ROOT/package-lock.json" "$APP_DIR/" 2>/dev/null || true
+    cp "$PROJECT_ROOT/pnpm-lock.yaml" "$APP_DIR/" 2>/dev/null || true
+    cp "$PROJECT_ROOT/next.config.mjs" "$APP_DIR/" 2>/dev/null || true
+    cp "$PROJECT_ROOT/tailwind.config.js" "$APP_DIR/" 2>/dev/null || true
+    cp "$PROJECT_ROOT/postcss.config.js" "$APP_DIR/" 2>/dev/null || true
+    cp "$PROJECT_ROOT/postcss.config.mjs" "$APP_DIR/" 2>/dev/null || true
+    cp "$PROJECT_ROOT/tsconfig.json" "$APP_DIR/" 2>/dev/null || true
+    cp "$PROJECT_ROOT/components.json" "$APP_DIR/" 2>/dev/null || true
+    
+    # Set proper ownership
+    CURRENT_GROUP=$(id -gn)
+    sudo chown -R $CURRENT_USER:$CURRENT_GROUP $APP_DIR
     
     # Copy management scripts from pi folder
     mkdir -p $APP_DIR/scripts
-    cp ../pi/backup-pi.sh $APP_DIR/scripts/backup.sh
-    cp ../pi/update-pi.sh $APP_DIR/scripts/update.sh
+    cp "$SCRIPT_DIR/backup-pi.sh" "$APP_DIR/scripts/backup.sh"
+    cp "$SCRIPT_DIR/update-pi.sh" "$APP_DIR/scripts/update.sh"
     chmod +x $APP_DIR/scripts/backup.sh
     chmod +x $APP_DIR/scripts/update.sh
     
@@ -272,7 +302,7 @@ start_application() {
     cd $APP_DIR
     
     # Start the application
-    pm2 start ecosystem.config.js
+    pm2 start ecosystem.config.js --instances 2
     
     # Save PM2 configuration
     pm2 save
