@@ -1,69 +1,75 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Eye, EyeOff, DollarSign, UserPlus, LogIn } from "lucide-react"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Eye, EyeOff, DollarSign, UserPlus, LogIn } from "lucide-react";
 
 interface LoginFormProps {
-  onLogin: (username: string, password: string) => Promise<boolean>
-  onRegister: (username: string, password: string) => Promise<boolean>
+  onLogin: (username: string, password: string) => Promise<boolean>;
+  onRegister: (username: string, password: string) => Promise<boolean>;
 }
 
 export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
-  const [username, setUsername] = useState("")
-  const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const [isRegisterMode, setIsRegisterMode] = useState(false)
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isRegisterMode, setIsRegisterMode] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
-    setIsLoading(true)
+    e.preventDefault();
+    setError("");
+    setIsLoading(true);
 
     try {
       if (isRegisterMode) {
         if (password !== confirmPassword) {
-          setError("Passwords do not match.")
-          setIsLoading(false)
-          return
+          setError("Passwords do not match.");
+          setIsLoading(false);
+          return;
         }
         if (password.length < 6) {
-          setError("Password must be at least 6 characters long.")
-          setIsLoading(false)
-          return
+          setError("Password must be at least 6 characters long.");
+          setIsLoading(false);
+          return;
         }
-        const success = await onRegister(username, password)
+        const success = await onRegister(username, password);
         if (!success) {
-          setError("Username already exists. Please choose a different one.")
+          setError("Username already exists. Please choose a different one.");
         }
       } else {
-        const success = await onLogin(username, password)
+        const success = await onLogin(username, password);
         if (!success) {
-          setError("Invalid credentials. Please try again.")
+          setError("Invalid credentials. Please try again.");
         }
       }
     } catch (err) {
-      setError("An error occurred. Please try again.")
+      setError("An error occurred. Please try again.");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const toggleMode = () => {
-    setIsRegisterMode(!isRegisterMode)
-    setError("")
-    setPassword("")
-    setConfirmPassword("")
-  }
+    setIsRegisterMode(!isRegisterMode);
+    setError("");
+    setPassword("");
+    setConfirmPassword("");
+  };
 
   return (
     <div className="min-h-screen finance-gradient flex items-center justify-center p-4">
@@ -73,9 +79,13 @@ export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
             <DollarSign className="w-6 h-6 text-primary-foreground" />
           </div>
           <div>
-            <CardTitle className="text-2xl font-bold">{isRegisterMode ? "Create Account" : "Welcome Back"}</CardTitle>
+            <CardTitle className="text-2xl font-bold">
+              {isRegisterMode ? "Create Account" : "Welcome Back"}
+            </CardTitle>
             <CardDescription>
-              {isRegisterMode ? "Create your finance tracker account" : "Sign in to your finance tracker account"}
+              {isRegisterMode
+                ? "Create your finance tracker account"
+                : "Sign in to your finance tracker account"}
             </CardDescription>
           </div>
         </CardHeader>
@@ -171,14 +181,16 @@ export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
                 type="button"
                 variant="ghost"
                 onClick={toggleMode}
-                className="text-sm text-muted-foreground hover:text-primary"
+                className="text-sm text-muted-foreground hover:text-primary hover:text-white"
               >
-                {isRegisterMode ? "Already have an account? Sign in" : "Don't have an account? Create one"}
+                {isRegisterMode
+                  ? "Already have an account? Sign in"
+                  : "Don't have an account? Create one"}
               </Button>
             </div>
           </form>
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

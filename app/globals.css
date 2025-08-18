@@ -57,7 +57,35 @@
   body {
     @apply bg-background text-foreground;
   }
-  /* Added custom financial app styling */
+  
+  html {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  
+  html::-webkit-scrollbar {
+    display: none;
+  }
+  
+  body {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  
+  body::-webkit-scrollbar {
+    display: none;
+  }
+  
+
+  * {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  
+  *::-webkit-scrollbar {
+    display: none;
+  }
+
   .finance-gradient {
     background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
   }
@@ -73,8 +101,8 @@
     touch-action: manipulation;
   }
 
-  /* Custom scrollbar for mobile */
-  @media (max-width: 768px) {
+  /* Custom scrollbar for mobile - DISABLED (scrollbars hidden globally) */
+  /* @media (max-width: 768px) {
     ::-webkit-scrollbar {
       width: 4px;
       height: 4px;
@@ -92,7 +120,7 @@
     ::-webkit-scrollbar-thumb:hover {
       background: hsl(var(--muted-foreground) / 0.5);
     }
-  }
+  } */
 
   /* Enhanced focus states for mobile accessibility */
   @media (max-width: 768px) {
