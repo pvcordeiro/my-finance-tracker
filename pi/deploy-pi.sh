@@ -282,7 +282,7 @@ setup_backup_script() {
     
     print_status "Daily backup scheduled at 2 AM"
 }
-}
+
 
 # Setup update script
 setup_update_script() {
@@ -290,7 +290,7 @@ setup_update_script() {
     # The update script was already copied during deployment
     print_status "Update script available at $APP_DIR/scripts/update.sh"
 }
-}
+
 
 # Setup firewall
 setup_firewall() {
