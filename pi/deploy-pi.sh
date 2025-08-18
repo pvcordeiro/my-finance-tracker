@@ -111,8 +111,17 @@ stop_existing_services() {
 deploy_app() {
     print_status "Deploying application files..."
     
+    # Remove existing app directory to prevent conflicts
+    if [ -d "$APP_DIR" ]; then
+        print_status "Removing existing application directory..."
+        rm -rf $APP_DIR
+    fi
+    
+    # Create fresh app directory
+    mkdir -p $APP_DIR
+    
     # Copy all files except node_modules and .git from parent directory
-    rsync -av --exclude 'node_modules' --exclude '.git' --exclude '.next' --exclude 'data/finance.db*' --exclude 'pi' ../ $APP_DIR/
+    rsync -av --exclude 'node_modules' --exclude '.git' --exclude '.next' --exclude 'data/finance.db*' --exclude 'pi' --exclude '.env' ../ $APP_DIR/
     
     # Copy management scripts from pi folder
     mkdir -p $APP_DIR/scripts
