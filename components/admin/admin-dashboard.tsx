@@ -54,7 +54,7 @@ export function AdminDashboard() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<number | null>(null);
 
-  const getAuthHeader = () => {
+  const getAuthHeader = (): Record<string, string> => {
     const auth = localStorage.getItem("admin-auth");
     return auth ? { "x-admin-auth": auth } : {};
   };

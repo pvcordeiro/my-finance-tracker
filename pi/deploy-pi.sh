@@ -164,11 +164,41 @@ deploy_app() {
     
     # Install dependencies
     print_status "Installing dependencies..."
-    npm ci --production
+    
+    # Check if we should use pnpm or npm
+    if [ -f "pnpm-lock.yaml" ]; then
+        # Install pnpm if not present
+        if ! command -v pnpm &> /dev/null; then
+            print_status "Installing pnpm..."
+            sudo npm install -g pnpm
+        fi
+        print_status "Using pnpm for dependency installation..."
+        # Install all dependencies (including dev) for building
+        pnpm install
+    elif [ -f "package-lock.json" ]; then
+        print_status "Using npm for dependency installation..."
+        # Install all dependencies (including dev) for building
+        npm ci
+    else
+        print_status "No lock file found, using npm install..."
+        npm install
+    fi
     
     # Build the application
     print_status "Building application..."
-    npm run build
+    
+    # Use the same package manager for build
+    if [ -f "pnpm-lock.yaml" ]; then
+        pnpm run build
+        # Clean up dev dependencies after build to save space
+        print_status "Cleaning up dev dependencies..."
+        pnpm prune --prod
+    else
+        npm run build
+        # Clean up dev dependencies after build to save space
+        print_status "Cleaning up dev dependencies..."
+        npm prune --production
+    fi
 }
 
 # Create environment file
@@ -194,11 +224,19 @@ EOF
 # Create PM2 ecosystem file
 create_pm2_config() {
     print_status "Creating PM2 configuration..."
+    
+    # Determine which package manager to use
+    if [ -f "$APP_DIR/pnpm-lock.yaml" ]; then
+        PKG_MANAGER="pnpm"
+    else
+        PKG_MANAGER="npm"
+    fi
+    
     cat > $APP_DIR/ecosystem.config.js << EOF
 module.exports = {
   apps: [{
     name: '$APP_NAME',
-    script: 'npm',
+    script: '$PKG_MANAGER',
     args: 'start',
     cwd: '$APP_DIR',
     instances: 1,
@@ -240,7 +278,7 @@ server {
     gzip on;
     gzip_vary on;
     gzip_min_length 1024;
-    gzip_proxied expired no-cache no-store private must-revalidate;
+    gzip_proxied any;
     gzip_types
         text/plain
         text/css
