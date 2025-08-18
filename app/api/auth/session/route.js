@@ -1,25 +1,25 @@
 import { NextResponse } from "next/server"
-import { getDatabase } from "../../../../lib/database.js"
+import { validateSession, getSessionFromRequest } from "../../../../lib/session.js"
 
 export async function GET(request) {
   try {
-    const { searchParams } = new URL(request.url)
-    const userId = searchParams.get("userId")
+    // Get session token from cookie
+    const sessionToken = getSessionFromRequest(request);
 
-    if (!userId) {
-      return NextResponse.json({ error: "User ID required" }, { status: 400 })
+    if (!sessionToken) {
+      return NextResponse.json({ error: "No session found" }, { status: 401 });
     }
 
-    const db = getDatabase()
-    const user = db.prepare("SELECT id, username FROM users WHERE id = ?").get(userId)
+    // Validate session and get user data
+    const user = validateSession(sessionToken);
 
     if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 })
+      return NextResponse.json({ error: "Invalid or expired session" }, { status: 401 });
     }
 
-    return NextResponse.json({ user })
+    return NextResponse.json({ user: { id: user.id, username: user.username } });
   } catch (error) {
-    console.error("Session validation error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    console.error("Session validation error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

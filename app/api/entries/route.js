@@ -1,17 +1,12 @@
 import { NextResponse } from "next/server"
 import { getDatabase } from "../../../lib/database.js"
-import { entrySchema, userIdSchema } from "../../../lib/validations.ts"
+import { entrySchema } from "../../../lib/validations.ts"
+import { withAuth, getAuthenticatedUser } from "../../../lib/auth-middleware.js"
 
-export async function GET(request) {
+export const GET = withAuth(async (request) => {
   try {
-    const { searchParams } = new URL(request.url)
-    const userIdValidation = userIdSchema.safeParse({ userId: searchParams.get("userId") })
-    
-    if (!userIdValidation.success) {
-      return NextResponse.json({ error: "Invalid user ID" }, { status: 400 })
-    }
-    
-    const { userId } = userIdValidation.data
+    const user = getAuthenticatedUser(request);
+    const userId = user.id;
 
     const db = getDatabase()
     const entries = db.prepare("SELECT * FROM entries WHERE user_id = ? ORDER BY created_at DESC").all(userId)
@@ -27,18 +22,15 @@ export async function GET(request) {
     console.error("Get entries error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
-}
+})
 
-export async function POST(request) {
+export const POST = withAuth(async (request) => {
   try {
+    const user = getAuthenticatedUser(request);
+    const userId = user.id;
+    
     const body = await request.json()
-    const { entries, userId = 1 } = body
-
-    // Validate userId
-    const userIdValidation = userIdSchema.safeParse({ userId: userId.toString() })
-    if (!userIdValidation.success) {
-      return NextResponse.json({ error: "Invalid user ID" }, { status: 400 })
-    }
+    const { entries } = body
 
     if (!Array.isArray(entries)) {
       return NextResponse.json({ error: "Entries must be an array" }, { status: 400 })
@@ -56,10 +48,9 @@ export async function POST(request) {
     }
 
     const db = getDatabase()
-    const validatedUserId = userIdValidation.data.userId
 
     // Clear existing entries for user
-    db.prepare("DELETE FROM entries WHERE user_id = ?").run(validatedUserId)
+    db.prepare("DELETE FROM entries WHERE user_id = ?").run(userId)
 
     // Insert new entries
     const stmt = db.prepare(`
@@ -70,7 +61,7 @@ export async function POST(request) {
     let insertedCount = 0
     for (const entry of entries) {
       if (entry.name && entry.type && entry.amounts) {
-        stmt.run(validatedUserId, entry.name, entry.type, entry.amounts)
+        stmt.run(userId, entry.name, entry.type, entry.amounts)
         insertedCount++
       }
     }
@@ -80,4 +71,4 @@ export async function POST(request) {
     console.error("Save entries error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
-}
+})

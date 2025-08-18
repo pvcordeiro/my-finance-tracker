@@ -33,15 +33,15 @@ export function useFinanceData() {
       setIsLoading(true);
 
       // Load bank amount
-      const bankResponse = await fetch(
-        `/api/bank-amount?userId=${user?.id || 1}`
-      );
+      const bankResponse = await fetch('/api/bank-amount', {
+        credentials: 'include', // Include cookies for session
+      });
       const bankData = await bankResponse.json();
 
       // Load entries
-      const entriesResponse = await fetch(
-        `/api/entries?userId=${user?.id || 1}`
-      );
+      const entriesResponse = await fetch('/api/entries', {
+        credentials: 'include', // Include cookies for session
+      });
       const entriesData = await entriesResponse.json();
 
       // Transform entries to match frontend format
@@ -75,7 +75,6 @@ export function useFinanceData() {
 
   const saveData = async (dataToSave?: FinanceData) => {
     try {
-      const userId = user?.id || 1;
       const currentData = dataToSave || data;
 
       // Save bank amount
@@ -86,8 +85,8 @@ export function useFinanceData() {
         },
         body: JSON.stringify({
           amount: currentData.bankAmount,
-          userId,
         }),
+        credentials: 'include', // Include cookies for session
       });
 
       if (!bankResponse.ok) {
@@ -119,8 +118,8 @@ export function useFinanceData() {
         },
         body: JSON.stringify({
           entries: allEntries,
-          userId,
         }),
+        credentials: 'include', // Include cookies for session
       });
 
       if (!entriesResponse.ok) {

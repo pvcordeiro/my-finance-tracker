@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getDatabase, hashPassword } from "../../../../lib/database.js";
 import { registerSchema } from "../../../../lib/validations.ts";
 import { rateLimit, getClientIp } from "../../../../lib/rate-limit.ts";
+import { createSession, getSessionCookieOptions, SESSION_COOKIE_NAME } from "../../../../lib/session.js";
 
 export async function POST(request) {
   try {
@@ -65,10 +66,21 @@ export async function POST(request) {
     );
     const result = stmt.run(username, hashedPassword);
 
-    return NextResponse.json({
-      user: { id: result.lastInsertRowid, username },
+    const userId = result.lastInsertRowid;
+
+    // Create session
+    const sessionToken = createSession(userId);
+
+    // Create response with session cookie
+    const response = NextResponse.json({
+      user: { id: userId, username },
       message: "User created successfully",
     });
+
+    // Set secure HTTP-only cookie
+    response.cookies.set(SESSION_COOKIE_NAME, sessionToken, getSessionCookieOptions());
+
+    return response;
   } catch (error) {
     console.error("Registration error:", error);
     return NextResponse.json(

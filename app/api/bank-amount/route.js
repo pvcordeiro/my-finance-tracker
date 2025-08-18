@@ -1,17 +1,12 @@
 import { NextResponse } from "next/server"
 import { getDatabase } from "../../../lib/database.js"
-import { bankAmountSchema, userIdSchema } from "../../../lib/validations.ts"
+import { bankAmountSchema } from "../../../lib/validations.ts"
+import { withAuth, getAuthenticatedUser } from "../../../lib/auth-middleware.js"
 
-export async function GET(request) {
+export const GET = withAuth(async (request) => {
   try {
-    const { searchParams } = new URL(request.url)
-    const userIdValidation = userIdSchema.safeParse({ userId: searchParams.get("userId") })
-    
-    if (!userIdValidation.success) {
-      return NextResponse.json({ error: "Invalid user ID" }, { status: 400 })
-    }
-    
-    const { userId } = userIdValidation.data
+    const user = getAuthenticatedUser(request);
+    const userId = user.id;
 
     const db = getDatabase()
     const bankAmount = db
@@ -23,10 +18,13 @@ export async function GET(request) {
     console.error("Get bank amount error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
-}
+})
 
-export async function POST(request) {
+export const POST = withAuth(async (request) => {
   try {
+    const user = getAuthenticatedUser(request);
+    const userId = user.id;
+    
     const body = await request.json()
     
     // Validate input
@@ -38,13 +36,7 @@ export async function POST(request) {
       )
     }
 
-    const userIdValidation = userIdSchema.safeParse({ userId: (body.userId || 1).toString() })
-    if (!userIdValidation.success) {
-      return NextResponse.json({ error: "Invalid user ID" }, { status: 400 })
-    }
-
     const { amount } = validation.data
-    const { userId } = userIdValidation.data
 
     const db = getDatabase()
 
@@ -60,4 +52,4 @@ export async function POST(request) {
     console.error("Save bank amount error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
-}
+})

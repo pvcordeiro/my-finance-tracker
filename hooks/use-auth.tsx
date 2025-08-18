@@ -28,12 +28,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check for existing session
-    const savedUser = localStorage.getItem("finance-user");
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
-    setIsLoading(false);
+    // Check for existing session from server
+    const checkSession = async () => {
+      try {
+        const response = await fetch("/api/auth/session", {
+          credentials: 'include', // Include cookies
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          setUser(data.user);
+        }
+      } catch (error) {
+        console.error("Session check error:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkSession();
   }, []);
 
   const login = async (
@@ -47,12 +60,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ username, password }),
+        credentials: 'include', // Include cookies
       });
 
       if (response.ok) {
         const { user: userData } = await response.json();
         setUser(userData);
-        localStorage.setItem("finance-user", JSON.stringify(userData));
         return true;
       }
       return false;
@@ -73,12 +86,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ username, password }),
+        credentials: 'include', // Include cookies
       });
 
       if (response.ok) {
         const { user: userData } = await response.json();
         setUser(userData);
-        localStorage.setItem("finance-user", JSON.stringify(userData));
         return true;
       }
 
@@ -95,9 +108,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem("finance-user");
+  const logout = async () => {
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: 'include', // Include cookies
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      setUser(null);
+    }
   };
 
   return (

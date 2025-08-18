@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs"
 import { getDatabase } from "../../../../lib/database.js"
 import { loginSchema } from "../../../../lib/validations.ts"
 import { rateLimit, getClientIp } from "../../../../lib/rate-limit.ts"
+import { createSession, getSessionCookieOptions, SESSION_COOKIE_NAME } from "../../../../lib/session.js"
 
 export async function POST(request) {
   try {
@@ -41,10 +42,19 @@ export async function POST(request) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
     }
 
-    return NextResponse.json({
+    // Create session
+    const sessionToken = createSession(user.id)
+
+    // Create response with session cookie
+    const response = NextResponse.json({
       user: { id: user.id, username: user.username },
       message: "Login successful",
     })
+
+    // Set secure HTTP-only cookie
+    response.cookies.set(SESSION_COOKIE_NAME, sessionToken, getSessionCookieOptions())
+
+    return response
   } catch (error) {
     console.error("Login error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
