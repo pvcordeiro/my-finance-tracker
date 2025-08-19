@@ -34,26 +34,14 @@ print_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
-# Load domain from .env or prompt user
-load_domain() {
-    DOMAIN=""
-    
-    # Try to load domain from .env
-    if [ -f ".env" ]; then
-        DOMAIN=$(grep "^DOMAIN=" ".env" 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "")
-    fi
-    
-    # If no domain found or it's the default, prompt user
+
+# Prompt for domain and use it everywhere
+prompt_domain() {
+    read -p "Enter your domain name (e.g., mydomain.com): " DOMAIN
     if [ -z "$DOMAIN" ] || [ "$DOMAIN" = "your-domain.com" ]; then
-        print_warning "No domain configured in .env"
-        read -p "Enter your domain name (e.g., mydomain.com): " DOMAIN
-        
-        if [ -z "$DOMAIN" ]; then
-            print_error "Domain name is required for deployment"
-            exit 1
-        fi
+        print_error "Domain name is required for deployment"
+        exit 1
     fi
-    
     print_status "Using domain: $DOMAIN"
 }
 
@@ -641,7 +629,7 @@ setup_ssl() {
 # Main deployment function
 main() {
     check_sudo
-    load_domain
+    prompt_domain
     
     print_status "🍓 Finance Tracker Raspberry Pi Deployment"
     print_status "=========================================="

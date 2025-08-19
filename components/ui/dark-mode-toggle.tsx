@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 
 export function DarkModeToggle() {
-  const { theme, setTheme } = useTheme();
+  const { setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -29,10 +29,10 @@ export function DarkModeToggle() {
     <Button
       variant="outline"
       size="sm"
-      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+      onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
       className="transition-all duration-200 hover:scale-[1.02] touch-manipulation focus:ring-0 focus:ring-offset-0 active:scale-[0.98]"
     >
-      {theme === "dark" ? (
+      {resolvedTheme === "dark" ? (
         <Sun className="w-4 h-4" />
       ) : (
         <Moon className="w-4 h-4" />
