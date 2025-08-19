@@ -69,8 +69,7 @@ function DetailsPage() {
             onClick={() => router.push("/")}
             className="transition-all duration-200 hover:scale-[1.02]"
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Dashboard
+            Back to Management Page
             <Edit className="w-4 h-4 mr-2" />
           </Button>
         </div>

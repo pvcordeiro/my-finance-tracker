@@ -131,13 +131,13 @@ export function FinancialChart({ data }: FinancialChartProps) {
                   />
                   <Bar
                     dataKey="income"
-                    fill="hsl(var(--chart-1))"
+                    fill="#22c55e"
                     name="income"
                     radius={[2, 2, 0, 0]}
                   />
                   <Bar
                     dataKey="expenses"
-                    fill="hsl(var(--chart-2))"
+                    fill="#ef4444"
                     name="expenses"
                     radius={[2, 2, 0, 0]}
                   />
