@@ -14,7 +14,6 @@ USER_HOME=$(eval echo ~$CURRENT_USER)
 APP_DIR="$USER_HOME/finance-tracker"
 SERVICE_FILE="/etc/systemd/system/$APP_NAME.service"
 NGINX_CONFIG="/etc/nginx/sites-available/$APP_NAME"
-DOMAIN="your-domain.com"  # Change this to your domain or use IP
 PORT=3000
 
 # Colors for output
@@ -307,10 +306,45 @@ EOF
 # Configure Nginx reverse proxy
 configure_nginx() {
     print_status "Configuring Nginx..."
-    sudo tee $NGINX_CONFIG > /dev/null << EOF
+    sudo tee $NGINX_CONFIG > /dev/null << 'EOF'
+# HTTP server - redirect to HTTPS
 server {
     listen 80;
-    server_name $DOMAIN $(hostname -I | awk '{print $1}');
+    server_name localhost;
+    
+    # Redirect all HTTP traffic to HTTPS
+    return 301 https://$host$request_uri;
+}
+
+# Catch-all server for unknown hosts (security)
+server {
+    listen 80 default_server;
+    listen 443 ssl default_server;
+    server_name _;
+    
+    # Use snakeoil cert for unknown hosts
+    ssl_certificate /etc/ssl/certs/ssl-cert-snakeoil.pem;
+    ssl_certificate_key /etc/ssl/private/ssl-cert-snakeoil.key;
+    
+    # Return 444 (close connection) for unknown hosts
+    return 444;
+}
+
+# HTTPS server
+server {
+    listen 443 ssl http2;
+    server_name localhost;
+    
+    # SSL configuration (using snakeoil certs for development)
+    ssl_certificate /etc/ssl/certs/ssl-cert-snakeoil.pem;
+    ssl_certificate_key /etc/ssl/private/ssl-cert-snakeoil.key;
+    
+    # Modern SSL configuration
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers ECDHE-RSA-AES256-GCM-SHA512:DHE-RSA-AES256-GCM-SHA512:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384;
+    ssl_prefer_server_ciphers off;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 1d;
     
     # Security headers
     add_header X-Frame-Options "SAMEORIGIN" always;
@@ -318,6 +352,7 @@ server {
     add_header X-Content-Type-Options "nosniff" always;
     add_header Referrer-Policy "no-referrer-when-downgrade" always;
     add_header Content-Security-Policy "default-src 'self' http: https: data: blob: 'unsafe-inline'" always;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
     
     # Gzip compression
     gzip on;
@@ -335,15 +370,15 @@ server {
         application/json;
     
     location / {
-        proxy_pass http://localhost:$PORT;
+        proxy_pass http://localhost:3000;
         proxy_http_version 1.1;
-        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_cache_bypass \$http_upgrade;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
         
         # Timeout settings
         proxy_connect_timeout 60s;
@@ -353,14 +388,14 @@ server {
     
     # Static file caching
     location /_next/static {
-        proxy_pass http://localhost:$PORT;
+        proxy_pass http://localhost:3000;
         proxy_cache_valid 200 1y;
         add_header Cache-Control "public, immutable";
     }
     
     # Favicon
     location /favicon.ico {
-        proxy_pass http://localhost:$PORT;
+        proxy_pass http://localhost:3000;
         proxy_cache_valid 200 1d;
     }
 }
@@ -534,10 +569,9 @@ main() {
     echo ""
     print_warning "Remember to:"
     print_warning "1. Change the admin password after first login"
-    print_warning "2. Update the domain name in Nginx config if needed"
+    print_warning "2. Update server names in Nginx config for your specific domain/IP if needed"
     print_warning "3. Set up SSL certificate for production use"
 }
 
 # Run the deployment
 main "$@"
-EOF

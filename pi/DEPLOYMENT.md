@@ -248,8 +248,8 @@ For production use with a domain name:
 # Install Certbot
 sudo apt install certbot python3-certbot-nginx
 
-# Get SSL certificate
-sudo certbot --nginx -d your-domain.com
+# Get SSL certificate (replace with your actual domain)
+sudo certbot --nginx -d yourdomain.com
 
 # Auto-renewal (already configured)
 sudo systemctl status certbot.timer
