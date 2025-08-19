@@ -596,6 +596,48 @@ setup_firewall() {
     sudo ufw --force enable
 }
 
+# Setup SSL certificates
+setup_ssl() {
+    print_status "Setting up SSL certificates..."
+    
+    # Get the current script directory (should be in pi folder)
+    SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+    SSL_SCRIPT="$SCRIPT_DIR/setup-ssl.sh"
+    
+    if [ -f "$SSL_SCRIPT" ]; then
+        print_status "Running SSL setup script..."
+        echo ""
+        print_warning "SSL Setup will now begin. This will:"
+        print_warning "1. Install Certbot for Let's Encrypt"
+        print_warning "2. Request SSL certificates for $DOMAIN"
+        print_warning "3. Configure automatic certificate renewal"
+        echo ""
+        
+        # Ask for confirmation
+        read -p "Do you want to set up SSL certificates now? (y/N): " setup_ssl_confirm
+        
+        if [[ $setup_ssl_confirm =~ ^[Yy]$ ]]; then
+            # Make the script executable and run it
+            chmod +x "$SSL_SCRIPT"
+            
+            # Run the SSL setup script with the domain
+            if "$SSL_SCRIPT" "$DOMAIN"; then
+                print_status "✅ SSL certificates installed successfully!"
+                print_status "Your site is now available at: https://$DOMAIN"
+            else
+                print_warning "⚠️  SSL setup encountered issues."
+                print_warning "You can run it manually later with: $SSL_SCRIPT $DOMAIN"
+            fi
+        else
+            print_warning "Skipping SSL setup. You can run it manually later with:"
+            print_warning "$SSL_SCRIPT $DOMAIN"
+        fi
+    else
+        print_warning "SSL setup script not found at $SSL_SCRIPT"
+        print_warning "SSL setup skipped."
+    fi
+}
+
 # Main deployment function
 main() {
     check_sudo
@@ -620,6 +662,7 @@ main() {
     setup_backup_script
     setup_update_script
     setup_firewall
+    setup_ssl
     
     print_status "=========================================="
     print_status "🎉 Deployment completed successfully!"
@@ -629,7 +672,12 @@ main() {
     print_status "Your Finance Tracker is now running at:"
     print_status "  Local: http://localhost"
     print_status "  Network: http://$(hostname -I | awk '{print $1}')"
-    print_status "  Internet: https://$DOMAIN"
+    if [ -d "/etc/letsencrypt/live/$DOMAIN" ]; then
+        print_status "  Internet: https://$DOMAIN (SSL enabled)"
+    else
+        print_status "  Internet: http://$DOMAIN (SSL not configured)"
+        print_warning "  Note: Run the SSL setup for HTTPS: ./pi/setup-ssl.sh $DOMAIN"
+    fi
     
     echo ""
     print_status "Admin credentials:"
@@ -639,7 +687,11 @@ main() {
     echo ""
     print_status "Admin panel access:"
     print_status "  Local: http://$(hostname -I | awk '{print $1}')/admin"
-    print_status "  Internet: https://$DOMAIN/admin"
+    if [ -d "/etc/letsencrypt/live/$DOMAIN" ]; then
+        print_status "  Internet: https://$DOMAIN/admin"
+    else
+        print_status "  Internet: http://$DOMAIN/admin"
+    fi
     
     echo ""
     print_status "Useful commands:"
