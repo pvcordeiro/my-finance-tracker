@@ -34,13 +34,24 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check for existing admin session
-    const savedAdmin = localStorage.getItem("finance-admin");
-    if (savedAdmin) {
-      setAdminUser(JSON.parse(savedAdmin));
-    }
-    setIsLoading(false);
+    checkAdminSession();
   }, []);
+
+  const checkAdminSession = async () => {
+    try {
+      const response = await fetch("/api/admin/session", {
+        credentials: "include",
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setAdminUser(data.admin);
+      }
+    } catch (error) {
+      console.error("Admin session check failed:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const loginAdmin = async (
     username: string,
@@ -53,16 +64,12 @@ export function AdminProvider({ children }: { children: ReactNode }) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ username, password }),
+        credentials: "include",
       });
 
       if (response.ok) {
-        const adminData = { isAdmin: true };
-        setAdminUser(adminData);
-        localStorage.setItem("finance-admin", JSON.stringify(adminData));
-        localStorage.setItem(
-          "admin-auth",
-          Buffer.from(`${username}:${password}`).toString("base64")
-        );
+        const data = await response.json();
+        setAdminUser(data.admin);
         return true;
       }
       return false;
@@ -72,10 +79,16 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const logoutAdmin = () => {
+  const logoutAdmin = async () => {
+    try {
+      await fetch("/api/admin/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (error) {
+      console.error("Admin logout error:", error);
+    }
     setAdminUser(null);
-    localStorage.removeItem("finance-admin");
-    localStorage.removeItem("admin-auth");
   };
 
   return (

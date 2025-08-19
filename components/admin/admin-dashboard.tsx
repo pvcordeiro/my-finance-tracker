@@ -60,15 +60,10 @@ export function AdminDashboard() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<number | null>(null);
 
-  const getAuthHeader = (): Record<string, string> => {
-    const auth = localStorage.getItem("admin-auth");
-    return auth ? { "x-admin-auth": auth } : {};
-  };
-
   const loadUsers = async () => {
     try {
       const response = await fetch("/api/admin/users", {
-        headers: getAuthHeader(),
+        credentials: "include",
       });
       if (response.ok) {
         const data = await response.json();
@@ -84,7 +79,7 @@ export function AdminDashboard() {
   const loadSettings = async () => {
     try {
       const response = await fetch("/api/admin/settings", {
-        headers: getAuthHeader(),
+        credentials: "include",
       });
       if (response.ok) {
         const data = await response.json();
@@ -116,7 +111,7 @@ export function AdminDashboard() {
     try {
       const response = await fetch(`/api/admin/users?userId=${userToDelete}`, {
         method: "DELETE",
-        headers: getAuthHeader(),
+        credentials: "include",
       });
 
       if (response.ok) {
@@ -140,9 +135,9 @@ export function AdminDashboard() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...getAuthHeader(),
         },
         body: JSON.stringify(updatedSettings),
+        credentials: "include",
       });
 
       if (response.ok) {

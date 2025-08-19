@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
 import { getDatabase } from "../../../../lib/database.js";
 import { settingsSchema } from "../../../../lib/validations.ts";
+import {
+  validateAdminSession,
+  getAdminSessionFromRequest,
+} from "../../../../lib/admin-session.js";
 
 function verifyAdmin(request) {
-  const adminHeader = request.headers.get("x-admin-auth");
-  const expectedAuth = Buffer.from(
-    `${process.env.ADMIN_USERNAME}:${process.env.ADMIN_PASSWORD}`
-  ).toString("base64");
-  return adminHeader === expectedAuth;
+  const sessionToken = getAdminSessionFromRequest(request);
+  const adminSession = validateAdminSession(sessionToken);
+  return adminSession !== null;
 }
 
 export async function GET(request) {
@@ -52,7 +54,6 @@ export async function POST(request) {
 
     const db = getDatabase();
 
-    // Update settings
     for (const [key, value] of Object.entries(validation.data)) {
       db.prepare(
         `

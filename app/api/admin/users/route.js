@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
 import { getDatabase } from "../../../../lib/database.js";
 import { deleteUserSchema } from "../../../../lib/validations.ts";
+import {
+  validateAdminSession,
+  getAdminSessionFromRequest,
+} from "../../../../lib/admin-session.js";
 
 function verifyAdmin(request) {
-  const adminHeader = request.headers.get("x-admin-auth");
-  const expectedAuth = Buffer.from(
-    `${process.env.ADMIN_USERNAME}:${process.env.ADMIN_PASSWORD}`
-  ).toString("base64");
-  return adminHeader === expectedAuth;
+  const sessionToken = getAdminSessionFromRequest(request);
+  const adminSession = validateAdminSession(sessionToken);
+  return adminSession !== null;
 }
 
 export async function GET(request) {
@@ -60,7 +62,6 @@ export async function DELETE(request) {
 
     const db = getDatabase();
 
-    // Delete user and all related data (cascading)
     const result = db
       .prepare("DELETE FROM users WHERE id = ?")
       .run(validation.data.userId);

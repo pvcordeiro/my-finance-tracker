@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
 import { adminLoginSchema } from "../../../../lib/validations.ts";
+import {
+  createAdminSession,
+  getAdminSessionCookieOptions,
+  ADMIN_SESSION_COOKIE_NAME,
+} from "../../../../lib/admin-session.js";
 
 export async function POST(request) {
   try {
@@ -26,10 +31,18 @@ export async function POST(request) {
     }
 
     if (username === adminUsername && password === adminPassword) {
-      return NextResponse.json({
+      const sessionToken = createAdminSession();
+      const response = NextResponse.json({
         success: true,
         message: "Admin login successful",
+        admin: { isAdmin: true },
       });
+      response.cookies.set(
+        ADMIN_SESSION_COOKIE_NAME,
+        sessionToken,
+        getAdminSessionCookieOptions()
+      );
+      return response;
     } else {
       return NextResponse.json(
         { error: "Invalid admin credentials" },
