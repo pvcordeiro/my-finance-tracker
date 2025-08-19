@@ -289,10 +289,10 @@ export function EntryForm({
               onClick={handleAddEntry}
               variant="outline"
               className={cn(
-                "w-full transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] touch-manipulation py-3 sm:py-2 hover:text-current",
+                "w-full transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] touch-manipulation py-3 sm:py-2",
                 type === "income"
-                  ? "border-emerald-200 hover:bg-emerald-50"
-                  : "border-red-200 hover:bg-red-50"
+                  ? "border-emerald-200 dark:border-emerald-700/50 hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
+                  : "border-red-200 dark:border-red-700/50 hover:bg-red-50 dark:hover:bg-red-950/20"
               )}
             >
               <Plus className="w-4 h-4 mr-2" />

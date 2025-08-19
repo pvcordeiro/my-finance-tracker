@@ -1,19 +1,21 @@
-import type React from "react"
-import type { Metadata } from "next"
-import { DM_Sans } from "next/font/google"
-import "./globals.css"
-import { AuthProvider } from "@/hooks/use-auth"
-import { ErrorBoundary } from "@/components/error-boundary"
+import type React from "react";
+import type { Metadata } from "next";
+import { DM_Sans } from "next/font/google";
+import "./globals.css";
+import { AuthProvider } from "@/hooks/use-auth";
+import { ErrorBoundary } from "@/components/error-boundary";
+import { ThemeProvider } from "@/components/theme-provider";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-dm-sans",
-})
+});
 
 export const metadata: Metadata = {
   title: "Finance Tracker - Take Control of Your Finances",
-  description: "Track income, manage expenses, and budget smarter with our modern finance tracker.",
+  description:
+    "Track income, manage expenses, and budget smarter with our modern finance tracker.",
   generator: "v0.app",
   icons: {
     icon: [
@@ -22,15 +24,15 @@ export const metadata: Metadata = {
       },
     ],
   },
-}
+};
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode
+  children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <style>{`
 html {
@@ -40,10 +42,17 @@ html {
         `}</style>
       </head>
       <body className={`${dmSans.variable} font-sans antialiased`}>
-        <ErrorBoundary>
-          <AuthProvider>{children}</AuthProvider>
-        </ErrorBoundary>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <ErrorBoundary>
+            <AuthProvider>{children}</AuthProvider>
+          </ErrorBoundary>
+        </ThemeProvider>
       </body>
     </html>
-  )
+  );
 }

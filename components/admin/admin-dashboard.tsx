@@ -35,6 +35,7 @@ import {
   Calendar,
 } from "lucide-react";
 import { useAdmin } from "@/hooks/use-admin";
+import { DarkModeToggle } from "@/components/ui/dark-mode-toggle";
 
 interface User {
   id: number;
@@ -168,7 +169,7 @@ export function AdminDashboard() {
 
   return (
     <div className="min-h-screen finance-gradient">
-      <header className="bg-white/80 backdrop-blur-sm border-b border-border/50 sticky top-0 z-50">
+      <header className="bg-background/90 backdrop-blur-sm border-b border-border/50 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3 sm:py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 sm:gap-3">
@@ -184,14 +185,17 @@ export function AdminDashboard() {
                 </p>
               </div>
             </div>
-            <Button
-              variant="outline"
-              onClick={logoutAdmin}
-              className="transition-all duration-200 active:scale-[0.98]"
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
-            </Button>
+            <div className="flex items-center gap-4">
+              <DarkModeToggle />
+              <Button
+                variant="outline"
+                onClick={logoutAdmin}
+                className="transition-all duration-200 active:scale-[0.98]"
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign Out
+              </Button>
+            </div>
           </div>
         </div>
       </header>

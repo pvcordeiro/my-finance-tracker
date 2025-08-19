@@ -162,7 +162,7 @@ export function SummaryTable({ data }: SummaryTableProps) {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20">
+        <Card className="bg-accent/10 border-primary/20">
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2">
               <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
@@ -183,12 +183,12 @@ export function SummaryTable({ data }: SummaryTableProps) {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-r from-accent/10 to-primary/10 border-accent/20">
+        <Card className="bg-accent/10 border-primary/20">
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2">
-              <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-accent flex-shrink-0" />
+              <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
               <div className="min-w-0">
-                <p className="text-xs sm:text-sm font-medium text-accent">
+                <p className="text-xs sm:text-sm font-medium text-primary">
                   Final Balance
                 </p>
                 <p

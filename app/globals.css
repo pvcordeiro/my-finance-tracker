@@ -28,25 +28,25 @@
 }
 
 .dark {
-  --background: 222.2 84% 4.9%;
-  --foreground: 210 40% 98%;
-  --card: 222.2 84% 4.9%;
-  --card-foreground: 210 40% 98%;
-  --popover: 222.2 84% 4.9%;
-  --popover-foreground: 210 40% 98%;
-  --primary: 263.4 70% 50.4%;
-  --primary-foreground: 210 40% 98%;
-  --secondary: 217.2 32.6% 17.5%;
-  --secondary-foreground: 210 40% 98%;
-  --muted: 217.2 32.6% 17.5%;
-  --muted-foreground: 215 20.2% 65.1%;
-  --accent: 263.4 70% 50.4%;
-  --accent-foreground: 210 40% 98%;
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 210 40% 98%;
-  --border: 217.2 32.6% 17.5%;
-  --input: 217.2 32.6% 17.5%;
-  --ring: 263.4 70% 50.4%;
+  --background: 240 10% 3.9%;
+  --foreground: 0 0% 98%;
+  --card: 240 10% 8%;
+  --card-foreground: 0 0% 95%;
+  --popover: 240 10% 8%;
+  --popover-foreground: 0 0% 95%;
+  --primary: 263.4 70% 60%;
+  --primary-foreground: 0 0% 98%;
+  --secondary: 240 3.7% 15.9%;
+  --secondary-foreground: 0 0% 98%;
+  --muted: 240 3.7% 15.9%;
+  --muted-foreground: 240 5% 64.9%;
+  --accent: 240 3.7% 15.9%;
+  --accent-foreground: 0 0% 98%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 240 3.7% 20%;
+  --input: 240 3.7% 15.9%;
+  --ring: 263.4 70% 60%;
 }
 
 @layer base {
@@ -88,11 +88,44 @@
   .finance-gradient {
     background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
   }
+  
+  .dark .finance-gradient {
+    background: linear-gradient(135deg, #0f0f23 0%, #1e1b4b 100%);
+  }
+  
   .income-card {
     @apply bg-emerald-50 border-emerald-200;
   }
+  
+  .dark .income-card {
+    @apply bg-emerald-950/40 border-emerald-700/50;
+  }
+  
   .expense-card {
     @apply bg-red-50 border-red-200;
+  }
+  
+  .dark .expense-card {
+    @apply bg-red-950/40 border-red-700/50;
+  }
+
+  /* Better table styling for dark mode */
+  .dark table {
+    background-color: hsl(var(--card));
+  }
+  
+  .dark th {
+    background-color: hsl(var(--muted));
+    color: hsl(var(--muted-foreground));
+    border-bottom: 1px solid hsl(var(--border));
+  }
+  
+  .dark td {
+    border-bottom: 1px solid hsl(var(--border));
+  }
+  
+  .dark tr:hover {
+    background-color: hsl(var(--muted) / 0.1);
   }
 
   /* Enhanced mobile touch interactions and accessibility */

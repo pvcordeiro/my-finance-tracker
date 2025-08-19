@@ -57,7 +57,7 @@ function HomePage() {
           </Button>
           <Button
             variant="outline"
-            className="transition-all duration-200 hover:scale-[1.01] active:scale-[0.95] bg-white/90 backdrop-blur-sm touch-manipulation h-12 sm:h-10 px-4 sm:px-3"
+            className="transition-all duration-200 hover:scale-[1.01] active:scale-[0.95] touch-manipulation h-12 sm:h-10 px-4 sm:px-3"
             onClick={() => router.push("/details")}
           >
             <FileText className="w-4 h-4 mr-2" />
