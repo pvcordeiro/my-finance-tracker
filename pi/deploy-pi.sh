@@ -307,10 +307,13 @@ EOF
 configure_nginx() {
     print_status "Configuring Nginx..."
     sudo tee $NGINX_CONFIG > /dev/null << 'EOF'
+# Production Nginx configuration for Finance Tracker with Let's Encrypt
+# Copy this to: /etc/nginx/sites-available/finance-tracker
+
 # HTTP server - redirect to HTTPS
 server {
     listen 80;
-    server_name localhost;
+    server_name YOURDOMAINHERE;
     
     # Redirect all HTTP traffic to HTTPS
     return 301 https://$host$request_uri;
@@ -322,7 +325,7 @@ server {
     listen 443 ssl default_server;
     server_name _;
     
-    # Use snakeoil cert for unknown hosts
+    # Use snakeoil cert for unknown hosts (fallback)
     ssl_certificate /etc/ssl/certs/ssl-cert-snakeoil.pem;
     ssl_certificate_key /etc/ssl/private/ssl-cert-snakeoil.key;
     
@@ -330,14 +333,14 @@ server {
     return 444;
 }
 
-# HTTPS server
+# HTTPS server - Production with Let's Encrypt
 server {
     listen 443 ssl http2;
-    server_name localhost;
+    server_name YOURDOMAINHERE;
     
-    # SSL configuration (using snakeoil certs for development)
-    ssl_certificate /etc/ssl/certs/ssl-cert-snakeoil.pem;
-    ssl_certificate_key /etc/ssl/private/ssl-cert-snakeoil.key;
+    # Let's Encrypt SSL certificates
+    ssl_certificate /etc/letsencrypt/live/YOURDOMAINHERE/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/YOURDOMAINHERE/privkey.pem;
     
     # Modern SSL configuration
     ssl_protocols TLSv1.2 TLSv1.3;
@@ -346,6 +349,11 @@ server {
     ssl_session_cache shared:SSL:10m;
     ssl_session_timeout 1d;
     
+    # OCSP stapling
+    ssl_stapling on;
+    ssl_stapling_verify on;
+    ssl_trusted_certificate /etc/letsencrypt/live/YOURDOMAINHERE/chain.pem;
+    
     # Security headers
     add_header X-Frame-Options "SAMEORIGIN" always;
     add_header X-XSS-Protection "1; mode=block" always;
@@ -353,6 +361,9 @@ server {
     add_header Referrer-Policy "no-referrer-when-downgrade" always;
     add_header Content-Security-Policy "default-src 'self' http: https: data: blob: 'unsafe-inline'" always;
     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    
+    # Hide nginx version
+    server_tokens off;
     
     # Gzip compression
     gzip on;
@@ -384,6 +395,11 @@ server {
         proxy_connect_timeout 60s;
         proxy_send_timeout 60s;
         proxy_read_timeout 60s;
+        
+        # Validate Host header (security)
+        if ($host !~ ^(anotherfinance\.duckdns\.org)$) {
+            return 444;
+        }
     }
     
     # Static file caching
@@ -398,7 +414,20 @@ server {
         proxy_pass http://localhost:3000;
         proxy_cache_valid 200 1d;
     }
+    
+    # Block access to sensitive files
+    location ~ /\.(ht|env) {
+        deny all;
+        access_log off;
+        log_not_found off;
+    }
+    
+    # Let's Encrypt verification
+    location /.well-known/acme-challenge/ {
+        root /var/www/html;
+    }
 }
+
 EOF
     
     # Enable the site
