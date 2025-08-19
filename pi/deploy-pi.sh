@@ -609,7 +609,7 @@ setup_ssl() {
             chmod +x "$SSL_SCRIPT"
             
             # Run the SSL setup script with the domain
-            if "$SSL_SCRIPT" "$DOMAIN"; then
+            if sudo "$SSL_SCRIPT" "$DOMAIN"; then
                 print_status "✅ SSL certificates installed successfully!"
                 print_status "Your site is now available at: https://$DOMAIN"
             else
