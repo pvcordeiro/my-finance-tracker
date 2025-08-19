@@ -271,22 +271,51 @@ setup_database_dependencies() {
 # Create environment file
 create_env_file() {
     print_status "Creating environment file..."
+    
+    # Generate session secret
+    SESSION_SECRET=$(openssl rand -base64 32)
+    
+    # Prompt for admin credentials
+    echo ""
+    print_status "Setting up admin credentials:"
+    read -p "Enter admin username (default: admin): " ADMIN_USERNAME
+    if [ -z "$ADMIN_USERNAME" ]; then
+        ADMIN_USERNAME="admin"
+    fi
+    
+    # Prompt for password with confirmation
+    while true; do
+        read -s -p "Enter admin password: " ADMIN_PASSWORD
+        echo ""
+        read -s -p "Confirm admin password: " ADMIN_PASSWORD_CONFIRM
+        echo ""
+        
+        if [ "$ADMIN_PASSWORD" = "$ADMIN_PASSWORD_CONFIRM" ]; then
+            if [ ${#ADMIN_PASSWORD} -lt 6 ]; then
+                print_warning "Password should be at least 6 characters long. Please try again."
+                continue
+            fi
+            break
+        else
+            print_warning "Passwords don't match. Please try again."
+        fi
+    done
+    
     cat > $APP_DIR/.env << EOF
 # Environment Configuration
 DATABASE_URL="file:./data/finance.db"
-SESSION_SECRET="$(openssl rand -base64 32)"
-ADMIN_USERNAME="admin"
-ADMIN_PASSWORD="$(openssl rand -base64 12)"
+SESSION_SECRET="$SESSION_SECRET"
+ADMIN_USERNAME="$ADMIN_USERNAME"
+ADMIN_PASSWORD="$ADMIN_PASSWORD"
 ALLOW_REGISTRATION="true"
 NODE_ENV="production"
 PORT=$PORT
 DOMAIN="$DOMAIN"
 EOF
     
-    print_warning "Admin credentials created:"
-    print_warning "Username: admin"
-    print_warning "Password: $(grep ADMIN_PASSWORD $APP_DIR/.env | cut -d'=' -f2 | tr -d '"')"
-    print_warning "Please save these credentials and change them after first login!"
+    print_status "Admin credentials configured:"
+    print_status "Username: $ADMIN_USERNAME"
+    print_warning "Please save these credentials securely!"
 }
 
 # Create PM2 ecosystem file
@@ -407,13 +436,13 @@ server {
     location / {
         proxy_pass http://localhost:3000;
         proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_cache_bypass $http_upgrade;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_cache_bypass \$http_upgrade;
         
         # Timeout settings
         proxy_connect_timeout 60s;
@@ -421,7 +450,7 @@ server {
         proxy_read_timeout 60s;
         
         # Validate Host header (security)
-        if (\$host !~ ^($(echo $DOMAIN | sed 's/\./\\./g'))\$) {
+        if (\$host !~ ^($(echo "$DOMAIN" | sed 's/\./\\\\./g'))\$) {
             return 444;
         }
     }
@@ -604,8 +633,8 @@ main() {
     
     echo ""
     print_status "Admin credentials:"
-    print_status "  Username: admin"
-    print_status "  Password: $(grep ADMIN_PASSWORD $APP_DIR/.env | cut -d'=' -f2 | tr -d '"')"
+    print_status "  Username: $(grep ADMIN_USERNAME $APP_DIR/.env | cut -d'=' -f2 | tr -d '"')"
+    print_warning "  Password: [Hidden for security - you entered this during setup]"
     
     echo ""
     print_status "Admin panel access:"
@@ -622,7 +651,7 @@ main() {
     
     echo ""
     print_warning "Remember to:"
-    print_warning "1. Change the admin password after first login"
+    print_warning "1. Keep your admin credentials secure"
     print_warning "2. Update server names in Nginx config for your specific domain/IP if needed"
     print_warning "3. Set up SSL certificate for production use"
 }
