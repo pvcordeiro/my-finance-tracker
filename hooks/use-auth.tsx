@@ -28,13 +28,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check for existing session from server
     const checkSession = async () => {
       try {
         const response = await fetch("/api/auth/session", {
-          credentials: 'include', // Include cookies
+          credentials: "include",
         });
-        
+
         if (response.ok) {
           const data = await response.json();
           setUser(data.user);
@@ -60,7 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ username, password }),
-        credentials: 'include', // Include cookies
+        credentials: "include",
       });
 
       if (response.ok) {
@@ -86,7 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ username, password }),
-        credentials: 'include', // Include cookies
+        credentials: "include",
       });
 
       if (response.ok) {
@@ -95,7 +94,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return true;
       }
 
-      // Handle specific error cases
       if (response.status === 403) {
         const errorData = await response.json();
         throw new Error(errorData.error || "Registration is disabled");
@@ -104,19 +102,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return false;
     } catch (error) {
       console.error("Registration error:", error);
-      throw error; // Re-throw to let the component handle the specific error
+      throw error;
     }
   };
 
   const logout = async () => {
     try {
+      setUser(null);
+
       await fetch("/api/auth/logout", {
         method: "POST",
-        credentials: 'include', // Include cookies
+        credentials: "include",
       });
     } catch (error) {
       console.error("Logout error:", error);
-    } finally {
       setUser(null);
     }
   };

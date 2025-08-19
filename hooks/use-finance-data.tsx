@@ -25,27 +25,55 @@ export function useFinanceData() {
   useEffect(() => {
     if (user) {
       loadDataFromServer();
+    } else {
+      setHasChanges(false);
+      setIsLoading(false);
     }
   }, [user]);
 
   const loadDataFromServer = async () => {
+    if (!user) {
+      setIsLoading(false);
+      return;
+    }
+
     try {
       setIsLoading(true);
 
       // Load bank amount
-      const bankResponse = await fetch('/api/bank-amount', {
-        credentials: 'include', // Include cookies for session
+      const bankResponse = await fetch("/api/bank-amount", {
+        credentials: "include", // Include cookies for session
       });
+
+      if (!bankResponse.ok) {
+        if (bankResponse.status === 401) {
+          console.log("Authentication required for bank amount");
+          return;
+        }
+        throw new Error(`Bank API error: ${bankResponse.status}`);
+      }
+
       const bankData = await bankResponse.json();
 
       // Load entries
-      const entriesResponse = await fetch('/api/entries', {
-        credentials: 'include', // Include cookies for session
+      const entriesResponse = await fetch("/api/entries", {
+        credentials: "include", // Include cookies for session
       });
+
+      if (!entriesResponse.ok) {
+        if (entriesResponse.status === 401) {
+          console.log("Authentication required for entries");
+          return;
+        }
+        throw new Error(`Entries API error: ${entriesResponse.status}`);
+      }
+
       const entriesData = await entriesResponse.json();
 
+      const entries = entriesData?.entries || [];
+
       // Transform entries to match frontend format
-      const incomes = entriesData.entries
+      const incomes = entries
         .filter((entry: any) => entry.type === "income")
         .map((entry: any) => ({
           id: entry.id.toString(),
@@ -53,7 +81,7 @@ export function useFinanceData() {
           amounts: entry.amounts,
         }));
 
-      const expenses = entriesData.entries
+      const expenses = entries
         .filter((entry: any) => entry.type === "expense")
         .map((entry: any) => ({
           id: entry.id.toString(),
@@ -86,14 +114,13 @@ export function useFinanceData() {
         body: JSON.stringify({
           amount: currentData.bankAmount,
         }),
-        credentials: 'include', // Include cookies for session
+        credentials: "include",
       });
 
       if (!bankResponse.ok) {
         console.error("Bank amount save failed:", await bankResponse.text());
       }
 
-      // Transform and save entries (only save entries with descriptions)
       const allEntries = [
         ...currentData.incomes
           .filter((entry) => entry.description.trim() !== "")
@@ -119,7 +146,7 @@ export function useFinanceData() {
         body: JSON.stringify({
           entries: allEntries,
         }),
-        credentials: 'include', // Include cookies for session
+        credentials: "include",
       });
 
       if (!entriesResponse.ok) {
@@ -131,7 +158,7 @@ export function useFinanceData() {
       setHasChanges(false);
     } catch (error) {
       console.error("Error saving data to server:", error);
-      throw error; // Re-throw so UI can handle it
+      throw error;
     }
   };
 
