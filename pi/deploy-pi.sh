@@ -34,6 +34,29 @@ print_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
+# Load domain from .env or prompt user
+load_domain() {
+    DOMAIN=""
+    
+    # Try to load domain from .env
+    if [ -f ".env" ]; then
+        DOMAIN=$(grep "^DOMAIN=" ".env" 2>/dev/null | cut -d'=' -f2 | tr -d '"' || echo "")
+    fi
+    
+    # If no domain found or it's the default, prompt user
+    if [ -z "$DOMAIN" ] || [ "$DOMAIN" = "your-domain.com" ]; then
+        print_warning "No domain configured in .env"
+        read -p "Enter your domain name (e.g., mydomain.com): " DOMAIN
+        
+        if [ -z "$DOMAIN" ]; then
+            print_error "Domain name is required for deployment"
+            exit 1
+        fi
+    fi
+    
+    print_status "Using domain: $DOMAIN"
+}
+
 # Check if running as root for system services
 check_sudo() {
     if [[ $EUID -eq 0 ]]; then
@@ -257,6 +280,7 @@ ADMIN_PASSWORD="$(openssl rand -base64 12)"
 ALLOW_REGISTRATION="true"
 NODE_ENV="production"
 PORT=$PORT
+DOMAIN="$DOMAIN"
 EOF
     
     print_warning "Admin credentials created:"
@@ -306,17 +330,17 @@ EOF
 # Configure Nginx reverse proxy
 configure_nginx() {
     print_status "Configuring Nginx..."
-    sudo tee $NGINX_CONFIG > /dev/null << 'EOF'
+    sudo tee $NGINX_CONFIG > /dev/null << EOF
 # Production Nginx configuration for Finance Tracker with Let's Encrypt
 # Copy this to: /etc/nginx/sites-available/finance-tracker
 
 # HTTP server - redirect to HTTPS
 server {
     listen 80;
-    server_name YOURDOMAINHERE;
+    server_name $DOMAIN;
     
     # Redirect all HTTP traffic to HTTPS
-    return 301 https://$host$request_uri;
+    return 301 https://\$host\$request_uri;
 }
 
 # Catch-all server for unknown hosts (security)
@@ -336,11 +360,11 @@ server {
 # HTTPS server - Production with Let's Encrypt
 server {
     listen 443 ssl http2;
-    server_name YOURDOMAINHERE;
+    server_name $DOMAIN;
     
     # Let's Encrypt SSL certificates
-    ssl_certificate /etc/letsencrypt/live/YOURDOMAINHERE/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/YOURDOMAINHERE/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/$DOMAIN/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/$DOMAIN/privkey.pem;
     
     # Modern SSL configuration
     ssl_protocols TLSv1.2 TLSv1.3;
@@ -352,7 +376,7 @@ server {
     # OCSP stapling
     ssl_stapling on;
     ssl_stapling_verify on;
-    ssl_trusted_certificate /etc/letsencrypt/live/YOURDOMAINHERE/chain.pem;
+    ssl_trusted_certificate /etc/letsencrypt/live/$DOMAIN/chain.pem;
     
     # Security headers
     add_header X-Frame-Options "SAMEORIGIN" always;
@@ -397,7 +421,7 @@ server {
         proxy_read_timeout 60s;
         
         # Validate Host header (security)
-        if ($host !~ ^(anotherfinance\.duckdns\.org)$) {
+        if (\$host !~ ^($(echo $DOMAIN | sed 's/\./\\./g'))\$) {
             return 444;
         }
     }
@@ -546,6 +570,7 @@ setup_firewall() {
 # Main deployment function
 main() {
     check_sudo
+    load_domain
     
     print_status "🍓 Finance Tracker Raspberry Pi Deployment"
     print_status "=========================================="
@@ -575,7 +600,7 @@ main() {
     print_status "Your Finance Tracker is now running at:"
     print_status "  Local: http://localhost"
     print_status "  Network: http://$(hostname -I | awk '{print $1}')"
-    print_status "  Internet: https://anotherfinance.duckdns.org"
+    print_status "  Internet: https://$DOMAIN"
     
     echo ""
     print_status "Admin credentials:"
@@ -585,7 +610,7 @@ main() {
     echo ""
     print_status "Admin panel access:"
     print_status "  Local: http://$(hostname -I | awk '{print $1}')/admin"
-    print_status "  Internet: https://anotherfinance.duckdns.org/admin"
+    print_status "  Internet: https://$DOMAIN/admin"
     
     echo ""
     print_status "Useful commands:"
