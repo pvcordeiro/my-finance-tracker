@@ -90,6 +90,7 @@ export function EntryForm({
   const entryRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const sectionRef = useRef<HTMLDivElement | null>(null);
   const prevEntriesLengthRef = useRef(entries.length);
+  const shouldExpandLastEntry = useRef(false);
 
   const toggleEntry = (entryId: string) => {
     const newExpanded = new Set(expandedEntries);
@@ -126,8 +127,8 @@ export function EntryForm({
     if (!isOpen) {
       onToggle();
     }
-
     prevEntriesLengthRef.current = entries.length;
+    shouldExpandLastEntry.current = true;
     onAddEntry();
   };
 
@@ -150,7 +151,10 @@ export function EntryForm({
   };
 
   useEffect(() => {
-    if (entries.length > prevEntriesLengthRef.current) {
+    if (
+      shouldExpandLastEntry.current &&
+      entries.length > prevEntriesLengthRef.current
+    ) {
       const newestEntry = entries[entries.length - 1];
       if (newestEntry) {
         setExpandedEntries((prev) => new Set([...prev, newestEntry.id]));
@@ -166,6 +170,7 @@ export function EntryForm({
           }
         }, 200);
       }
+      shouldExpandLastEntry.current = false;
     }
     prevEntriesLengthRef.current = entries.length;
   }, [entries]);
