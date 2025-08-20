@@ -1,27 +1,31 @@
-# Finance Tracker - Raspberry Pi Setup
+# Another Personal Finance Tracker
 
-A modern React-based finance tracker with server-side data persistence, perfect for running on a Raspberry Pi for 24/7 multi-device access.
+A modern, full-featured finance tracker built with Next.js 15 and React 19, designed for privacy, multi-device access, and easy self-hosting. Includes a secure admin panel, session-based authentication, and a beautiful, mobile-friendly UI.
 
 ## Features
 
-- 📊 Income and expense tracking with 12-month rolling view
-- 💰 Bank balance management
-- 📈 Financial analytics and summaries
-- 📱 Mobile-responsive design
-- 🔐 User authentication
-- 💾 SQLite database for reliable data persistence
-- 🌐 Multi-device access over local network
+- 📊 Track income & expenses with 12-month rolling view
+- 💰 Manage bank balances
+- 📈 Visual analytics, summaries, and charts
+- �️ Data import/export (JSON)
+- 🔐 Secure session-based authentication
+- � Admin panel: manage users, toggle registration, view activity
+- 💾 SQLite database for reliable, local data persistence
+- 🌐 Multi-device access (desktop, mobile, tablet)
+- 🎨 Modern, responsive UI (Tailwind CSS, Radix UI)
+- 🕹️ Easy deployment: Raspberry Pi, Linux, or any Node.js server
 
-## Raspberry Pi Setup
+## Quick Start (Raspberry Pi or Linux)
 
 ### Prerequisites
 
 ```bash
+
 # Update system
 sudo apt update && sudo apt upgrade -y
 
-# Install Node.js (v18 or higher)
-curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+# Install Node.js (v18+ recommended)
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt-get install -y nodejs
 
 # Verify installation
@@ -31,49 +35,34 @@ npm --version
 
 ### Installation
 
-1. **Clone/Download the project** to your Raspberry Pi
+1. **Clone/download this repo**
 2. **Install dependencies:**
    ```bash
-   npm install --legacy-peer-deps
+   npm install --legacy-peer-deps # or pnpm install
    ```
+3. **Start the app:**
 
-3. **Initialize the database:**
    ```bash
-   # The database will be created automatically on first run
-   # Demo data will be seeded for testing
-   ```
+   # Development
+   npm run dev -- -H 0.0.0.0
 
-4. **Start the application:**
-   ```bash
-   # Development mode
-   npm run dev
-
-   # Production mode
+   # Production
    npm run build
    npm start
    ```
 
-### Network Access Configuration
+   The SQLite database will be created at `data/finance.db` on first run.
 
-#### Option 1: Local Network Access (Recommended)
+### Network Access
 
-1. **Find your Raspberry Pi's IP address:**
+1. **Find your device's IP:**
    ```bash
    hostname -I
    ```
+2. **Access from any device on your network:**
+   - `http://[YOUR_PI_IP]:3000`
 
-2. **Start the server on all interfaces:**
-   ```bash
-   # Edit package.json or use:
-   npm run dev -- -H 0.0.0.0
-   ```
-
-3. **Access from any device on your network:**
-   - From your phone: `http://192.168.1.XXX:3000`
-   - From your laptop: `http://192.168.1.XXX:3000`
-   - Replace `XXX` with your Pi's actual IP
-
-#### Option 2: PM2 for 24/7 Operation
+#### (Optional) PM2 for 24/7 Operation
 
 ```bash
 # Install PM2 globally
@@ -90,7 +79,7 @@ pm2 startup
 # Follow the instructions provided by the command above
 ```
 
-### Firewall Configuration
+### Firewall (Optional)
 
 ```bash
 # Allow port 3000 through firewall
@@ -102,40 +91,40 @@ sudo ufw status
 
 ## Usage
 
-### Default Credentials
-- **Username:** `demo`
-- **Password:** `demo`
+### Authentication
 
-### Multi-Device Testing
+- **User login:** Register or sign in with a username and password
+- **Admin login:** Go to `/admin` for admin panel (credentials set at first deploy)
+- **Registration:** Can be enabled/disabled by admin in the panel
 
-1. **Start the server** on your Raspberry Pi
-2. **Find the Pi's IP address** using `hostname -I`
-3. **Access from multiple devices:**
-   - Phone browser: `http://[PI_IP]:3000`
-   - Laptop browser: `http://[PI_IP]:3000`
-   - Tablet browser: `http://[PI_IP]:3000`
+### Multi-Device
 
-4. **Test data synchronization:**
-   - Add an expense on your phone
-   - Check that it appears on your laptop
-   - Verify bank balance updates across devices
+- Access from any browser/device on your network
+- All data is synced in real time
 
-### Database Location
+### Data & Backups
 
-- **Database file:** `./data/finance.db`
-- **Backup location:** Create regular backups of this file
-- **Data export:** Use the built-in export feature in the app
+- **Database:** `data/finance.db` (SQLite, local only)
+- **Export:** Download your data as JSON from the app
+- **Backup:** Copy the `data/finance.db` file or use provided scripts
 
-## Troubleshooting
+## Admin Panel
+
+- Manage users (view, delete)
+- Toggle registration (allow/disable new signups)
+- View user activity
+- Change admin password
 
 ### Common Issues
 
 1. **Cannot access from other devices:**
+
    - Ensure the server is running on `0.0.0.0:3000`
    - Check firewall settings
    - Verify devices are on the same network
 
 2. **Database errors:**
+
    - Check file permissions in the `data/` directory
    - Ensure SQLite is properly installed
 
@@ -159,28 +148,30 @@ htop
 ### Project Structure
 
 ```
-├── app/                 # Next.js app directory
-│   ├── api/            # API routes
-│   ├── login/          # Login page
-│   ├── summary/        # Summary page
-│   └── page.tsx        # Main dashboard
-├── components/         # React components
-├── hooks/             # Custom React hooks
-├── lib/               # Database utilities
-├── scripts/           # Database scripts
-└── data/              # SQLite database (created at runtime)
+app/         # Next.js 15 app directory (API, pages, admin, etc)
+components/  # UI and feature components (finance, admin, auth, ui)
+hooks/       # Custom React hooks
+lib/         # Database/session/auth logic
+data/        # SQLite database (created at runtime)
+scripts/     # DB scripts/utilities
+pi/          # Raspberry Pi deployment scripts & configs
 ```
 
-### API Endpoints
+### API Endpoints (selected)
 
-- `POST /api/auth/login` - User authentication
-- `GET/POST /api/bank-amount` - Bank balance management
-- `GET/POST /api/entries` - Income/expense entries
-- `GET /api/data/export` - Data export
+- `POST /api/auth/login` — User login
+- `POST /api/auth/register` — User registration
+- `GET/POST /api/bank-amount` — Bank balance
+- `GET/POST /api/entries` — Income/expense entries
+- `GET /api/data/export` — Data export
+- `GET/POST /api/admin/*` — Admin panel endpoints
 
 ## Security Notes
 
-- Change default credentials in production
-- Consider setting up HTTPS for external access
+- Session-based authentication
+- HTTP-only cookies for all sessions
+- Admin panel protected by separate login
+- Registration can be disabled for closed systems
+- HTTPS recommended for external access (see `pi/DEPLOYMENT.md`)
 - Regular database backups recommended
-- Keep the system updated
+- Keep your system and dependencies updated
