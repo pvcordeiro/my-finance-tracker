@@ -2,6 +2,12 @@
 
 A modern, full-featured finance tracker built with Next.js 15 and React 19, designed for privacy, multi-device access, and easy self-hosting. Includes a secure admin panel, session-based authentication, and a beautiful, mobile-friendly UI.
 
+
+
+https://github.com/user-attachments/assets/e50001ff-c556-4d54-b0f6-ba4243d4c7bf
+
+
+
 ## Features
 
 - 📊 Track income & expenses with 12-month rolling view
