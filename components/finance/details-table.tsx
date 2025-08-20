@@ -66,8 +66,8 @@ export function DetailsTable({ data }: DetailsTableProps) {
           <div className="overflow-x-auto">
             <table className="w-full border-collapse min-w-[600px] text-sm">
               <thead>
-                <tr className="border-b bg-emerald-50 dark:bg-emerald-950/20">
-                  <th className="sticky left-0 bg-emerald-100 dark:bg-emerald-950/10 text-left p-2 font-semibold border-r min-w-[80px] z-10">
+                <tr className="border-b bg-emerald-50 dark:bg-emerald-700/20">
+                  <th className="sticky left-0 bg-emerald-100 dark:bg-emerald-100 text-left p-2 font-semibold border-r min-w-[80px] z-10">
                     Description
                   </th>
                   {months.map((month) => (
@@ -92,7 +92,7 @@ export function DetailsTable({ data }: DetailsTableProps) {
                 {/* Bank Amount Row */}
                 {data.bankAmount > 0 && (
                   <tr className="border-b hover:bg-emerald-50 dark:hover:bg-emerald-950/10 transition-colors">
-                    <td className="sticky left-0 bg-muted/50 p-2 font-medium border-r z-10">
+                    <td className="sticky left-0 bg-muted p-2 font-medium border-r z-10">
                       Bank Amount
                     </td>
                     {months.map((month) => (
@@ -115,7 +115,7 @@ export function DetailsTable({ data }: DetailsTableProps) {
                     key={income.id}
                     className="border-b hover:bg-emerald-50 dark:hover:bg-emerald-950/10 transition-colors"
                   >
-                    <td className="sticky left-0 bg-muted/50 p-2 font-medium border-r z-10">
+                    <td className="sticky left-0 bg-muted p-2 font-medium border-r z-10">
                       {income.description || "(No description)"}
                     </td>
                     {months.map((month) => {
@@ -165,8 +165,8 @@ export function DetailsTable({ data }: DetailsTableProps) {
           <div className="overflow-x-auto">
             <table className="w-full border-collapse min-w-[600px] text-sm">
               <thead>
-                <tr className="border-b bg-red-50 dark:bg-red-950/20">
-                  <th className="sticky left-0 bg-red-100 dark:bg-red-950/10 text-left p-2 font-semibold border-r min-w-[80px] z-10">
+                <tr className="border-b bg-red-50 dark:bg-red-700/20">
+                  <th className="sticky left-0 bg-red-100 dark:bg-red-100 text-left p-2 font-semibold border-r min-w-[80px] z-10">
                     Description
                   </th>
                   {months.map((month) => (
@@ -193,7 +193,7 @@ export function DetailsTable({ data }: DetailsTableProps) {
                     key={expense.id}
                     className="border-b hover:bg-red-50 dark:hover:bg-red-950/10 transition-colors"
                   >
-                    <td className="sticky left-0 bg-muted/50 p-2 font-medium border-r z-10">
+                    <td className="sticky left-0 bg-muted p-2 font-medium border-r z-10">
                       {expense.description || "(No description)"}
                     </td>
                     {months.map((month) => {
