@@ -33,7 +33,7 @@ fi
 echo "📥 Installing dependencies..."
 
 if [ "$PKG_MGR" = "pnpm" ]; then
-	pnpm install --prod --no-frozen-lockfile
+	pnpm install --prod
 else
 	npm ci --production
 fi
