@@ -8,6 +8,16 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { ChevronDown, ChevronUp, Trash2, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -74,6 +84,8 @@ export function EntryForm({
   const [expandedEntries, setExpandedEntries] = useState<Set<string>>(
     new Set()
   );
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [entryToDelete, setEntryToDelete] = useState<string | null>(null);
   const rollingMonths = getRollingMonths();
   const entryRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const sectionRef = useRef<HTMLDivElement | null>(null);
@@ -226,7 +238,8 @@ export function EntryForm({
                             size="sm"
                             onClick={(e) => {
                               e.stopPropagation();
-                              onRemoveEntry(entry.id);
+                              setEntryToDelete(entry.id);
+                              setDeleteDialogOpen(true);
                             }}
                             className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0 touch-manipulation"
                           >
@@ -301,6 +314,33 @@ export function EntryForm({
           </CardContent>
         </CollapsibleContent>
       </Collapsible>
+      {/* Delete Entry Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Entry</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this entry? This action cannot be
+              undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (entryToDelete) {
+                  onRemoveEntry(entryToDelete);
+                  setEntryToDelete(null);
+                }
+                setDeleteDialogOpen(false);
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete Entry
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }
