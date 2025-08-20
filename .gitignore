@@ -2,3 +2,6 @@
 node_modules/
 .DS_Store
 financeTracker.db
+next-env.d.ts
+data
+.next
