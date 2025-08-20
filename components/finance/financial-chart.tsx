@@ -78,27 +78,38 @@ export function FinancialChart({ data }: FinancialChartProps) {
 
   const months = getRollingMonths();
 
-  const chartData = months.map((month) => {
+  const now = new Date();
+  const currentMonth = now.getMonth();
+  let runningBalance = 0;
+  const chartData = months.map((month, idx) => {
     let income = 0;
     let expenses = 0;
 
     if (data.incomes) {
       data.incomes.forEach((incomeEntry) => {
-        income += incomeEntry.amounts[month.month] || 0;
+        const shiftedIndex = (month.month - currentMonth + 12) % 12;
+        income += incomeEntry.amounts[shiftedIndex] || 0;
       });
     }
 
     if (data.expenses) {
       data.expenses.forEach((expenseEntry) => {
-        expenses += expenseEntry.amounts[month.month] || 0;
+        const shiftedIndex = (month.month - currentMonth + 12) % 12;
+        expenses += expenseEntry.amounts[shiftedIndex] || 0;
       });
     }
+
+    let net = income - expenses;
+    if (idx === 0) {
+      net += data.bankAmount || 0;
+    }
+    runningBalance += net;
 
     return {
       month: month.label,
       income,
       expenses,
-      net: income - expenses,
+      net: runningBalance,
     };
   });
 

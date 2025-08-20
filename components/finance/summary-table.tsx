@@ -79,14 +79,16 @@ export function SummaryTable({ data }: SummaryTableProps) {
 
     if (data.incomes) {
       data.incomes.forEach((income) => {
-        const amount = income.amounts[month.month] || 0;
+        const shiftedIndex = (month.month - currentMonth + 12) % 12;
+        const amount = income.amounts[shiftedIndex] || 0;
         totalIncome += amount;
       });
     }
 
     if (data.expenses) {
       data.expenses.forEach((expense) => {
-        const amount = expense.amounts[month.month] || 0;
+        const shiftedIndex = (month.month - currentMonth + 12) % 12;
+        const amount = expense.amounts[shiftedIndex] || 0;
         totalExpenses += amount;
       });
     }
@@ -129,6 +131,9 @@ export function SummaryTable({ data }: SummaryTableProps) {
 
   return (
     <div className="space-y-4 sm:space-y-6">
+      <div className="flex justify-center items-center text-lg">
+        <p className="text-primary font-bold">12 months forecast</p>
+      </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-3 sm:gap-4">
         <Card className="income-card">
           <CardContent className="p-3 sm:p-4">
