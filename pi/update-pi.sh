@@ -31,18 +31,21 @@ fi
 
 # Install any new dependencies
 echo "📥 Installing dependencies..."
+
 if [ "$PKG_MGR" = "pnpm" ]; then
-	# Check if lockfile is out of sync with package.json
-	pnpm install --prod --frozen-lockfile 2>pnpm-error.log || {
+	pnpm install --prod --frozen-lockfile 2>pnpm-error.log
+	EXIT_CODE=$?
+	if [ $EXIT_CODE -ne 0 ]; then
 		if grep -q 'ERR_PNPM_OUTDATED_LOCKFILE' pnpm-error.log; then
 			echo "⚠️  pnpm-lock.yaml is out of sync with package.json. Running pnpm install to update lockfile..."
 			pnpm install --prod --no-frozen-lockfile
 		else
 			echo "❌ pnpm install failed for another reason. See pnpm-error.log."
 			cat pnpm-error.log
+			rm -f pnpm-error.log
 			exit 1
 		fi
-	}
+	fi
 	rm -f pnpm-error.log
 else
 	npm ci --production
