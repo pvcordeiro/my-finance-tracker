@@ -5,16 +5,21 @@ import { useAuth } from "@/hooks/use-auth";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { DarkModeToggle } from "@/components/ui/dark-mode-toggle";
+import { useRouter } from "next/navigation";
 
 export function DashboardHeader() {
   const { user, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const router = useRouter();
 
   return (
     <header className="bg-background/90 backdrop-blur-sm border-b border-border/50 sticky top-0 z-50">
       <div className="container mx-auto px-4 py-3 sm:py-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div
+            className="flex items-center gap-2 sm:gap-3 cursor-pointer"
+            onClick={() => router.push("/")}
+          >
             <div className="w-8 h-8 sm:w-10 sm:h-10 bg-primary rounded-full flex items-center justify-center">
               <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-primary-foreground" />
             </div>
