@@ -131,19 +131,16 @@ export function SummaryTable({ data }: SummaryTableProps) {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div className="flex justify-center items-center text-lg">
-        <p className="text-primary font-bold">12 months forecast</p>
-      </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-3 sm:gap-4">
         <Card className="income-card">
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2">
               <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600 flex-shrink-0" />
               <div className="min-w-0">
-                <p className="text-xs sm:text-sm font-medium text-emerald-700">
+                <p className="text-xs sm:text-sm font-medium text-emerald-700 text-shadow-sm">
                   Total Income
                 </p>
-                <p className="text-lg sm:text-2xl font-bold text-emerald-800 truncate">
+                <p className="text-lg sm:text-2xl font-bold text-emerald-800 truncate text-shadow-sm">
                   €{annualIncome.toFixed(2)}
                 </p>
               </div>
@@ -156,10 +153,10 @@ export function SummaryTable({ data }: SummaryTableProps) {
             <div className="flex items-center gap-2">
               <TrendingDown className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 flex-shrink-0" />
               <div className="min-w-0">
-                <p className="text-xs sm:text-sm font-medium text-red-700">
+                <p className="text-xs sm:text-sm font-medium text-red-700 text-shadow-sm">
                   Total Expenses
                 </p>
-                <p className="text-lg sm:text-2xl font-bold text-red-800 truncate">
+                <p className="text-lg sm:text-2xl font-bold text-red-800 truncate text-shadow-sm">
                   €{annualExpenses.toFixed(2)}
                 </p>
               </div>
@@ -167,17 +164,17 @@ export function SummaryTable({ data }: SummaryTableProps) {
           </CardContent>
         </Card>
 
-        <Card className="bg-accent/10 border-primary/20">
+        <Card className="bg-accent/30 border-primary/50">
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2">
               <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
               <div className="min-w-0">
-                <p className="text-xs sm:text-sm font-medium text-primary">
+                <p className="text-xs sm:text-sm font-medium text-primary text-shadow-sm">
                   Net Savings
                 </p>
                 <p
                   className={cn(
-                    "text-lg sm:text-2xl font-bold truncate",
+                    "text-lg sm:text-2xl font-bold truncate text-shadow-sm",
                     netSavings >= 0 ? "text-emerald-600" : "text-red-600"
                   )}
                 >
@@ -188,17 +185,17 @@ export function SummaryTable({ data }: SummaryTableProps) {
           </CardContent>
         </Card>
 
-        <Card className="bg-accent/10 border-primary/20">
+        <Card className="bg-accent/30 border-primary/50">
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2">
               <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
               <div className="min-w-0">
-                <p className="text-xs sm:text-sm font-medium text-primary">
+                <p className="text-xs sm:text-sm font-medium text-primary text-shadow-sm">
                   Final Balance
                 </p>
                 <p
                   className={cn(
-                    "text-lg sm:text-2xl font-bold truncate",
+                    "text-lg sm:text-2xl font-bold truncate text-shadow-sm",
                     finalBalance >= 0 ? "text-emerald-600" : "text-red-600"
                   )}
                 >
