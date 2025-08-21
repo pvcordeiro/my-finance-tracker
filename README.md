@@ -2,11 +2,7 @@
 
 A modern, full-featured finance tracker built with Next.js 15 and React 19, designed for privacy, multi-device access, and easy self-hosting. Includes a secure admin panel, session-based authentication, and a beautiful, mobile-friendly UI.
 
-
-
 https://github.com/user-attachments/assets/e50001ff-c556-4d54-b0f6-ba4243d4c7bf
-
-
 
 ## Features
 
@@ -21,79 +17,36 @@ https://github.com/user-attachments/assets/e50001ff-c556-4d54-b0f6-ba4243d4c7bf
 - 🎨 Modern, responsive UI (Tailwind CSS, Radix UI)
 - 🕹️ Easy deployment: Raspberry Pi, Linux, or any Node.js server
 
-## Quick Start (Raspberry Pi or Linux)
+## Quick Start (Docker)
 
 ### Prerequisites
 
-```bash
+- [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/) installed
 
-# Update system
-sudo apt update && sudo apt upgrade -y
+### 1. Clone/download this repo
 
-# Install Node.js (v18+ recommended)
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt-get install -y nodejs
+### 2. Copy `.env.example` into `.env` file and change your admin credentials, secrets, etc:
 
-# Verify installation
-node --version
-npm --version
+```
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=yourpassword
+SESSION_SECRET=yourrandomsecret
+# DATABASE_URL, DOMAIN, etc. can also be set if needed
 ```
 
-### Installation
-
-1. **Clone/download this repo**
-2. **Install dependencies:**
-   ```bash
-   npm install --legacy-peer-deps # or pnpm install
-   ```
-3. **Start the app:**
-
-   ```bash
-   # Development
-   npm run dev -- -H 0.0.0.0
-
-   # Production
-   npm run build
-   npm start
-   ```
-
-   The SQLite database will be created at `data/finance.db` on first run.
-
-### Network Access
-
-1. **Find your device's IP:**
-   ```bash
-   hostname -I
-   ```
-2. **Access from any device on your network:**
-   - `http://[YOUR_PI_IP]:3000`
-
-#### (Optional) PM2 for 24/7 Operation
+### 3. Start everything with Docker Compose:
 
 ```bash
-# Install PM2 globally
-sudo npm install -g pm2
-
-# Start the application
-pm2 start npm --name "finance-tracker" -- start
-
-# Save PM2 configuration
-pm2 save
-
-# Setup PM2 to start on boot
-pm2 startup
-# Follow the instructions provided by the command above
+docker compose up --build -d
 ```
 
-### Firewall (Optional)
+The app will be available at [http://localhost:3000](http://localhost:3000) (or your server's IP).
 
-```bash
-# Allow port 3000 through firewall
-sudo ufw allow 3000
+The SQLite database will be created at `data/finance.db` on first run and persisted on your host.
 
-# Check firewall status
-sudo ufw status
-```
+### 4. (Optional) Nginx + HTTPS
+
+Nginx is included in the Docker Compose setup for HTTPS/SSL termination. See the `nginx/` folder for configuration and instructions on using your own domain and certificates.
 
 ## Usage
 
@@ -178,6 +131,6 @@ pi/          # Raspberry Pi deployment scripts & configs
 - HTTP-only cookies for all sessions
 - Admin panel protected by separate login
 - Registration can be disabled for closed systems
-- HTTPS recommended for external access (see `pi/DEPLOYMENT.md`)
+- HTTPS recommended for external access
 - Regular database backups recommended
 - Keep your system and dependencies updated
