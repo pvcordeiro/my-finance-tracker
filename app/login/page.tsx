@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { LoginForm } from "@/components/auth/login-form";
 import { useAuth } from "@/hooks/use-auth";
 
-export default function LoginPage() {
+function LoginPageInner() {
   const { user, isLoading, login, register } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -49,5 +50,13 @@ export default function LoginPage() {
       )}
       <LoginForm onLogin={handleLogin} onRegister={handleRegister} />
     </>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginPageInner />
+    </Suspense>
   );
 }
