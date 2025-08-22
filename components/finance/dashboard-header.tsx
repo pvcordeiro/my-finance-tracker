@@ -12,6 +12,13 @@ export function DashboardHeader() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const router = useRouter();
 
+  const handleLogout = async () => {
+    await logout();
+    setTimeout(() => {
+      router.push("/login");
+    }, 100);
+  };
+
   return (
     <header className="bg-background/90 backdrop-blur-sm border-b border-border/50 sticky top-0 z-50">
       <div className="container mx-auto px-4 py-3 sm:py-4">
@@ -42,7 +49,7 @@ export function DashboardHeader() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={logout}
+                onClick={handleLogout}
                 className="transition-all duration-200 hover:scale-[1.02] touch-manipulation"
               >
                 <LogOut className="w-4 h-4 mr-2" />
@@ -78,7 +85,7 @@ export function DashboardHeader() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={logout}
+                onClick={handleLogout}
                 className="transition-all duration-200 active:scale-[0.98] touch-manipulation"
               >
                 <LogOut className="w-4 h-4 mr-2" />

@@ -15,7 +15,7 @@ const dmSans = DM_Sans({
 export const metadata: Metadata = {
   title: "Finance Tracker - Take Control of Your Finances",
   description:
-    "Track income, manage expenses, and budget smarter with our modern finance tracker.",
+    "Track income, manage expenses, and budget smarter with this modern finance tracker.",
   generator: "v0.app",
   icons: {
     icon: [
