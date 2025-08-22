@@ -8,7 +8,7 @@ import { DashboardHeader } from "@/components/finance/dashboard-header";
 import { BankAmount } from "@/components/finance/bank-amount";
 import { EntryForm } from "@/components/finance/entry-form";
 import { Button } from "@/components/ui/button";
-import { Save, BarChart3, FileText, Settings, Edit } from "lucide-react";
+import { BarChart3, FileText, Settings, Edit } from "lucide-react";
 import { DataManagement } from "@/components/finance/data-management";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -22,7 +22,7 @@ import {
 import { FullPageLoader } from "@/components/ui/loading";
 
 function HomePage() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, logout } = useAuth();
   const router = useRouter();
   const {
     data,
@@ -37,10 +37,12 @@ function HomePage() {
   const [incomeOpen, setIncomeOpen] = useState(false);
   const [expenseOpen, setExpenseOpen] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showSaved, setShowSaved] = useState(false);
   const nextRouteRef = useRef<string | null>(null);
+  const sessionExpiredRef = useRef(false);
 
   useEffect(() => {
-    if (!isLoading && !user) {
+    if (!isLoading && !user && !sessionExpiredRef.current) {
       router.push("/login");
     }
   }, [user, isLoading, router]);
@@ -93,6 +95,19 @@ function HomePage() {
     await setData(emptyData, true);
   };
 
+  const triggerSavedPopup = () => {
+    setTimeout(() => {
+      setShowSaved(true);
+      setTimeout(() => setShowSaved(false), 1000);
+    }, 300);
+  };
+
+  const handleSessionExpired = async () => {
+    sessionExpiredRef.current = true;
+    await logout();
+    router.push("/login?session=expired");
+  };
+
   if (isLoading) {
     return <FullPageLoader message="Loading your financial data..." />;
   }
@@ -104,6 +119,11 @@ function HomePage() {
   return (
     <div className="min-h-screen finance-gradient">
       <DashboardHeader />
+      {showSaved && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-emerald-600 text-white px-4 py-2 rounded shadow z-50 transition-opacity pointer-events-none text-sm whitespace-nowrap">
+          Your changes have been saved
+        </div>
+      )}
       <main className="container mx-auto p-4 space-y-6">
         <Tabs defaultValue="main" className="space-y-6">
           <TabsList className="grid w-full grid-cols-2">
@@ -143,18 +163,32 @@ function HomePage() {
               </div>
               <BankAmount
                 amount={data.bankAmount}
-                onChange={updateBankAmount}
+                onChange={(amount) => {
+                  updateBankAmount(amount);
+                  saveData(undefined, handleSessionExpired);
+                  triggerSavedPopup();
+                }}
               />
 
               <div className="space-y-4">
                 <EntryForm
                   title="Income"
                   entries={data.incomes}
-                  onAddEntry={() => addEntry("incomes")}
-                  onUpdateEntry={(id, field, value, monthIndex) =>
-                    updateEntry("incomes", id, field, value, monthIndex)
-                  }
-                  onRemoveEntry={(id) => removeEntry("incomes", id)}
+                  onAddEntry={() => {
+                    addEntry("incomes");
+                    saveData(undefined, handleSessionExpired);
+                    triggerSavedPopup();
+                  }}
+                  onUpdateEntry={(id, field, value, monthIndex) => {
+                    updateEntry("incomes", id, field, value, monthIndex);
+                    saveData(undefined, handleSessionExpired);
+                    triggerSavedPopup();
+                  }}
+                  onRemoveEntry={(id) => {
+                    removeEntry("incomes", id);
+                    saveData(undefined, handleSessionExpired);
+                    triggerSavedPopup();
+                  }}
                   type="income"
                   isOpen={incomeOpen}
                   onToggle={() => setIncomeOpen(!incomeOpen)}
@@ -163,29 +197,25 @@ function HomePage() {
                 <EntryForm
                   title="Expenses"
                   entries={data.expenses}
-                  onAddEntry={() => addEntry("expenses")}
-                  onUpdateEntry={(id, field, value, monthIndex) =>
-                    updateEntry("expenses", id, field, value, monthIndex)
-                  }
-                  onRemoveEntry={(id) => removeEntry("expenses", id)}
+                  onAddEntry={() => {
+                    addEntry("expenses");
+                    saveData(undefined, handleSessionExpired);
+                    triggerSavedPopup();
+                  }}
+                  onUpdateEntry={(id, field, value, monthIndex) => {
+                    updateEntry("expenses", id, field, value, monthIndex);
+                    saveData(undefined, handleSessionExpired);
+                    triggerSavedPopup();
+                  }}
+                  onRemoveEntry={(id) => {
+                    removeEntry("expenses", id);
+                    saveData(undefined, handleSessionExpired);
+                    triggerSavedPopup();
+                  }}
                   type="expense"
                   isOpen={expenseOpen}
                   onToggle={() => setExpenseOpen(!expenseOpen)}
                 />
-              </div>
-
-              <div className="fixed bottom-4 right-4 flex flex-col gap-2 z-40">
-                {hasChanges && (
-                  <Button
-                    onClick={() => saveData()}
-                    className="shadow-lg transition-all duration-200 hover:scale-[1.05] active:scale-[0.95] bg-emerald-600 hover:bg-emerald-700 touch-manipulation h-12 sm:h-10 px-4 sm:px-3"
-                  >
-                    <Save className="w-4 h-4 mr-2" />
-                    <span className="transition-all duration-200 hover:scale-[1.05]">
-                      Save
-                    </span>
-                  </Button>
-                )}
               </div>
             </div>
           </TabsContent>

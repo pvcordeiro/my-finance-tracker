@@ -37,9 +37,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (response.ok) {
           const data = await response.json();
           setUser(data.user);
+        } else {
+          setUser(null);
         }
       } catch (error) {
         console.error("Session check error:", error);
+        setUser(null);
       } finally {
         setIsLoading(false);
       }

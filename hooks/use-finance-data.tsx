@@ -101,7 +101,10 @@ export function useFinanceData() {
     }
   };
 
-  const saveData = async (dataToSave?: FinanceData) => {
+  const saveData = async (
+    dataToSave?: FinanceData,
+    onSessionExpired?: () => void
+  ) => {
     try {
       const currentData = dataToSave || data;
 
@@ -119,6 +122,10 @@ export function useFinanceData() {
 
       if (!bankResponse.ok) {
         console.error("Bank amount save failed:", await bankResponse.text());
+        if (bankResponse.status === 401) {
+          if (onSessionExpired) onSessionExpired();
+          return;
+        }
       }
 
       const allEntries = [
