@@ -1,12 +1,12 @@
-"use client"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent } from "@/components/ui/card"
-import { Banknote } from "lucide-react"
+"use client";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
+import { Banknote } from "lucide-react";
 
 interface BankAmountProps {
-  amount: number
-  onChange: (amount: number) => void
+  amount: number;
+  onChange: (amount: number) => void;
 }
 
 export function BankAmount({ amount, onChange }: BankAmountProps) {
@@ -16,8 +16,11 @@ export function BankAmount({ amount, onChange }: BankAmountProps) {
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
           <div className="flex items-center gap-2 flex-1">
             <Banknote className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
-            <Label htmlFor="bankAmount" className="font-semibold text-primary text-sm sm:text-base">
-              Current Bank Amount:
+            <Label
+              htmlFor="bankAmount"
+              className="font-semibold text-primary text-sm sm:text-base"
+            >
+              Current Bank Balance:
             </Label>
           </div>
           <div className="relative w-full sm:w-auto">
@@ -37,5 +40,5 @@ export function BankAmount({ amount, onChange }: BankAmountProps) {
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

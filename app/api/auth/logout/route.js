@@ -1,11 +1,15 @@
 import { NextResponse } from "next/server";
-import { deleteSession, getSessionFromRequest, SESSION_COOKIE_NAME } from "../../../../lib/session.js";
+import {
+  deleteSession,
+  getSessionFromRequest,
+  SESSION_COOKIE_NAME,
+} from "../../../../lib/session.js";
 
 export async function POST(request) {
   try {
     // Get session token from cookie
     const sessionToken = getSessionFromRequest(request);
-    
+
     if (sessionToken) {
       // Delete the session from database
       deleteSession(sessionToken);
@@ -17,12 +21,12 @@ export async function POST(request) {
     });
 
     // Clear the session cookie
-    response.cookies.set(SESSION_COOKIE_NAME, '', {
+    response.cookies.set(SESSION_COOKIE_NAME, "", {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 0, // Expire immediately
-      path: '/'
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 0,
+      path: "/",
     });
 
     return response;

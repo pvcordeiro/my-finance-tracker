@@ -93,7 +93,7 @@ export function DetailsTable({ data }: DetailsTableProps) {
                 {data.bankAmount > 0 && (
                   <tr className="border-b hover:bg-emerald-50 dark:hover:bg-emerald-950/10 transition-colors">
                     <td className="sticky left-0 bg-muted p-2 font-medium border-r z-10">
-                      Bank Amount
+                      Bank Balance
                     </td>
                     {months.map((month) => (
                       <td key={month.label} className="text-center p-2">

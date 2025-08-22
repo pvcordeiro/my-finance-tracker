@@ -2,7 +2,11 @@ import { NextResponse } from "next/server";
 import { getDatabase, hashPassword } from "../../../../lib/database.js";
 import { registerSchema } from "../../../../lib/validations.ts";
 import { rateLimit, getClientIp } from "../../../../lib/rate-limit.ts";
-import { createSession, getSessionCookieOptions, SESSION_COOKIE_NAME } from "../../../../lib/session.js";
+import {
+  createSession,
+  getSessionCookieOptions,
+  SESSION_COOKIE_NAME,
+} from "../../../../lib/session.js";
 
 export async function POST(request) {
   try {
@@ -78,7 +82,11 @@ export async function POST(request) {
     });
 
     // Set secure HTTP-only cookie
-    response.cookies.set(SESSION_COOKIE_NAME, sessionToken, getSessionCookieOptions());
+    response.cookies.set(
+      SESSION_COOKIE_NAME,
+      sessionToken,
+      getSessionCookieOptions()
+    );
 
     return response;
   } catch (error) {
