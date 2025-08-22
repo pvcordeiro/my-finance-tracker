@@ -17,7 +17,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Eye,
   EyeOff,
-  DollarSign,
+  EuroIcon,
   UserPlus,
   LogIn,
   AlertTriangle,
@@ -116,7 +116,7 @@ export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="text-center space-y-4">
           <div className="mx-auto w-12 h-12 bg-primary rounded-full flex items-center justify-center">
-            <DollarSign className="w-6 h-6 text-primary-foreground" />
+            <EuroIcon className="w-6 h-6 text-primary-foreground" />
           </div>
           <div>
             <CardTitle className="text-2xl font-bold">

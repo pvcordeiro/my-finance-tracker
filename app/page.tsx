@@ -8,7 +8,9 @@ import { DashboardHeader } from "@/components/finance/dashboard-header";
 import { BankAmount } from "@/components/finance/bank-amount";
 import { EntryForm } from "@/components/finance/entry-form";
 import { Button } from "@/components/ui/button";
-import { Save, BarChart3, FileText } from "lucide-react";
+import { Save, BarChart3, FileText, Settings, Edit } from "lucide-react";
+import { DataManagement } from "@/components/finance/data-management";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { Dialog } from "@/components/ui/dialog";
 import {
@@ -30,10 +32,10 @@ function HomePage() {
     addEntry,
     updateEntry,
     removeEntry,
+    setData,
   } = useFinanceData();
   const [incomeOpen, setIncomeOpen] = useState(false);
   const [expenseOpen, setExpenseOpen] = useState(false);
-
   const [showConfirm, setShowConfirm] = useState(false);
   const nextRouteRef = useRef<string | null>(null);
 
@@ -56,7 +58,6 @@ function HomePage() {
     };
   }, [hasChanges]);
 
-  // Custom navigation handler for in-app navigation
   const handleNav = (url: string) => {
     if (hasChanges) {
       setShowConfirm(true);
@@ -79,6 +80,19 @@ function HomePage() {
     nextRouteRef.current = null;
   }, []);
 
+  const handleImportData = async (importedData: any) => {
+    await setData(importedData, true);
+  };
+
+  const handleClearData = async () => {
+    const emptyData = {
+      bankAmount: 0,
+      incomes: [],
+      expenses: [],
+    };
+    await setData(emptyData, true);
+  };
+
   if (isLoading) {
     return <FullPageLoader message="Loading your financial data..." />;
   }
@@ -90,72 +104,100 @@ function HomePage() {
   return (
     <div className="min-h-screen finance-gradient">
       <DashboardHeader />
-      <main className="container mx-auto p-3 sm:p-4 space-y-4 sm:space-y-6 pb-24 sm:pb-6">
-        <div className="grid grid-cols-2 gap-2">
-          <Button
-            variant="outline"
-            className="transition-all duration-200 hover:scale-[1.01] active:scale-[0.95] touch-manipulation h-12 sm:h-10 px-4 sm:px-3"
-            onClick={() => handleNav("/summary")}
-          >
-            <BarChart3 className="w-4 h-4 mr-2" />
-            <span className="transition-all duration-200 hover:scale-[1.05]">
-              Summary
-            </span>
-          </Button>
-          <Button
-            variant="outline"
-            className="transition-all duration-200 hover:scale-[1.01] active:scale-[0.95] touch-manipulation h-12 sm:h-10 px-4 sm:px-3"
-            onClick={() => handleNav("/details")}
-          >
-            <FileText className="w-4 h-4 mr-2" />
-            <span className="transition-all duration-200 hover:scale-[1.05]">
-              Details
-            </span>
-          </Button>
-        </div>
-        <BankAmount amount={data.bankAmount} onChange={updateBankAmount} />
+      <main className="container mx-auto p-4 space-y-6">
+        <Tabs defaultValue="main" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="main" className="flex items-center gap-2">
+              <Edit className="w-4 h-4" />
+              Manage
+            </TabsTrigger>
+            <TabsTrigger value="management" className="flex items-center gap-2">
+              <Settings className="w-4 h-4" />
+              Data
+            </TabsTrigger>
+          </TabsList>
 
-        <div className="space-y-4">
-          <EntryForm
-            title="Income"
-            entries={data.incomes}
-            onAddEntry={() => addEntry("incomes")}
-            onUpdateEntry={(id, field, value, monthIndex) =>
-              updateEntry("incomes", id, field, value, monthIndex)
-            }
-            onRemoveEntry={(id) => removeEntry("incomes", id)}
-            type="income"
-            isOpen={incomeOpen}
-            onToggle={() => setIncomeOpen(!incomeOpen)}
-          />
+          <TabsContent value="main">
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  variant="outline"
+                  className="transition-all duration-200 hover:scale-[1.01] active:scale-[0.95] touch-manipulation h-12 sm:h-10 px-4 sm:px-3"
+                  onClick={() => handleNav("/summary")}
+                >
+                  <BarChart3 className="w-4 h-4 mr-2" />
+                  <span className="transition-all duration-200 hover:scale-[1.05]">
+                    Summary
+                  </span>
+                </Button>
+                <Button
+                  variant="outline"
+                  className="transition-all duration-200 hover:scale-[1.01] active:scale-[0.95] touch-manipulation h-12 sm:h-10 px-4 sm:px-3"
+                  onClick={() => handleNav("/details")}
+                >
+                  <FileText className="w-4 h-4 mr-2" />
+                  <span className="transition-all duration-200 hover:scale-[1.05]">
+                    Details
+                  </span>
+                </Button>
+              </div>
+              <BankAmount
+                amount={data.bankAmount}
+                onChange={updateBankAmount}
+              />
 
-          <EntryForm
-            title="Expenses"
-            entries={data.expenses}
-            onAddEntry={() => addEntry("expenses")}
-            onUpdateEntry={(id, field, value, monthIndex) =>
-              updateEntry("expenses", id, field, value, monthIndex)
-            }
-            onRemoveEntry={(id) => removeEntry("expenses", id)}
-            type="expense"
-            isOpen={expenseOpen}
-            onToggle={() => setExpenseOpen(!expenseOpen)}
-          />
-        </div>
+              <div className="space-y-4">
+                <EntryForm
+                  title="Income"
+                  entries={data.incomes}
+                  onAddEntry={() => addEntry("incomes")}
+                  onUpdateEntry={(id, field, value, monthIndex) =>
+                    updateEntry("incomes", id, field, value, monthIndex)
+                  }
+                  onRemoveEntry={(id) => removeEntry("incomes", id)}
+                  type="income"
+                  isOpen={incomeOpen}
+                  onToggle={() => setIncomeOpen(!incomeOpen)}
+                />
 
-        <div className="fixed bottom-4 right-4 flex flex-col gap-2 z-40">
-          {hasChanges && (
-            <Button
-              onClick={() => saveData()}
-              className="shadow-lg transition-all duration-200 hover:scale-[1.05] active:scale-[0.95] bg-emerald-600 hover:bg-emerald-700 touch-manipulation h-12 sm:h-10 px-4 sm:px-3"
-            >
-              <Save className="w-4 h-4 mr-2" />
-              <span className="transition-all duration-200 hover:scale-[1.05]">
-                Save
-              </span>
-            </Button>
-          )}
-        </div>
+                <EntryForm
+                  title="Expenses"
+                  entries={data.expenses}
+                  onAddEntry={() => addEntry("expenses")}
+                  onUpdateEntry={(id, field, value, monthIndex) =>
+                    updateEntry("expenses", id, field, value, monthIndex)
+                  }
+                  onRemoveEntry={(id) => removeEntry("expenses", id)}
+                  type="expense"
+                  isOpen={expenseOpen}
+                  onToggle={() => setExpenseOpen(!expenseOpen)}
+                />
+              </div>
+
+              <div className="fixed bottom-4 right-4 flex flex-col gap-2 z-40">
+                {hasChanges && (
+                  <Button
+                    onClick={() => saveData()}
+                    className="shadow-lg transition-all duration-200 hover:scale-[1.05] active:scale-[0.95] bg-emerald-600 hover:bg-emerald-700 touch-manipulation h-12 sm:h-10 px-4 sm:px-3"
+                  >
+                    <Save className="w-4 h-4 mr-2" />
+                    <span className="transition-all duration-200 hover:scale-[1.05]">
+                      Save
+                    </span>
+                  </Button>
+                )}
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="management">
+            <DataManagement
+              data={data}
+              onImportData={handleImportData}
+              onClearData={handleClearData}
+            />
+          </TabsContent>
+        </Tabs>
       </main>
       {/* Confirmation Dialog */}
       <Dialog open={showConfirm} onOpenChange={setShowConfirm}>

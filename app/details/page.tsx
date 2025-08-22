@@ -23,19 +23,6 @@ function DetailsPage() {
     }
   }, [user, isLoading, router]);
 
-  const handleImportData = async (importedData: any) => {
-    await setData(importedData, true);
-  };
-
-  const handleClearData = async () => {
-    const emptyData = {
-      bankAmount: 0,
-      incomes: [],
-      expenses: [],
-    };
-    await setData(emptyData, true);
-  };
-
   if (isLoading) {
     return (
       <div className="min-h-screen finance-gradient flex items-center justify-center">
@@ -73,31 +60,7 @@ function DetailsPage() {
             <span className="hidden xs:inline">Manage</span>
           </Button>
         </div>
-
-        <Tabs defaultValue="details" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="details" className="flex items-center gap-2">
-              <FileText className="w-4 h-4" />
-              Details View
-            </TabsTrigger>
-            <TabsTrigger value="management" className="flex items-center gap-2">
-              <Settings className="w-4 h-4" />
-              Data Management
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="details">
-            <DetailsTable data={data} />
-          </TabsContent>
-
-          <TabsContent value="management">
-            <DataManagement
-              data={data}
-              onImportData={handleImportData}
-              onClearData={handleClearData}
-            />
-          </TabsContent>
-        </Tabs>
+        <DetailsTable data={data} />
       </main>
     </div>
   );

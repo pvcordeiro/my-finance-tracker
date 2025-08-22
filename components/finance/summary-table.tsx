@@ -1,7 +1,7 @@
 "use client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, TrendingDown, DollarSign } from "lucide-react";
+import { TrendingUp, TrendingDown, EuroIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { FinanceData } from "@/hooks/use-finance-data";
 
@@ -167,7 +167,7 @@ export function SummaryTable({ data }: SummaryTableProps) {
         <Card className="bg-accent/30 border-primary/50">
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2">
-              <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
+              <EuroIcon className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
               <div className="min-w-0">
                 <p className="text-xs sm:text-sm font-medium text-primary text-shadow-sm">
                   Net Savings
@@ -188,7 +188,7 @@ export function SummaryTable({ data }: SummaryTableProps) {
         <Card className="bg-accent/30 border-primary/50">
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2">
-              <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
+              <EuroIcon className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
               <div className="min-w-0">
                 <p className="text-xs sm:text-sm font-medium text-primary text-shadow-sm">
                   Final Balance
@@ -210,7 +210,7 @@ export function SummaryTable({ data }: SummaryTableProps) {
       <Card>
         <CardHeader className="pb-3 sm:pb-6">
           <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
-            <DollarSign className="w-4 h-4 sm:w-5 sm:h-5" />
+            <EuroIcon className="w-4 h-4 sm:w-5 sm:h-5" />
             Monthly Financial Summary
           </CardTitle>
         </CardHeader>

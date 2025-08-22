@@ -1,6 +1,6 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { LogOut, DollarSign, Menu } from "lucide-react";
+import { LogOut, Menu, EuroIcon } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -28,7 +28,7 @@ export function DashboardHeader() {
             onClick={() => router.push("/")}
           >
             <div className="w-8 h-8 sm:w-10 sm:h-10 bg-primary rounded-full flex items-center justify-center">
-              <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-primary-foreground" />
+              <EuroIcon className="w-4 h-4 sm:w-5 sm:h-5 text-primary-foreground" />
             </div>
             <div>
               <h1 className="text-lg sm:text-xl font-bold text-primary">
