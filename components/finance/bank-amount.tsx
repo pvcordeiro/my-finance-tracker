@@ -7,9 +7,10 @@ import { Banknote } from "lucide-react";
 interface BankAmountProps {
   amount: number;
   onChange: (amount: number) => void;
+  onBlur: () => void;
 }
 
-export function BankAmount({ amount, onChange }: BankAmountProps) {
+export function BankAmount({ amount, onChange, onBlur }: BankAmountProps) {
   return (
     <Card className="bg-gradient-to-r from-primary/5 to-accent/5 border-primary/20">
       <CardContent className="p-3 sm:p-4">
@@ -34,6 +35,7 @@ export function BankAmount({ amount, onChange }: BankAmountProps) {
               placeholder="0"
               value={amount || ""}
               onChange={(e) => onChange(Number.parseFloat(e.target.value) || 0)}
+              onBlur={onBlur}
               className="pl-8 w-full sm:w-32 transition-all duration-200 focus:ring-2 focus:ring-primary/20 text-sm sm:text-base touch-manipulation"
             />
           </div>

@@ -163,8 +163,8 @@ function HomePage() {
               </div>
               <BankAmount
                 amount={data.bankAmount}
-                onChange={(amount) => {
-                  updateBankAmount(amount);
+                onChange={updateBankAmount}
+                onBlur={() => {
                   saveData(undefined, handleSessionExpired);
                   triggerSavedPopup();
                 }}
@@ -174,47 +174,33 @@ function HomePage() {
                 <EntryForm
                   title="Income"
                   entries={data.incomes}
-                  onAddEntry={() => {
-                    addEntry("incomes");
-                    saveData(undefined, handleSessionExpired);
-                    triggerSavedPopup();
-                  }}
-                  onUpdateEntry={(id, field, value, monthIndex) => {
-                    updateEntry("incomes", id, field, value, monthIndex);
-                    saveData(undefined, handleSessionExpired);
-                    triggerSavedPopup();
-                  }}
-                  onRemoveEntry={(id) => {
-                    removeEntry("incomes", id);
-                    saveData(undefined, handleSessionExpired);
-                    triggerSavedPopup();
-                  }}
+                  onAddEntry={() => addEntry("incomes")}
+                  onUpdateEntry={(id, field, value, monthIndex) =>
+                    updateEntry("incomes", id, field, value, monthIndex)
+                  }
+                  onRemoveEntry={(id) => removeEntry("incomes", id)}
                   type="income"
                   isOpen={incomeOpen}
                   onToggle={() => setIncomeOpen(!incomeOpen)}
+                  saveData={saveData}
+                  triggerSavedPopup={triggerSavedPopup}
+                  handleSessionExpired={handleSessionExpired}
                 />
 
                 <EntryForm
                   title="Expenses"
                   entries={data.expenses}
-                  onAddEntry={() => {
-                    addEntry("expenses");
-                    saveData(undefined, handleSessionExpired);
-                    triggerSavedPopup();
-                  }}
-                  onUpdateEntry={(id, field, value, monthIndex) => {
-                    updateEntry("expenses", id, field, value, monthIndex);
-                    saveData(undefined, handleSessionExpired);
-                    triggerSavedPopup();
-                  }}
-                  onRemoveEntry={(id) => {
-                    removeEntry("expenses", id);
-                    saveData(undefined, handleSessionExpired);
-                    triggerSavedPopup();
-                  }}
+                  onAddEntry={() => addEntry("expenses")}
+                  onUpdateEntry={(id, field, value, monthIndex) =>
+                    updateEntry("expenses", id, field, value, monthIndex)
+                  }
+                  onRemoveEntry={(id) => removeEntry("expenses", id)}
                   type="expense"
                   isOpen={expenseOpen}
                   onToggle={() => setExpenseOpen(!expenseOpen)}
+                  saveData={saveData}
+                  triggerSavedPopup={triggerSavedPopup}
+                  handleSessionExpired={handleSessionExpired}
                 />
               </div>
             </div>

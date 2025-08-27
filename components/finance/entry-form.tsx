@@ -41,6 +41,9 @@ interface EntryFormProps {
   type: "income" | "expense";
   isOpen: boolean;
   onToggle: () => void;
+  saveData: (a?: any, b?: any) => void;
+  triggerSavedPopup: () => void;
+  handleSessionExpired: () => void;
 }
 
 const MONTHS = [
@@ -80,6 +83,9 @@ export function EntryForm({
   type,
   isOpen,
   onToggle,
+  saveData,
+  triggerSavedPopup,
+  handleSessionExpired,
 }: EntryFormProps) {
   const [expandedEntries, setExpandedEntries] = useState<Set<string>>(
     new Set()
@@ -267,6 +273,10 @@ export function EntryForm({
                         onChange={(e) =>
                           onUpdateEntry(entry.id, "description", e.target.value)
                         }
+                        onBlur={() => {
+                          saveData(undefined, handleSessionExpired);
+                          triggerSavedPopup();
+                        }}
                         className="transition-all duration-200 focus:ring-2 focus:ring-primary/20 text-sm sm:text-base"
                       />
                       <div className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 sm:gap-4">
@@ -292,6 +302,10 @@ export function EntryForm({
                                     index
                                   )
                                 }
+                                onBlur={() => {
+                                  saveData(undefined, handleSessionExpired);
+                                  triggerSavedPopup();
+                                }}
                                 className="pl-8 transition-all duration-200 focus:ring-2 focus:ring-primary/20 text-sm sm:text-base touch-manipulation"
                               />
                             </div>
