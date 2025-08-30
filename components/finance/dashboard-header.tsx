@@ -5,12 +5,16 @@ import { useAuth } from "@/hooks/use-auth";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { DarkModeToggle } from "@/components/ui/dark-mode-toggle";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
+import { Edit, BarChart3, FileText } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export function DashboardHeader() {
   const { user, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
+  const isMobile = useIsMobile();
 
   const handleLogout = async () => {
     await logout();
@@ -19,9 +23,15 @@ export function DashboardHeader() {
     }, 100);
   };
 
+  const navItems = [
+    { href: "/", label: "Manage", icon: Edit },
+    { href: "/summary", label: "Summary", icon: BarChart3 },
+    { href: "/details", label: "Details", icon: FileText },
+  ];
+
   return (
     <header className="bg-background/90 backdrop-blur-sm border-b border-border/50 sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-3 sm:py-4">
+      <div className="container mx-auto px-4 py-3 sm:py-4 sm:pb-2">
         <div className="flex items-center justify-between">
           <div
             className="flex items-center gap-2 sm:gap-3 cursor-pointer"
@@ -69,6 +79,27 @@ export function DashboardHeader() {
             </Button>
           </div>
         </div>
+
+        {/* Desktop Navigation */}
+        {!isMobile && (
+          <nav className="hidden sm:flex justify-center gap-4 pt-2 border-t border-border/50 mt-2">
+            {navItems.map(({ href, label, icon: Icon }) => {
+              const isActive = pathname === href;
+              return (
+                <Button
+                  key={href}
+                  variant={isActive ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => router.push(href)}
+                  className="flex items-center gap-2"
+                >
+                  <Icon className="w-4 h-4" />
+                  {label}
+                </Button>
+              );
+            })}
+          </nav>
+        )}
 
         {/* Mobile menu */}
         <div

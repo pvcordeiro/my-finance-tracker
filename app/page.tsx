@@ -138,29 +138,7 @@ function HomePage() {
           </TabsList>
 
           <TabsContent value="main">
-            <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  variant="outline"
-                  className="transition-all duration-200 hover:scale-[1.01] active:scale-[0.95] touch-manipulation h-12 sm:h-10 px-4 sm:px-3"
-                  onClick={() => handleNav("/summary")}
-                >
-                  <BarChart3 className="w-4 h-4 mr-2" />
-                  <span className="transition-all duration-200 hover:scale-[1.05]">
-                    Summary
-                  </span>
-                </Button>
-                <Button
-                  variant="outline"
-                  className="transition-all duration-200 hover:scale-[1.01] active:scale-[0.95] touch-manipulation h-12 sm:h-10 px-4 sm:px-3"
-                  onClick={() => handleNav("/details")}
-                >
-                  <FileText className="w-4 h-4 mr-2" />
-                  <span className="transition-all duration-200 hover:scale-[1.05]">
-                    Details
-                  </span>
-                </Button>
-              </div>
+            <div className="space-y-4">
               <BankAmount
                 amount={data.bankAmount}
                 onChange={updateBankAmount}
@@ -169,40 +147,37 @@ function HomePage() {
                   triggerSavedPopup();
                 }}
               />
+              <EntryForm
+                title="Income"
+                entries={data.incomes}
+                onAddEntry={() => addEntry("incomes")}
+                onUpdateEntry={(id, field, value, monthIndex) =>
+                  updateEntry("incomes", id, field, value, monthIndex)
+                }
+                onRemoveEntry={(id) => removeEntry("incomes", id)}
+                type="income"
+                isOpen={incomeOpen}
+                onToggle={() => setIncomeOpen(!incomeOpen)}
+                saveData={saveData}
+                triggerSavedPopup={triggerSavedPopup}
+                handleSessionExpired={handleSessionExpired}
+              />
 
-              <div className="space-y-4">
-                <EntryForm
-                  title="Income"
-                  entries={data.incomes}
-                  onAddEntry={() => addEntry("incomes")}
-                  onUpdateEntry={(id, field, value, monthIndex) =>
-                    updateEntry("incomes", id, field, value, monthIndex)
-                  }
-                  onRemoveEntry={(id) => removeEntry("incomes", id)}
-                  type="income"
-                  isOpen={incomeOpen}
-                  onToggle={() => setIncomeOpen(!incomeOpen)}
-                  saveData={saveData}
-                  triggerSavedPopup={triggerSavedPopup}
-                  handleSessionExpired={handleSessionExpired}
-                />
-
-                <EntryForm
-                  title="Expenses"
-                  entries={data.expenses}
-                  onAddEntry={() => addEntry("expenses")}
-                  onUpdateEntry={(id, field, value, monthIndex) =>
-                    updateEntry("expenses", id, field, value, monthIndex)
-                  }
-                  onRemoveEntry={(id) => removeEntry("expenses", id)}
-                  type="expense"
-                  isOpen={expenseOpen}
-                  onToggle={() => setExpenseOpen(!expenseOpen)}
-                  saveData={saveData}
-                  triggerSavedPopup={triggerSavedPopup}
-                  handleSessionExpired={handleSessionExpired}
-                />
-              </div>
+              <EntryForm
+                title="Expenses"
+                entries={data.expenses}
+                onAddEntry={() => addEntry("expenses")}
+                onUpdateEntry={(id, field, value, monthIndex) =>
+                  updateEntry("expenses", id, field, value, monthIndex)
+                }
+                onRemoveEntry={(id) => removeEntry("expenses", id)}
+                type="expense"
+                isOpen={expenseOpen}
+                onToggle={() => setExpenseOpen(!expenseOpen)}
+                saveData={saveData}
+                triggerSavedPopup={triggerSavedPopup}
+                handleSessionExpired={handleSessionExpired}
+              />
             </div>
           </TabsContent>
 

@@ -5,6 +5,7 @@ import "./globals.css";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { ThemeProvider } from "@/components/theme-provider";
+import { MobileBottomNav } from "@/components/ui/mobile-bottom-nav";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -41,7 +42,9 @@ html {
 }
         `}</style>
       </head>
-      <body className={`${dmSans.variable} font-sans antialiased`}>
+      <body
+        className={`${dmSans.variable} font-sans antialiased pb-16 md:pb-0`}
+      >
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -49,7 +52,10 @@ html {
           disableTransitionOnChange
         >
           <ErrorBoundary>
-            <AuthProvider>{children}</AuthProvider>
+            <AuthProvider>
+              {children}
+              <MobileBottomNav />
+            </AuthProvider>
           </ErrorBoundary>
         </ThemeProvider>
       </body>

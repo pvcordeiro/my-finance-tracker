@@ -50,16 +50,7 @@ function SummaryPage() {
               Your complete financial overview
             </p>
           </div>
-          <Button
-            variant="outline"
-            onClick={() => router.push("/")}
-            className="transition-all duration-200 hover:scale-[1.02] xs:h-10 px-3 xs:px-4 xs:text-base min-w-0 flex items-center gap-1 xs:gap-2 whitespace-nowrap"
-          >
-            <ArrowLeft className="w-4 h-4 mr-0 sm:mr-2" />
-            <span className="hidden xs:inline">Manage</span>
-          </Button>
         </div>
-
         <SummaryTable data={data} />
         <FinancialChart data={data} />
       </main>
