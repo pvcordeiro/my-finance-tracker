@@ -9,8 +9,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { useState, useEffect } from "react";
 
 const navItems = [
-  { href: "/", label: "Manage", icon: Edit },
-  { href: "/summary", label: "Summary", icon: BarChart3 },
+  { href: "/manage", label: "Manage", icon: Edit },
+  { href: "/", label: "Summary", icon: BarChart3 },
   { href: "/details", label: "Details", icon: FileText },
 ];
 

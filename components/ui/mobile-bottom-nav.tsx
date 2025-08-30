@@ -8,8 +8,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/use-auth";
 
 const navItems = [
-  { href: "/", label: "Manage", icon: Edit },
-  { href: "/summary", label: "Summary", icon: BarChart3 },
+  { href: "/manage", label: "Manage", icon: Edit },
+  { href: "/", label: "Summary", icon: BarChart3 },
   { href: "/details", label: "Details", icon: FileText },
 ];
 

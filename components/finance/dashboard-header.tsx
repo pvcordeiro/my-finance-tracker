@@ -24,8 +24,8 @@ export function DashboardHeader() {
   };
 
   const navItems = [
-    { href: "/", label: "Manage", icon: Edit },
-    { href: "/summary", label: "Summary", icon: BarChart3 },
+    { href: "/manage", label: "Manage", icon: Edit },
+    { href: "/", label: "Summary", icon: BarChart3 },
     { href: "/details", label: "Details", icon: FileText },
   ];
 
