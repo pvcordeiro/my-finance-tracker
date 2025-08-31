@@ -28,27 +28,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+
     const checkSession = async () => {
       try {
         const response = await fetch("/api/auth/session", {
           credentials: "include",
         });
 
-        if (response.ok) {
-          const data = await response.json();
-          setUser(data.user);
-        } else {
-          setUser(null);
+        if (isMounted) {
+          if (response.ok) {
+            const data = await response.json();
+            setUser(data.user);
+          } else {
+            setUser(null);
+          }
         }
       } catch (error) {
         console.error("Session check error:", error);
-        setUser(null);
+        if (isMounted) setUser(null);
       } finally {
-        setIsLoading(false);
+        if (isMounted) setIsLoading(false);
       }
     };
 
     checkSession();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const login = async (
@@ -111,11 +119,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
+      setUser(null);
       await fetch("/api/auth/logout", {
         method: "POST",
         credentials: "include",
       });
-      setUser(null);
     } catch (error) {
       console.error("Logout error:", error);
       setUser(null);

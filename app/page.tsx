@@ -1,28 +1,35 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, Suspense, lazy } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { AuthProvider } from "@/hooks/use-auth";
 import { useFinanceData } from "@/hooks/use-finance-data";
 import { DashboardHeader } from "@/components/finance/dashboard-header";
 import { SummaryTable } from "@/components/finance/summary-table";
-import { FinancialChart } from "@/components/finance/financial-chart";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Edit, FileText } from "lucide-react";
+import { ErrorBoundary } from "@/components/error-boundary";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const FinancialChart = lazy(() =>
+  import("@/components/finance/financial-chart").then((mod) => ({
+    default: mod.FinancialChart,
+  }))
+);
 
 function SummaryPage() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
-  const { data } = useFinanceData();
+  const { data, isLoading: dataLoading } = useFinanceData();
 
   useEffect(() => {
-    if (!isLoading && !user) {
+    if (!authLoading && !user) {
       router.push("/login");
     }
-  }, [user, isLoading, router]);
+  }, [user, authLoading, router]);
 
-  if (isLoading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen finance-gradient flex items-center justify-center">
         <div className="text-center">
@@ -51,8 +58,19 @@ function SummaryPage() {
             </p>
           </div>
         </div>
-        <SummaryTable data={data} />
-        <FinancialChart data={data} />
+        {dataLoading ? (
+          <div className="space-y-6">
+            <Skeleton className="h-64 w-full" />
+            <Skeleton className="h-96 w-full" />
+          </div>
+        ) : (
+          <>
+            <SummaryTable data={data} />
+            <Suspense fallback={<Skeleton className="h-96 w-full" />}>
+              <FinancialChart data={data} />
+            </Suspense>
+          </>
+        )}
       </main>
     </div>
   );
@@ -61,7 +79,9 @@ function SummaryPage() {
 export default function Page() {
   return (
     <AuthProvider>
-      <SummaryPage />
+      <ErrorBoundary>
+        <SummaryPage />
+      </ErrorBoundary>
     </AuthProvider>
   );
 }

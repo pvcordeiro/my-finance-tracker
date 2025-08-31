@@ -253,6 +253,9 @@ export function EntryForm({
                               setDeleteDialogOpen(true);
                             }}
                             className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0 touch-manipulation"
+                            aria-label={`Delete entry: ${
+                              entry.description || "unnamed entry"
+                            }`}
                           >
                             <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
                           </Button>
@@ -278,6 +281,9 @@ export function EntryForm({
                           triggerSavedPopup();
                         }}
                         className="transition-all duration-200 focus:ring-2 focus:ring-primary/20 text-sm sm:text-base"
+                        aria-label={`Description for ${
+                          entry.description || "new entry"
+                        }`}
                       />
                       <div className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 sm:gap-4">
                         {rollingMonths.map((month, index) => (
@@ -307,6 +313,9 @@ export function EntryForm({
                                   triggerSavedPopup();
                                 }}
                                 className="pl-8 transition-all duration-200 focus:ring-2 focus:ring-primary/20 text-sm sm:text-base touch-manipulation"
+                                aria-label={`Amount for ${month} in ${
+                                  entry.description || "entry"
+                                }`}
                               />
                             </div>
                           </div>
@@ -326,6 +335,9 @@ export function EntryForm({
                   ? "border-emerald-200 dark:border-emerald-700/50 hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
                   : "border-red-200 dark:border-red-700/50 hover:bg-red-50 dark:hover:bg-red-950/20"
               )}
+              aria-label={`Add new ${
+                type === "income" ? "income" : "expense"
+              } entry`}
             >
               <Plus className="w-4 h-4 mr-2" />
               Add {type === "income" ? "Income" : "Expense"}

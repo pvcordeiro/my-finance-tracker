@@ -40,7 +40,6 @@ export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
   const [checkingRegistration, setCheckingRegistration] = useState(true);
 
   useEffect(() => {
-    // Check if registration is allowed
     const checkRegistrationStatus = async () => {
       try {
         const response = await fetch("/api/auth/registration-status");
@@ -50,7 +49,6 @@ export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
         }
       } catch (error) {
         console.error("Failed to check registration status:", error);
-        // Default to allowing registration if check fails
         setAllowRegistration(true);
       } finally {
         setCheckingRegistration(false);

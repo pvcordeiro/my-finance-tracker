@@ -122,7 +122,11 @@ export function FinancialChart({ data }: FinancialChartProps) {
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
-            <div className="min-w-[400px] w-full">
+            <div
+              className="min-w-[400px] w-full"
+              role="img"
+              aria-label="Bar chart showing income versus expenses for each month"
+            >
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
@@ -166,7 +170,11 @@ export function FinancialChart({ data }: FinancialChartProps) {
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
-            <div className="min-w-[400px] w-full">
+            <div
+              className="min-w-[400px] w-full"
+              role="img"
+              aria-label="Line chart showing monthly net balance over time"
+            >
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" className="opacity-30" />

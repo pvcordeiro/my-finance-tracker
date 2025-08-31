@@ -26,6 +26,7 @@ export function useFinanceData() {
     if (user) {
       loadDataFromServer();
     } else {
+      setData(defaultData);
       setHasChanges(false);
       setIsLoading(false);
     }
