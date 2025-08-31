@@ -1,29 +1,33 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AdminProvider, useAdmin } from "@/hooks/use-admin";
 import { AdminLogin } from "@/components/admin/admin-login";
 import { AdminDashboard } from "@/components/admin/admin-dashboard";
+import { FullPageLoader } from "@/components/ui/loading";
 
 function AdminPageContent() {
   const { adminUser, loginAdmin, isLoading } = useAdmin();
   const router = useRouter();
+  const [showLoader, setShowLoader] = useState(false);
+
+  useEffect(() => {
+    if (isLoading) {
+      const timer = setTimeout(() => setShowLoader(true), 100); // Delay spinner by 100ms
+      return () => clearTimeout(timer);
+    } else {
+      setShowLoader(false);
+    }
+  }, [isLoading]);
 
   const handleLogin = async (username: string, password: string) => {
     const success = await loginAdmin(username, password);
     return success;
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen finance-gradient flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 border-4 border-destructive border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
+  if (showLoader) {
+    return <FullPageLoader message="Loading..." />;
   }
 
   if (!adminUser) {

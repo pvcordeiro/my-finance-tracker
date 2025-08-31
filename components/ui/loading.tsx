@@ -33,7 +33,7 @@ export function LoadingState({ message = "Loading...", className = "" }: Loading
 
 export function FullPageLoader({ message = "Loading..." }: { message?: string }) {
   return (
-    <div className="min-h-screen finance-gradient flex items-center justify-center p-4">
+    <div className="flex items-center justify-center p-4 min-h-[50vh]">
       <LoadingState message={message} />
     </div>
   )

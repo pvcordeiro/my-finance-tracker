@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { AuthProvider } from "@/hooks/use-auth";
@@ -11,28 +11,28 @@ import { DataManagement } from "@/components/finance/data-management";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, FileText, Settings, Edit, BarChart3 } from "lucide-react";
+import { FullPageLoader } from "@/components/ui/loading";
 
 function DetailsPage() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
   const { data, saveData, setData } = useFinanceData();
+  const [showLoader, setShowLoader] = useState(false);
+
+  useEffect(() => {
+    if (isLoading) {
+      const timer = setTimeout(() => setShowLoader(true), 100); // Delay spinner by 100ms
+      return () => clearTimeout(timer);
+    } else {
+      setShowLoader(false);
+    }
+  }, [isLoading]);
 
   useEffect(() => {
     if (!isLoading && !user) {
       router.push("/login");
     }
   }, [user, isLoading, router]);
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen finance-gradient flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading details...</p>
-        </div>
-      </div>
-    );
-  }
 
   if (!user) {
     return null;
@@ -41,19 +41,23 @@ function DetailsPage() {
   return (
     <div className="min-h-screen finance-gradient">
       <DashboardHeader />
-      <main className="container mx-auto p-4 space-y-6">
-        <div className="flex items-center justify-between gap-2">
-          <div>
-            <h1 className="text-3xl font-bold text-primary">
-              Financial Details
-            </h1>
-            <p className="text-muted-foreground">
-              Detailed view and data management
-            </p>
+      {showLoader ? (
+        <FullPageLoader message="Loading details..." />
+      ) : (
+        <main className="container mx-auto p-4 space-y-6">
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <h1 className="text-3xl font-bold text-primary">
+                Financial Details
+              </h1>
+              <p className="text-muted-foreground">
+                Detailed view and data management
+              </p>
+            </div>
           </div>
-        </div>
-        <DetailsTable data={data} />
-      </main>
+          <DetailsTable data={data} />
+        </main>
+      )}
     </div>
   );
 }
