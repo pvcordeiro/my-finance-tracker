@@ -18,9 +18,7 @@ export function DashboardHeader() {
 
   const handleLogout = async () => {
     await logout();
-    setTimeout(() => {
-      router.push("/login");
-    }, 100);
+    window.location.href = "/login";
   };
 
   const navItems = [
