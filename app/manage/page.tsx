@@ -27,6 +27,7 @@ function HomePage() {
   const {
     data,
     hasChanges,
+    isLoading: dataLoading,
     saveData,
     updateBankAmount,
     addEntry,
@@ -108,7 +109,7 @@ function HomePage() {
     router.push("/login?session=expired");
   };
 
-  if (isLoading) {
+  if (isLoading || dataLoading) {
     return <FullPageLoader message="Loading your financial data..." />;
   }
 

@@ -1,10 +1,10 @@
 "use client";
 
-
 import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { LoginForm } from "@/components/auth/login-form";
 import { useAuth } from "@/hooks/use-auth";
+import { LoadingState } from "@/components/ui/loading";
 
 function LoginPageInner() {
   const { user, isLoading, login, register } = useAuth();
@@ -40,6 +40,9 @@ function LoginPageInner() {
     }
     return success;
   };
+
+  // Don't show loading on login page - users expect to see login form immediately
+  // The useEffect above will redirect authenticated users to the main page
 
   return (
     <>

@@ -10,7 +10,7 @@ import { SummaryTable } from "@/components/finance/summary-table";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Edit, FileText } from "lucide-react";
 import { ErrorBoundary } from "@/components/error-boundary";
-import { Skeleton } from "@/components/ui/skeleton";
+import { LoadingState } from "@/components/ui/loading";
 
 const FinancialChart = lazy(() =>
   import("@/components/finance/financial-chart").then((mod) => ({
@@ -19,23 +19,20 @@ const FinancialChart = lazy(() =>
 );
 
 function SummaryPage() {
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, isLoading } = useAuth();
   const router = useRouter();
-  const { data, isLoading: dataLoading } = useFinanceData();
+  const { data } = useFinanceData();
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (!isLoading && !user) {
       router.push("/login");
     }
-  }, [user, authLoading, router]);
+  }, [user, isLoading, router]);
 
-  if (authLoading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen finance-gradient flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading summary...</p>
-        </div>
+        <LoadingState message="Loading your financial summary..." />
       </div>
     );
   }
@@ -58,19 +55,10 @@ function SummaryPage() {
             </p>
           </div>
         </div>
-        {dataLoading ? (
-          <div className="space-y-6">
-            <Skeleton className="h-64 w-full" />
-            <Skeleton className="h-96 w-full" />
-          </div>
-        ) : (
-          <>
-            <SummaryTable data={data} />
-            <Suspense fallback={<Skeleton className="h-96 w-full" />}>
-              <FinancialChart data={data} />
-            </Suspense>
-          </>
-        )}
+        <SummaryTable data={data} />
+        <Suspense fallback={<LoadingState message="Loading chart..." />}>
+          <FinancialChart data={data} />
+        </Suspense>
       </main>
     </div>
   );
