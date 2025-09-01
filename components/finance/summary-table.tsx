@@ -79,16 +79,14 @@ export function SummaryTable({ data }: SummaryTableProps) {
 
     if (data.incomes) {
       data.incomes.forEach((income) => {
-        const shiftedIndex = (month.month - currentMonth + 12) % 12;
-        const amount = income.amounts[shiftedIndex] || 0;
+        const amount = income.amounts[index] || 0;
         totalIncome += amount;
       });
     }
 
     if (data.expenses) {
       data.expenses.forEach((expense) => {
-        const shiftedIndex = (month.month - currentMonth + 12) % 12;
-        const amount = expense.amounts[shiftedIndex] || 0;
+        const amount = expense.amounts[index] || 0;
         totalExpenses += amount;
       });
     }

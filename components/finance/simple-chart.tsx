@@ -69,21 +69,19 @@ export function SimpleChart({ data }: SimpleChartProps) {
 
   const now = new Date();
   const currentMonth = now.getMonth();
-  const chartData = months.map((month) => {
+  const chartData = months.map((month, idx) => {
     let income = 0;
     let expenses = 0;
 
     if (data.incomes) {
       data.incomes.forEach((incomeEntry) => {
-        const shiftedIndex = (month.month - currentMonth + 12) % 12;
-        income += incomeEntry.amounts[shiftedIndex] || 0;
+        income += incomeEntry.amounts[idx] || 0;
       });
     }
 
     if (data.expenses) {
       data.expenses.forEach((expenseEntry) => {
-        const shiftedIndex = (month.month - currentMonth + 12) % 12;
-        expenses += expenseEntry.amounts[shiftedIndex] || 0;
+        expenses += expenseEntry.amounts[idx] || 0;
       });
     }
 

@@ -16,6 +16,36 @@ const defaultData: FinanceData = {
   expenses: [],
 };
 
+function shiftDataForRollingMonths(amounts: number[]): number[] {
+  const now = new Date();
+  const currentMonth = now.getMonth();
+
+  if (currentMonth === 0) {
+    return amounts;
+  }
+
+  const shifted = [...amounts];
+  const fromCurrentToEnd = shifted.slice(currentMonth);
+  const fromStartToCurrent = shifted.slice(0, currentMonth);
+
+  return [...fromCurrentToEnd, ...fromStartToCurrent];
+}
+
+function unshiftDataForStorage(amounts: number[]): number[] {
+  const now = new Date();
+  const currentMonth = now.getMonth(); // 0-11
+
+  if (currentMonth === 0) {
+    return amounts;
+  }
+
+  const unshifted = [...amounts];
+  const fromCurrentMonthBack = unshifted.slice(-currentMonth);
+  const restOfArray = unshifted.slice(0, -currentMonth);
+
+  return [...fromCurrentMonthBack, ...restOfArray];
+}
+
 export function useFinanceData() {
   const [data, setData] = useState<FinanceData>(defaultData);
   const [hasChanges, setHasChanges] = useState(false);
@@ -73,13 +103,13 @@ export function useFinanceData() {
 
       const entries = entriesData?.entries || [];
 
-      // Transform entries to match frontend format
+      // Transform entries to match frontend format and shift data for rolling months
       const incomes = entries
         .filter((entry: any) => entry.type === "income")
         .map((entry: any) => ({
           id: entry.id.toString(),
           description: entry.name,
-          amounts: entry.amounts,
+          amounts: shiftDataForRollingMonths(entry.amounts),
         }));
 
       const expenses = entries
@@ -87,7 +117,7 @@ export function useFinanceData() {
         .map((entry: any) => ({
           id: entry.id.toString(),
           description: entry.name,
-          amounts: entry.amounts,
+          amounts: shiftDataForRollingMonths(entry.amounts),
         }));
 
       setData({
@@ -135,14 +165,14 @@ export function useFinanceData() {
           .map((entry) => ({
             name: entry.description,
             type: "income",
-            amounts: JSON.stringify(entry.amounts),
+            amounts: JSON.stringify(unshiftDataForStorage(entry.amounts)),
           })),
         ...currentData.expenses
           .filter((entry) => entry.description.trim() !== "")
           .map((entry) => ({
             name: entry.description,
             type: "expense",
-            amounts: JSON.stringify(entry.amounts),
+            amounts: JSON.stringify(unshiftDataForStorage(entry.amounts)),
           })),
       ];
 

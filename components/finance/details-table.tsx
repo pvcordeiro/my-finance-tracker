@@ -118,10 +118,8 @@ export function DetailsTable({ data }: DetailsTableProps) {
                     <td className="sticky left-0 bg-muted p-2 font-medium border-r z-10">
                       {income.description || "(No description)"}
                     </td>
-                    {months.map((month) => {
-                      const shiftedIndex =
-                        (month.month - currentMonth + 12) % 12;
-                      const amount = income.amounts[shiftedIndex] || 0;
+                    {months.map((month, idx) => {
+                      const amount = income.amounts[idx] || 0;
                       return (
                         <td key={month.label} className="text-center p-2">
                           {amount > 0 ? (
@@ -196,10 +194,8 @@ export function DetailsTable({ data }: DetailsTableProps) {
                     <td className="sticky left-0 bg-muted p-2 font-medium border-r z-10">
                       {expense.description || "(No description)"}
                     </td>
-                    {months.map((month) => {
-                      const shiftedIndex =
-                        (month.month - currentMonth + 12) % 12;
-                      const amount = expense.amounts[shiftedIndex] || 0;
+                    {months.map((month, idx) => {
+                      const amount = expense.amounts[idx] || 0;
                       return (
                         <td key={month.label} className="text-center p-2">
                           {amount > 0 ? (
