@@ -1,6 +1,6 @@
 services:
   app:
-    build: .
+    image: finance-tracker:arm64
     ports:
       - "3000:3000"
     volumes:
@@ -15,7 +15,7 @@ services:
     restart: unless-stopped
 
   nginx:
-    build: ./nginx
+    image: nginx:arm64
     environment:
       - DOMAIN=${DOMAIN}
     volumes:

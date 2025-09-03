@@ -17,6 +17,9 @@ ignoreip = 127.0.0.1/8 ::1
 [sshd]
 enabled = false
 
+[sshd-ddos]
+enabled = false
+
 [nginx-http-auth]
 enabled = true
 port = http,https
@@ -24,36 +27,45 @@ filter = nginx-http-auth
 logpath = /var/log/nginx/error.log
 maxretry = 3
 
-[nginx-noscript]
+[common-probes]
 enabled = true
+port = http,https
+filter = common-probes
+logpath = /var/log/nginx/access.log
+maxretry = 3
+findtime = 600
+bantime = 3600
+
+[nginx-noscript]
+enabled = false
 port = http,https
 filter = nginx-noscript
 logpath = /var/log/nginx/access.log
 maxretry = 6
 
 [nginx-badbots]
-enabled = true
+enabled = false
 port = http,https
 filter = nginx-badbots
 logpath = /var/log/nginx/access.log
 maxretry = 2
 
 [nginx-noproxy]
-enabled = true
+enabled = false
 port = http,https
 filter = nginx-noproxy
 logpath = /var/log/nginx/access.log
 maxretry = 2
 
 [nginx-botsearch]
-enabled = true
+enabled = false
 port = http,https
 filter = nginx-botsearch
 logpath = /var/log/nginx/access.log
 maxretry = 2
 
 [nginx-req-limit]
-enabled = true
+enabled = false
 port = http,https
 filter = nginx-req-limit
 logpath = /var/log/nginx/error.log
@@ -62,7 +74,7 @@ findtime = 600
 bantime = 7200
 
 [nginx-ddos]
-enabled = true
+enabled = false
 port = http,https
 filter = nginx-ddos
 logpath = /var/log/nginx/access.log
