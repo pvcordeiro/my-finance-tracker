@@ -12,4 +12,7 @@ else
   envsubst '$DOMAIN' < /etc/nginx/nginx.conf.http > /etc/nginx/nginx.conf
 fi
 
+# Start fail2ban
+fail2ban-client start
+
 exec nginx -g 'daemon off;'
