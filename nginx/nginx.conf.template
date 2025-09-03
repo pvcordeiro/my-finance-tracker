@@ -39,6 +39,9 @@ http {
       proxy_set_header X-Real-IP $remote_addr;
       proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
       proxy_set_header X-Forwarded-Proto $scheme;
+      
+      # Rate limiting for general requests
+      limit_req zone=general burst=10 nodelay;
     }
 
     location /.well-known/acme-challenge/ {
@@ -48,13 +51,11 @@ http {
 	# Rate limit for API endpoints
     location /api/ {
         limit_req zone=api burst=20 nodelay;
-        # ... existing location config ...
-    }
-
-    # Rate limit for general requests
-    location / {
-        limit_req zone=general burst=10 nodelay;
-        # ... existing location config ...
+        proxy_pass http://app:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
 
     # Block specific paths (e.g., common probes)
