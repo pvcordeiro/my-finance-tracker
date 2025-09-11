@@ -7,7 +7,7 @@ import {
 export async function GET(request) {
   try {
     const sessionToken = getAdminSessionFromRequest(request);
-    const adminSession = validateAdminSession(sessionToken);
+    const adminSession = await validateAdminSession(sessionToken);
 
     if (adminSession) {
       return NextResponse.json({

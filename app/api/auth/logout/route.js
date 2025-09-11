@@ -12,7 +12,7 @@ export async function POST(request) {
 
     if (sessionToken) {
       // Delete the session from database
-      deleteSession(sessionToken);
+      await deleteSession(sessionToken);
     }
 
     // Create response and clear the session cookie

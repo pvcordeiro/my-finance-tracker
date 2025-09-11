@@ -31,7 +31,7 @@ export async function POST(request) {
     }
 
     if (username === adminUsername && password === adminPassword) {
-      const sessionToken = createAdminSession();
+      const sessionToken = await createAdminSession();
       const response = NextResponse.json({
         success: true,
         message: "Admin login successful",

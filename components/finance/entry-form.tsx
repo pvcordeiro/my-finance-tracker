@@ -361,6 +361,8 @@ export function EntryForm({
               onClick={() => {
                 if (entryToDelete) {
                   onRemoveEntry(entryToDelete);
+                  saveData(undefined, handleSessionExpired);
+                  triggerSavedPopup();
                   setEntryToDelete(null);
                 }
                 setDeleteDialogOpen(false);

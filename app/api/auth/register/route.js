@@ -11,10 +11,17 @@ import {
 export async function POST(request) {
   try {
     // Check if registration is allowed
-    const db = getDatabase();
-    const registrationSetting = db
-      .prepare("SELECT value FROM settings WHERE key = 'allow_registration'")
-      .get();
+    const db = await getDatabase();
+    const registrationSetting = await new Promise((resolve, reject) => {
+      db.get(
+        "SELECT value FROM settings WHERE key = 'allow_registration'",
+        [],
+        (err, row) => {
+          if (err) reject(err);
+          else resolve(row);
+        }
+      );
+    });
 
     if (!registrationSetting || registrationSetting.value !== "true") {
       return NextResponse.json(
@@ -51,9 +58,16 @@ export async function POST(request) {
     const { username, password } = validation.data;
 
     // Check if user already exists
-    const existingUser = db
-      .prepare("SELECT id FROM users WHERE username = ?")
-      .get(username);
+    const existingUser = await new Promise((resolve, reject) => {
+      db.get(
+        "SELECT id FROM users WHERE username = ?",
+        [username],
+        (err, row) => {
+          if (err) reject(err);
+          else resolve(row);
+        }
+      );
+    });
     if (existingUser) {
       return NextResponse.json(
         { error: "Username already exists" },
@@ -65,15 +79,19 @@ export async function POST(request) {
     const hashedPassword = hashPassword(password);
 
     // Create user
-    const stmt = db.prepare(
-      "INSERT INTO users (username, password_hash) VALUES (?, ?)"
-    );
-    const result = stmt.run(username, hashedPassword);
-
-    const userId = result.lastInsertRowid;
+    const userId = await new Promise((resolve, reject) => {
+      db.run(
+        "INSERT INTO users (username, password_hash) VALUES (?, ?)",
+        [username, hashedPassword],
+        function (err) {
+          if (err) reject(err);
+          else resolve(this.lastID);
+        }
+      );
+    });
 
     // Create session
-    const sessionToken = createSession(userId);
+    const sessionToken = await createSession(userId);
 
     // Create response with session cookie
     const response = NextResponse.json({

@@ -9,7 +9,7 @@ export async function POST(request) {
   try {
     const sessionToken = getAdminSessionFromRequest(request);
     if (sessionToken) {
-      deleteAdminSession(sessionToken);
+      await deleteAdminSession(sessionToken);
     }
     const response = NextResponse.json({ success: true });
     response.cookies.delete(ADMIN_SESSION_COOKIE_NAME);

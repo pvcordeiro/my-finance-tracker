@@ -1,5 +1,8 @@
-import { NextResponse } from "next/server"
-import { validateSession, getSessionFromRequest } from "../../../../lib/session.js"
+import { NextResponse } from "next/server";
+import {
+  validateSession,
+  getSessionFromRequest,
+} from "../../../../lib/session.js";
 
 export async function GET(request) {
   try {
@@ -11,15 +14,23 @@ export async function GET(request) {
     }
 
     // Validate session and get user data
-    const user = validateSession(sessionToken);
+    const user = await validateSession(sessionToken);
 
     if (!user) {
-      return NextResponse.json({ error: "Invalid or expired session" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Invalid or expired session" },
+        { status: 401 }
+      );
     }
 
-    return NextResponse.json({ user: { id: user.id, username: user.username } });
+    return NextResponse.json({
+      user: { id: user.id, username: user.username },
+    });
   } catch (error) {
     console.error("Session validation error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }

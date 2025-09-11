@@ -6,35 +6,40 @@ import {
   getAdminSessionFromRequest,
 } from "../../../../lib/admin-session.js";
 
-function verifyAdmin(request) {
+async function verifyAdmin(request) {
   const sessionToken = getAdminSessionFromRequest(request);
-  const adminSession = validateAdminSession(sessionToken);
+  const adminSession = await validateAdminSession(sessionToken);
   return adminSession !== null;
 }
 
 export async function GET(request) {
   try {
-    if (!verifyAdmin(request)) {
+    if (!(await verifyAdmin(request))) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const db = getDatabase();
-    const users = db
-      .prepare(
+    const db = await getDatabase();
+    const users = await new Promise((resolve, reject) => {
+      db.all(
         `
-      SELECT 
-        u.id, 
-        u.username, 
-        u.created_at,
-        COUNT(e.id) as entry_count,
-        MAX(e.updated_at) as last_activity
-      FROM users u 
-      LEFT JOIN entries e ON u.id = e.user_id 
-      GROUP BY u.id, u.username, u.created_at
-      ORDER BY u.created_at DESC
-    `
-      )
-      .all();
+          SELECT 
+            u.id, 
+            u.username, 
+            u.created_at,
+            COUNT(e.id) as entry_count,
+            MAX(e.updated_at) as last_activity
+          FROM users u 
+          LEFT JOIN entries e ON u.id = e.user_id 
+          GROUP BY u.id, u.username, u.created_at
+          ORDER BY u.created_at DESC
+        `,
+        [],
+        (err, rows) => {
+          if (err) reject(err);
+          else resolve(rows);
+        }
+      );
+    });
 
     return NextResponse.json({ users });
   } catch (error) {
@@ -48,7 +53,7 @@ export async function GET(request) {
 
 export async function DELETE(request) {
   try {
-    if (!verifyAdmin(request)) {
+    if (!(await verifyAdmin(request))) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -60,11 +65,18 @@ export async function DELETE(request) {
       return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
     }
 
-    const db = getDatabase();
+    const db = await getDatabase();
 
-    const result = db
-      .prepare("DELETE FROM users WHERE id = ?")
-      .run(validation.data.userId);
+    const result = await new Promise((resolve, reject) => {
+      db.run(
+        "DELETE FROM users WHERE id = ?",
+        [validation.data.userId],
+        function (err) {
+          if (err) reject(err);
+          else resolve({ changes: this.changes });
+        }
+      );
+    });
 
     if (result.changes === 0) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });

@@ -140,11 +140,14 @@ function HomePage() {
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="main" className="flex items-center gap-2">
                 <Edit className="w-4 h-4" />
-                Manage
+                Edit
               </TabsTrigger>
-              <TabsTrigger value="management" className="flex items-center gap-2">
+              <TabsTrigger
+                value="management"
+                className="flex items-center gap-2"
+              >
                 <Settings className="w-4 h-4" />
-                Data
+                Backup
               </TabsTrigger>
             </TabsList>
 
