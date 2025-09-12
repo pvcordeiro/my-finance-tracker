@@ -40,13 +40,17 @@ SESSION_SECRET=yourrandomsecret
 docker compose up --build -d
 ```
 
-The app will be available at [http://localhost:3000](http://localhost:3000) (or your server's IP).
+The app will be available at [http://localhost](http://localhost) (or your server's IP).
 
 The SQLite database will be created at `data/finance.db` on first run and persisted on your host.
 
-### 4. (Optional) Nginx + HTTPS
+### 4. (Optional) Domain + HTTPS with Cloudflare
 
-Nginx is included in the Docker Compose setup for HTTPS/SSL termination. See the `nginx/` folder for configuration and instructions on using your own domain and certificates.
+For production deployment with a custom domain and HTTPS, use Cloudflare as your reverse proxy:
+
+1. Point your domain to your server's IP in Cloudflare DNS
+2. Enable Cloudflare proxying for automatic SSL
+3. The app will be accessible at `https://yourdomain.com`
 
 ## Usage
 
@@ -78,7 +82,7 @@ Nginx is included in the Docker Compose setup for HTTPS/SSL termination. See the
 
 1. **Cannot access from other devices:**
 
-   - Ensure the server is running on `0.0.0.0:3000`
+   - Ensure the server is running on `0.0.0.0:80`
    - Check firewall settings
    - Verify devices are on the same network
 

@@ -2,7 +2,7 @@ services:
   app:
     image: finance-tracker:arm64
     ports:
-      - "3000:3000"
+      - "80:3000"
     volumes:
       - ./data:/app/data
     environment:
@@ -12,16 +12,4 @@ services:
       - SESSION_SECRET=${SESSION_SECRET}
       - DATABASE_URL=${DATABASE_URL}
       - DOMAIN=${DOMAIN}
-    restart: unless-stopped
-
-  nginx:
-    image: nginx:arm64
-    environment:
-      - DOMAIN=${DOMAIN}
-    ports:
-      - "80:80"
-    cap_add:
-      - NET_ADMIN
-    depends_on:
-      - app
     restart: unless-stopped
