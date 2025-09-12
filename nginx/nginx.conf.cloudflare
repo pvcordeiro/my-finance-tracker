@@ -1,0 +1,89 @@
+env DOMAIN;
+
+events {}
+
+http {
+  limit_req_zone $binary_remote_addr zone=api:10m rate=10r/s;
+  limit_req_zone $binary_remote_addr zone=general:10m rate=5r/s;
+
+  # Cloudflare real IP restoration
+  set_real_ip_from 173.245.48.0/20;
+  set_real_ip_from 103.21.244.0/22;
+  set_real_ip_from 103.22.200.0/22;
+  set_real_ip_from 103.31.4.0/22;
+  set_real_ip_from 141.101.64.0/18;
+  set_real_ip_from 108.162.192.0/18;
+  set_real_ip_from 190.93.240.0/20;
+  set_real_ip_from 188.114.96.0/20;
+  set_real_ip_from 197.234.240.0/22;
+  set_real_ip_from 198.41.128.0/17;
+  set_real_ip_from 162.158.0.0/15;
+  set_real_ip_from 104.16.0.0/13;
+  set_real_ip_from 104.24.0.0/14;
+  set_real_ip_from 172.64.0.0/13;
+  set_real_ip_from 131.0.72.0/22;
+  real_ip_header CF-Connecting-IP;
+
+  server {
+    listen 80;
+    server_name ${DOMAIN};
+
+    access_log /var/log/nginx/access.log;
+    error_log /var/log/nginx/error.log;
+
+    # Security headers (Cloudflare handles SSL, so no HSTS needed here)
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "no-referrer-when-downgrade" always;
+
+    location / {
+      proxy_pass http://app:3000;
+      proxy_set_header Host $host;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto https;  # Cloudflare terminates SSL
+      proxy_set_header CF-Connecting-IP $http_cf_connecting_ip;
+      proxy_set_header CF-IPCountry $http_cf_ipcountry;
+      proxy_set_header CF-RAY $http_cf_ray;
+
+      # Rate limiting for general requests
+      limit_req zone=general burst=10 nodelay;
+    }
+
+    location /.well-known/acme-challenge/ {
+      root /var/www/html;
+    }
+
+    # Rate limit for API endpoints
+    location /api/ {
+        limit_req zone=api burst=20 nodelay;
+        proxy_pass http://app:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header CF-Connecting-IP $http_cf_connecting_ip;
+        proxy_set_header CF-IPCountry $http_cf_ipcountry;
+        proxy_set_header CF-RAY $http_cf_ray;
+    }
+
+    # Block specific paths (e.g., common probes)
+    location ~ /\.git {
+        deny all;
+        return 444;
+    }
+    location /geoserver {
+        deny all;
+        return 444;
+    }
+    location /goform {
+        deny all;
+        return 444;
+    }
+    location /dns-query {
+        deny all;
+        return 444;
+    }
+  }
+}
