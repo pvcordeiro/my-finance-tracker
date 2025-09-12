@@ -37,7 +37,7 @@ interface EntryFormProps {
     value: string | number,
     monthIndex?: number
   ) => void;
-  onRemoveEntry: (id: string) => void;
+  onRemoveEntry: (id: string) => Promise<void>;
   type: "income" | "expense";
   isOpen: boolean;
   onToggle: () => void;
@@ -358,12 +358,17 @@ export function EntryForm({
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => {
+              onClick={async () => {
                 if (entryToDelete) {
-                  onRemoveEntry(entryToDelete);
-                  saveData(undefined, handleSessionExpired);
-                  triggerSavedPopup();
-                  setEntryToDelete(null);
+                  try {
+                    await onRemoveEntry(entryToDelete);
+                    // No need to call saveData since deletion is immediate via API
+                    triggerSavedPopup();
+                    setEntryToDelete(null);
+                  } catch (error) {
+                    console.error("Failed to delete entry:", error);
+                    // You could show an error message to the user here
+                  }
                 }
                 setDeleteDialogOpen(false);
               }}

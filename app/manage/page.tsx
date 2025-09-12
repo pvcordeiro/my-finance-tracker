@@ -168,7 +168,14 @@ function HomePage() {
                   onUpdateEntry={(id, field, value, monthIndex) =>
                     updateEntry("incomes", id, field, value, monthIndex)
                   }
-                  onRemoveEntry={(id) => removeEntry("incomes", id)}
+                  onRemoveEntry={async (id) => {
+                    try {
+                      await removeEntry("incomes", id);
+                      triggerSavedPopup();
+                    } catch (error) {
+                      console.error("Failed to delete income entry:", error);
+                    }
+                  }}
                   type="income"
                   isOpen={incomeOpen}
                   onToggle={() => setIncomeOpen(!incomeOpen)}
@@ -184,7 +191,14 @@ function HomePage() {
                   onUpdateEntry={(id, field, value, monthIndex) =>
                     updateEntry("expenses", id, field, value, monthIndex)
                   }
-                  onRemoveEntry={(id) => removeEntry("expenses", id)}
+                  onRemoveEntry={async (id) => {
+                    try {
+                      await removeEntry("expenses", id);
+                      triggerSavedPopup();
+                    } catch (error) {
+                      console.error("Failed to delete expense entry:", error);
+                    }
+                  }}
                   type="expense"
                   isOpen={expenseOpen}
                   onToggle={() => setExpenseOpen(!expenseOpen)}

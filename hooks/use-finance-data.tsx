@@ -243,12 +243,26 @@ export function useFinanceData() {
     setHasChanges(true);
   };
 
-  const removeEntry = (type: "incomes" | "expenses", id: string) => {
-    setData((prev) => ({
-      ...prev,
-      [type]: prev[type].filter((entry) => entry.id !== id),
-    }));
-    setHasChanges(true);
+  const removeEntry = async (type: "incomes" | "expenses", id: string) => {
+    try {
+      const response = await fetch(`/api/entries?id=${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to delete entry");
+      }
+
+      setData((prev) => ({
+        ...prev,
+        [type]: prev[type].filter((entry) => entry.id !== id),
+      }));
+    } catch (error) {
+      console.error("Error deleting entry:", error);
+      throw error;
+    }
   };
 
   const setDataForImport = async (

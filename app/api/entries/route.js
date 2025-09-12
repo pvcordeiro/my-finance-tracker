@@ -102,3 +102,66 @@ export const POST = withAuth(async (request) => {
     );
   }
 });
+
+export const DELETE = withAuth(async (request) => {
+  try {
+    const user = getAuthenticatedUser(request);
+    const userId = user.id;
+
+    const { searchParams } = new URL(request.url);
+    const entryId = searchParams.get("id");
+
+    if (!entryId) {
+      return NextResponse.json(
+        { error: "Entry ID is required" },
+        { status: 400 }
+      );
+    }
+
+    const db = await getDatabase();
+
+    const entry = await new Promise((resolve, reject) => {
+      db.get(
+        "SELECT id FROM entries WHERE id = ? AND user_id = ?",
+        [entryId, userId],
+        (err, row) => {
+          if (err) reject(err);
+          else resolve(row);
+        }
+      );
+    });
+
+    if (!entry) {
+      return NextResponse.json(
+        { error: "Entry not found or access denied" },
+        { status: 404 }
+      );
+    }
+
+    const result = await new Promise((resolve, reject) => {
+      db.run(
+        "DELETE FROM entries WHERE id = ? AND user_id = ?",
+        [entryId, userId],
+        function (err) {
+          if (err) reject(err);
+          else resolve({ changes: this.changes });
+        }
+      );
+    });
+
+    if (result.changes === 0) {
+      return NextResponse.json({ error: "Entry not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "Entry deleted successfully",
+    });
+  } catch (error) {
+    console.error("Delete entry error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+});
