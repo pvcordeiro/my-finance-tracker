@@ -1,17 +1,16 @@
-FROM node:20-alpine AS builder
+FROM oven/bun:alpine AS builder
 
 WORKDIR /app
 
-COPY package.json pnpm-lock.yaml ./
+COPY package.json bun.lock ./
 COPY . .
 
-RUN npm install -g pnpm
-RUN pnpm install --frozen-lockfile
-RUN pnpm run build
+RUN bun install --frozen-lockfile
+RUN bun run build
 
 
 
-FROM node:20-alpine
+FROM oven/bun:alpine
 
 WORKDIR /app
 
@@ -22,4 +21,4 @@ COPY --from=builder /app/package.json ./package.json
 
 ENV NODE_ENV=production
 
-CMD ["node", "server.js"]
+CMD ["bun", "server.js"]
