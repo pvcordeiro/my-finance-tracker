@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, Suspense, lazy, useState } from "react";
+import { useEffect, Suspense, lazy } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { AuthProvider } from "@/hooks/use-auth";
@@ -22,16 +22,6 @@ function SummaryPage() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
   const { data } = useFinanceData();
-  const [showLoader, setShowLoader] = useState(false);
-
-  useEffect(() => {
-    if (isLoading) {
-      const timer = setTimeout(() => setShowLoader(true), 100); // Delay spinner by 100ms
-      return () => clearTimeout(timer);
-    } else {
-      setShowLoader(false);
-    }
-  }, [isLoading]);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -46,26 +36,22 @@ function SummaryPage() {
   return (
     <div className="min-h-screen finance-gradient">
       <DashboardHeader />
-      {showLoader ? (
-        <FullPageLoader message="Loading your financial summary..." />
-      ) : (
-        <main className="container mx-auto p-4 space-y-6">
-          <div className="flex items-center justify-between gap-2">
-            <div>
-              <h1 className="text-3xl font-bold text-primary">
-                Financial Summary
-              </h1>
-              <p className="text-muted-foreground">
-                Your complete financial overview
-              </p>
-            </div>
+      <main className="container mx-auto p-4 space-y-6">
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <h1 className="text-3xl font-bold text-primary">
+              Financial Summary
+            </h1>
+            <p className="text-muted-foreground">
+              Your complete financial overview
+            </p>
           </div>
-          <SummaryTable data={data} />
-          <Suspense fallback={<LoadingState message="Loading chart..." />}>
-            <FinancialChart data={data} />
-          </Suspense>
-        </main>
-      )}
+        </div>
+        <SummaryTable data={data} />
+        <Suspense fallback={<LoadingState message="Loading chart..." />}>
+          <FinancialChart data={data} />
+        </Suspense>
+      </main>
     </div>
   );
 }

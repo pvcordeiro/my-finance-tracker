@@ -109,16 +109,11 @@ function HomePage() {
     router.push("/login?session=expired");
   };
 
-  const [showLoader, setShowLoader] = useState(false);
-
   useEffect(() => {
-    if (isLoading || dataLoading) {
-      const timer = setTimeout(() => setShowLoader(true), 100); // Delay spinner by 100ms
-      return () => clearTimeout(timer);
-    } else {
-      setShowLoader(false);
+    if (!isLoading && !user && !sessionExpiredRef.current) {
+      router.push("/login");
     }
-  }, [isLoading, dataLoading]);
+  }, [user, isLoading, router]);
 
   if (!user) {
     return null;
@@ -132,93 +127,86 @@ function HomePage() {
           Your changes have been saved
         </div>
       )}
-      {showLoader ? (
-        <FullPageLoader message="Loading your financial data..." />
-      ) : (
-        <main className="container mx-auto p-4 space-y-6">
-          <Tabs defaultValue="main" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="main" className="flex items-center gap-2">
-                <Edit className="w-4 h-4" />
-                Edit
-              </TabsTrigger>
-              <TabsTrigger
-                value="management"
-                className="flex items-center gap-2"
-              >
-                <Settings className="w-4 h-4" />
-                Backup
-              </TabsTrigger>
-            </TabsList>
+      <main className="container mx-auto p-4 space-y-6">
+        <Tabs defaultValue="main" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="main" className="flex items-center gap-2">
+              <Edit className="w-4 h-4" />
+              Edit
+            </TabsTrigger>
+            <TabsTrigger value="management" className="flex items-center gap-2">
+              <Settings className="w-4 h-4" />
+              Backup
+            </TabsTrigger>
+          </TabsList>
 
-            <TabsContent value="main">
-              <div className="space-y-4">
-                <BankAmount
-                  amount={data.bankAmount}
-                  onChange={updateBankAmount}
-                  onBlur={() => {
-                    saveData(undefined, handleSessionExpired);
-                    triggerSavedPopup();
-                  }}
-                />
-                <EntryForm
-                  title="Income"
-                  entries={data.incomes}
-                  onAddEntry={() => addEntry("incomes")}
-                  onUpdateEntry={(id, field, value, monthIndex) =>
-                    updateEntry("incomes", id, field, value, monthIndex)
-                  }
-                  onRemoveEntry={async (id) => {
-                    try {
-                      await removeEntry("incomes", id);
-                      triggerSavedPopup();
-                    } catch (error) {
-                      console.error("Failed to delete income entry:", error);
-                    }
-                  }}
-                  type="income"
-                  isOpen={incomeOpen}
-                  onToggle={() => setIncomeOpen(!incomeOpen)}
-                  saveData={saveData}
-                  triggerSavedPopup={triggerSavedPopup}
-                  handleSessionExpired={handleSessionExpired}
-                />
-
-                <EntryForm
-                  title="Expenses"
-                  entries={data.expenses}
-                  onAddEntry={() => addEntry("expenses")}
-                  onUpdateEntry={(id, field, value, monthIndex) =>
-                    updateEntry("expenses", id, field, value, monthIndex)
-                  }
-                  onRemoveEntry={async (id) => {
-                    try {
-                      await removeEntry("expenses", id);
-                      triggerSavedPopup();
-                    } catch (error) {
-                      console.error("Failed to delete expense entry:", error);
-                    }
-                  }}
-                  type="expense"
-                  isOpen={expenseOpen}
-                  onToggle={() => setExpenseOpen(!expenseOpen)}
-                  saveData={saveData}
-                  triggerSavedPopup={triggerSavedPopup}
-                  handleSessionExpired={handleSessionExpired}
-                />
-              </div>
-            </TabsContent>
-
-            <TabsContent value="management">
-              <DataManagement
-                data={data}
-                onImportData={handleImportData}
-                onClearData={handleClearData}
+          <TabsContent value="main">
+            <div className="space-y-4">
+              <BankAmount
+                amount={data.bankAmount}
+                onChange={updateBankAmount}
+                onBlur={() => {
+                  saveData(undefined, handleSessionExpired);
+                  triggerSavedPopup();
+                }}
               />
-            </TabsContent>
-          </Tabs>
-        </main>
-      )}
+              <EntryForm
+                title="Income"
+                entries={data.incomes}
+                onAddEntry={() => addEntry("incomes")}
+                onUpdateEntry={(id, field, value, monthIndex) =>
+                  updateEntry("incomes", id, field, value, monthIndex)
+                }
+                onRemoveEntry={async (id) => {
+                  try {
+                    await removeEntry("incomes", id);
+                    triggerSavedPopup();
+                  } catch (error) {
+                    console.error("Failed to delete income entry:", error);
+                  }
+                }}
+                type="income"
+                isOpen={incomeOpen}
+                onToggle={() => setIncomeOpen(!incomeOpen)}
+                saveData={saveData}
+                triggerSavedPopup={triggerSavedPopup}
+                handleSessionExpired={handleSessionExpired}
+              />
+
+              <EntryForm
+                title="Expenses"
+                entries={data.expenses}
+                onAddEntry={() => addEntry("expenses")}
+                onUpdateEntry={(id, field, value, monthIndex) =>
+                  updateEntry("expenses", id, field, value, monthIndex)
+                }
+                onRemoveEntry={async (id) => {
+                  try {
+                    await removeEntry("expenses", id);
+                    triggerSavedPopup();
+                  } catch (error) {
+                    console.error("Failed to delete expense entry:", error);
+                  }
+                }}
+                type="expense"
+                isOpen={expenseOpen}
+                onToggle={() => setExpenseOpen(!expenseOpen)}
+                saveData={saveData}
+                triggerSavedPopup={triggerSavedPopup}
+                handleSessionExpired={handleSessionExpired}
+              />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="management">
+            <DataManagement
+              data={data}
+              onImportData={handleImportData}
+              onClearData={handleClearData}
+            />
+          </TabsContent>
+        </Tabs>
+      </main>
       {/* Confirmation Dialog */}
       <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
         <DialogContent>

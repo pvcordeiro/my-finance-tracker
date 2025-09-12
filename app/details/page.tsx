@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { AuthProvider } from "@/hooks/use-auth";
@@ -17,16 +17,6 @@ function DetailsPage() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
   const { data, saveData, setData } = useFinanceData();
-  const [showLoader, setShowLoader] = useState(false);
-
-  useEffect(() => {
-    if (isLoading) {
-      const timer = setTimeout(() => setShowLoader(true), 100); // Delay spinner by 100ms
-      return () => clearTimeout(timer);
-    } else {
-      setShowLoader(false);
-    }
-  }, [isLoading]);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -41,23 +31,19 @@ function DetailsPage() {
   return (
     <div className="min-h-screen finance-gradient">
       <DashboardHeader />
-      {showLoader ? (
-        <FullPageLoader message="Loading details..." />
-      ) : (
-        <main className="container mx-auto p-4 space-y-6">
-          <div className="flex items-center justify-between gap-2">
-            <div>
-              <h1 className="text-3xl font-bold text-primary">
-                Financial Details
-              </h1>
-              <p className="text-muted-foreground">
-                Detailed view and data management
-              </p>
-            </div>
+      <main className="container mx-auto p-4 space-y-6">
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <h1 className="text-3xl font-bold text-primary">
+              Financial Details
+            </h1>
+            <p className="text-muted-foreground">
+              Detailed view and data management
+            </p>
           </div>
-          <DetailsTable data={data} />
-        </main>
-      )}
+        </div>
+        <DetailsTable data={data} />
+      </main>
     </div>
   );
 }
