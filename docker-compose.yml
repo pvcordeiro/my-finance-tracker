@@ -7,8 +7,6 @@ services:
       - ./data:/app/data
     environment:
       - NODE_ENV=${NODE_ENV}
-      - HOST=${HOST}
-      - PORT=${PORT}
       - ADMIN_USERNAME=${ADMIN_USERNAME}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
       - SESSION_SECRET=${SESSION_SECRET}

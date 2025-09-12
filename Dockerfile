@@ -15,7 +15,6 @@ FROM oven/bun:alpine
 WORKDIR /app
 
 COPY --from=builder /app/.next/standalone ./
-RUN sed -i "s/const hostname = process.env.HOSTNAME || '0.0.0.0'/const hostname = process.env.HOST || process.env.HOSTNAME || '0.0.0.0'/g" server.js
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/package.json ./package.json
