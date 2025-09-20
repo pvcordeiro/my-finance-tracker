@@ -2,7 +2,17 @@
 
 A modern, full-featured finance tracker built with Next.js 15 and React 19, designed for privacy, multi-device access, and easy self-hosting. Includes a secure admin panel, session-based authentication, and a beautiful, mobile-friendly UI.
 
-https://github.com/user-attachments/assets/e50001ff-c556-4d54-b0f6-ba4243d4c7bf
+Desktop:
+
+
+https://github.com/user-attachments/assets/58fc4ffb-19ae-4f61-9a5f-354d4595db1f
+
+
+Mobile:
+
+
+https://github.com/user-attachments/assets/a30efb78-74b5-45bb-b922-e2aa8f7005f7
+
 
 ## Features
 
