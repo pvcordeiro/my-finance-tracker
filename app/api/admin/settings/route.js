@@ -47,7 +47,16 @@ export async function POST(request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
+    const rawBody = await request.text();
+    if (rawBody.length > 20_000) {
+      return NextResponse.json({ error: "Payload too large" }, { status: 413 });
+    }
+    let body;
+    try {
+      body = JSON.parse(rawBody);
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    }
 
     const validation = settingsSchema.safeParse(body);
     if (!validation.success) {

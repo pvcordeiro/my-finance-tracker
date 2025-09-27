@@ -57,8 +57,30 @@ export async function POST(request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
+    const rawBody = await request.text();
+    if (rawBody.length > 20_000) {
+      return NextResponse.json({ error: "Payload too large" }, { status: 413 });
+    }
+    let body;
+    try {
+      body = JSON.parse(rawBody);
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    }
     const { userId, groupId } = body;
+    const numericUserId = Number(userId);
+    const numericGroupId = Number(groupId);
+    if (
+      !Number.isInteger(numericUserId) ||
+      numericUserId <= 0 ||
+      !Number.isInteger(numericGroupId) ||
+      numericGroupId <= 0
+    ) {
+      return NextResponse.json(
+        { error: "Invalid identifiers" },
+        { status: 400 }
+      );
+    }
 
     if (!userId || !groupId) {
       return NextResponse.json(
@@ -94,7 +116,7 @@ export async function POST(request) {
     const existing = await new Promise((resolve, reject) => {
       db.get(
         "SELECT id FROM user_groups WHERE user_id = ? AND group_id = ?",
-        [userId, groupId],
+        [numericUserId, numericGroupId],
         (err, row) => {
           if (err) reject(err);
           else resolve(row);
@@ -112,7 +134,7 @@ export async function POST(request) {
     await new Promise((resolve, reject) => {
       db.run(
         `INSERT INTO user_groups (user_id, group_id, joined_at) VALUES (?, ?, CURRENT_TIMESTAMP)`,
-        [userId, groupId],
+        [numericUserId, numericGroupId],
         function (err) {
           if (err) reject(err);
           else resolve();

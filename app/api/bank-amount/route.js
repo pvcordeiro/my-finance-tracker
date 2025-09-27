@@ -52,7 +52,16 @@ export const POST = withAuth(async (request) => {
     );
   }
 
-  const body = await request.json();
+  const rawBody = await request.text();
+  if (rawBody.length > 10_000) {
+    return NextResponse.json({ error: "Payload too large" }, { status: 413 });
+  }
+  let body;
+  try {
+    body = JSON.parse(rawBody);
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
 
   const validation = bankAmountSchema.safeParse({ amount: body.amount });
   if (!validation.success) {

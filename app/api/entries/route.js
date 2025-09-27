@@ -99,7 +99,16 @@ export const POST = withAuth(async (request) => {
 
     const currentYear = new Date().getFullYear();
 
-    const body = await request.json();
+    const rawBody = await request.text();
+    if (rawBody.length > 200_000) {
+      return NextResponse.json({ error: "Payload too large" }, { status: 413 });
+    }
+    let body;
+    try {
+      body = JSON.parse(rawBody);
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    }
     const { entries } = body;
 
     if (!Array.isArray(entries)) {
@@ -116,6 +125,21 @@ export const POST = withAuth(async (request) => {
           { error: "Invalid entry data", details: validation.error.errors },
           { status: 400 }
         );
+      }
+      if (Array.isArray(entry.amounts)) {
+        for (const a of entry.amounts) {
+          if (
+            typeof a !== "number" ||
+            !Number.isFinite(a) ||
+            a < -1_000_000_000 ||
+            a > 1_000_000_000
+          ) {
+            return NextResponse.json(
+              { error: "Invalid amount value" },
+              { status: 400 }
+            );
+          }
+        }
       }
     }
 

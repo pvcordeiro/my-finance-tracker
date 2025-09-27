@@ -10,7 +10,16 @@ export const POST = withAuth(async (request) => {
     const user = getAuthenticatedUser(request);
     const sessionToken = getSessionFromRequest(request);
 
-    const body = await request.json();
+    const rawBody = await request.text();
+    if (rawBody.length > 10_000) {
+      return NextResponse.json({ error: "Payload too large" }, { status: 413 });
+    }
+    let body;
+    try {
+      body = JSON.parse(rawBody);
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    }
     const { groupId } = body;
 
     if (!groupId) {
@@ -20,7 +29,13 @@ export const POST = withAuth(async (request) => {
       );
     }
 
-    const hasAccess = user.groups.some((group) => group.group_id === groupId);
+    const numericGroupId = Number(groupId);
+    if (!Number.isInteger(numericGroupId) || numericGroupId <= 0) {
+      return NextResponse.json({ error: "Invalid groupId" }, { status: 400 });
+    }
+    const hasAccess = user.groups.some(
+      (group) => group.group_id === numericGroupId
+    );
     if (!hasAccess) {
       return NextResponse.json(
         { error: "Access denied to this group" },
@@ -28,7 +43,7 @@ export const POST = withAuth(async (request) => {
       );
     }
 
-    await switchGroup(sessionToken, groupId);
+    await switchGroup(sessionToken, numericGroupId);
 
     return NextResponse.json({ success: true });
   } catch (error) {

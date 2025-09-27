@@ -61,7 +61,16 @@ export async function POST(request) {
     const sessionToken = getSessionFromRequest(request);
     const adminUser = await validateSession(sessionToken);
 
-    const body = await request.json();
+    const rawBody = await request.text();
+    if (rawBody.length > 20_000) {
+      return NextResponse.json({ error: "Payload too large" }, { status: 413 });
+    }
+    let body;
+    try {
+      body = JSON.parse(rawBody);
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    }
     const { name } = body;
 
     if (!name || typeof name !== "string" || name.trim().length === 0) {
@@ -118,7 +127,16 @@ export async function PATCH(request) {
       );
     }
 
-    const body = await request.json();
+    const rawBody = await request.text();
+    if (rawBody.length > 20_000) {
+      return NextResponse.json({ error: "Payload too large" }, { status: 413 });
+    }
+    let body;
+    try {
+      body = JSON.parse(rawBody);
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    }
     const { name } = body;
 
     if (!name || typeof name !== "string" || name.trim().length === 0) {

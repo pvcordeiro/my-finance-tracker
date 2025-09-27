@@ -6,10 +6,25 @@ import {
   getSessionFromRequest,
 } from "../../../../lib/session.js";
 
+const adminFailMap = new Map();
 async function verifyAdmin(request) {
+  const ip =
+    request.headers.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
+  const rec = adminFailMap.get(ip);
+  if (rec && rec.blockUntil && rec.blockUntil > Date.now()) return false;
   const sessionToken = getSessionFromRequest(request);
   const userSession = await validateSession(sessionToken);
-  return userSession && userSession.is_admin == true;
+  const ok = !!(userSession && userSession.is_admin == true);
+  if (!ok) {
+    const now = Date.now();
+    if (!rec || now > rec.reset) {
+      adminFailMap.set(ip, { fails: 1, reset: now + 15 * 60 * 1000 });
+    } else {
+      rec.fails += 1;
+      if (rec.fails > 20) rec.blockUntil = now + 30 * 60 * 1000;
+    }
+  }
+  return ok;
 }
 
 export async function GET(request) {
