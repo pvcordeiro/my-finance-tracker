@@ -539,12 +539,12 @@ export function AdminDashboard() {
                                 <div className="flex items-center justify-between">
                                   <h3 className="font-medium flex items-center gap-1">
                                     {userItem.username}
-                                    {userItem.is_admin && (
+                                    {userItem.is_admin ? (
                                       <Shield
                                         className="w-4 h-4 text-blue-600 dark:text-blue-400"
                                         aria-label="Admin user"
                                       />
-                                    )}
+                                    ) : null}
                                   </h3>
                                   {userItem.id !== 1 && (
                                     <DropdownMenu>
@@ -645,12 +645,12 @@ export function AdminDashboard() {
                                   <div>
                                     <div className="flex items-center gap-1">
                                       <span>{userItem.username}</span>
-                                      {userItem.is_admin && (
+                                      {userItem.is_admin ? (
                                         <Shield
                                           className="w-4 h-4 text-blue-600 dark:text-blue-400"
                                           aria-label="Admin user"
                                         />
-                                      )}
+                                      ) : null}
                                     </div>
                                     <div className="text-xs text-muted-foreground sm:hidden">
                                       <Calendar className="w-3 h-3 inline mr-1" />
@@ -779,14 +779,14 @@ export function AdminDashboard() {
                                     <h3 className="font-medium">
                                       {group.name}
                                     </h3>
-                                    {group.created_by_admin && (
+                                    {group.created_by_admin ? (
                                       <Badge
                                         variant="secondary"
                                         className="text-xs"
                                       >
                                         Admin
                                       </Badge>
-                                    )}
+                                    ) : null}
                                   </div>
                                 </div>
                                 <div className="text-sm text-muted-foreground">
@@ -918,14 +918,14 @@ export function AdminDashboard() {
                                   <div>
                                     <div className="flex items-center space-x-2">
                                       <span>{group.name}</span>
-                                      {group.created_by_admin && (
+                                      {group.created_by_admin ? (
                                         <Badge
                                           variant="secondary"
                                           className="text-xs"
                                         >
                                           Admin
                                         </Badge>
-                                      )}
+                                      ) : null}
                                     </div>
                                     <div className="text-xs text-muted-foreground sm:hidden">
                                       {formatDate(group.created_at)}
