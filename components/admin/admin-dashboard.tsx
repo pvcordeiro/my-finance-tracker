@@ -249,7 +249,7 @@ export function AdminDashboard() {
         toast.success("Group created successfully");
         setNewGroupName("");
         loadGroups();
-        loadUsers(); // Refresh users to show updated group info
+        loadUsers();
       } else {
         toast.error("Failed to create group");
       }

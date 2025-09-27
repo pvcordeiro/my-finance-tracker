@@ -130,7 +130,6 @@ export async function PATCH(request) {
 
     const db = await getDatabase();
 
-    // Check if group exists
     const group = await new Promise((resolve, reject) => {
       db.get(
         "SELECT id, name FROM groups WHERE id = ?",
@@ -146,7 +145,6 @@ export async function PATCH(request) {
       return NextResponse.json({ error: "Group not found" }, { status: 404 });
     }
 
-    // Update the group name
     await new Promise((resolve, reject) => {
       db.run(
         "UPDATE groups SET name = ? WHERE id = ?",
@@ -193,7 +191,6 @@ export async function DELETE(request) {
 
     const db = await getDatabase();
 
-    // Check if group exists and is not the first group
     const group = await new Promise((resolve, reject) => {
       db.get(
         "SELECT id, name FROM groups WHERE id = ?",
@@ -216,7 +213,6 @@ export async function DELETE(request) {
       );
     }
 
-    // Clear last_selected_group_id for any users who had this group selected
     await new Promise((resolve, reject) => {
       db.run(
         "UPDATE users SET last_selected_group_id = NULL WHERE last_selected_group_id = ?",
@@ -228,7 +224,6 @@ export async function DELETE(request) {
       );
     });
 
-    // Delete the group (cascade will handle related data)
     await new Promise((resolve, reject) => {
       db.run("DELETE FROM groups WHERE id = ?", [groupId], function (err) {
         if (err) reject(err);

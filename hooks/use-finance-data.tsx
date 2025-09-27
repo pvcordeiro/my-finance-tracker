@@ -33,7 +33,7 @@ function shiftDataForRollingMonths(amounts: number[]): number[] {
 
 function unshiftDataForStorage(amounts: number[]): number[] {
   const now = new Date();
-  const currentMonth = now.getMonth(); // 0-11
+  const currentMonth = now.getMonth();
 
   if (currentMonth === 0) {
     return amounts;
@@ -46,7 +46,6 @@ function unshiftDataForStorage(amounts: number[]): number[] {
   return [...fromCurrentMonthBack, ...restOfArray];
 }
 
-// Standard result type for commit operations
 type CommitResult =
   | { success: true }
   | { success: false; conflict?: true; error?: string };
@@ -86,17 +85,17 @@ export function useFinanceData() {
     bankAmount: { timestamp: null, userId: null },
     entries: { timestamp: null, userId: null },
   });
-  // Track changes independently so we can save bank amount and entries separately
+
   const [hasBankChanges, setHasBankChanges] = useState(false);
   const [hasEntryChanges, setHasEntryChanges] = useState(false);
-  // Derived overall changes flag (kept for existing consumers)
+
   const hasChanges = useMemo(
     () => hasBankChanges || hasEntryChanges,
     [hasBankChanges, hasEntryChanges]
   );
   const [isLoading, setIsLoading] = useState(true);
   const [conflictData, setConflictData] = useState<FinanceData | null>(null);
-  // Track which domain the conflict relates to: 'bank' | 'entries' | 'all'
+
   const [conflictType, setConflictType] = useState<
     null | "bank" | "entries" | "all"
   >(null);
@@ -122,9 +121,8 @@ export function useFinanceData() {
     try {
       setIsLoading(true);
 
-      // Load bank amount
       const bankResponse = await fetch("/api/bank-amount", {
-        credentials: "include", // Include cookies for session
+        credentials: "include",
       });
 
       if (!bankResponse.ok) {
@@ -137,9 +135,8 @@ export function useFinanceData() {
 
       const bankData = await bankResponse.json();
 
-      // Load entries
       const entriesResponse = await fetch("/api/entries", {
-        credentials: "include", // Include cookies for session
+        credentials: "include",
       });
 
       if (!entriesResponse.ok) {
@@ -154,7 +151,6 @@ export function useFinanceData() {
 
       const entries = entriesData?.entries || [];
 
-      // Transform entries to match frontend format and shift data for rolling months
       const incomes = entries
         .filter((entry: any) => entry.type === "income")
         .map((entry: any) => ({
@@ -179,7 +175,7 @@ export function useFinanceData() {
 
       setData(loadedData);
       setOriginalData(loadedData);
-      // On a clean server load we should clear change flags
+
       setHasBankChanges(false);
       setHasEntryChanges(false);
 
@@ -278,11 +274,11 @@ export function useFinanceData() {
   ) => {
     try {
       const currentData = dataToSave || data;
-      // Early return if value unchanged from original snapshot
+
       if (currentData.bankAmount === originalData.bankAmount) {
-        return { success: false } as const; // signal no-op
+        return { success: false } as const;
       }
-      // Conflict check: re-fetch bank only and compare if last update user differs
+
       const bankResponseCheck = await fetch("/api/bank-amount", {
         credentials: "include",
       });
@@ -291,7 +287,6 @@ export function useFinanceData() {
         const serverAmount = serverBank.amount || 0;
         const lastUser = serverBank.last_updated_user_id || null;
         if (serverAmount === currentData.bankAmount) {
-          // Server already has this value; treat as no-op and sync local original
           setOriginalData((prev) => ({ ...prev, bankAmount: serverAmount }));
           setHasBankChanges(false);
           return { success: false } as const;
@@ -301,7 +296,6 @@ export function useFinanceData() {
           lastUser !== user?.id &&
           serverAmount !== currentData.bankAmount
         ) {
-          // Conflict: capture minimal dataset (only bank) to show difference
           setConflictData({
             bankAmount: serverAmount,
             incomes: originalData.incomes,
@@ -325,7 +319,7 @@ export function useFinanceData() {
         }
         throw new Error("Failed to save bank amount");
       }
-      // Update original snapshot only for bank amount
+
       setOriginalData((prev) => ({
         ...prev,
         bankAmount: currentData.bankAmount,
@@ -338,23 +332,21 @@ export function useFinanceData() {
     }
   };
 
-  // Commit only a description change for a single entry (optimistic update)
   const commitEntryDescription = async (
     entryType: "incomes" | "expenses",
     id: string,
     newDescription: string
   ): Promise<CommitResult> => {
-    // optimistic local update already happened via updateEntry
     const originalEntry = originalData[entryType].find((e) => e.id === id);
     if (originalEntry && originalEntry.description === newDescription) {
-      return { success: false }; // no change
+      return { success: false };
     }
     try {
       const latest = await fetchLatestEntriesNoCache();
       if (latest) {
         const target = latest.entries.find((e: any) => e.id.toString() === id);
         const originalEntry = originalData[entryType].find((e) => e.id === id);
-        // If the target entry no longer exists on server but we have it locally => treat as conflict
+
         if (!target && originalEntry) {
           const incomesServer = latest.entries
             .filter((e: any) => e.type === "income")
@@ -380,7 +372,7 @@ export function useFinanceData() {
         }
         if (target && originalEntry) {
           const serverName = target.name;
-          // Conflict criteria: server differs from original snapshot & server not equal to attempted value
+
           if (
             serverName !== originalEntry.description &&
             serverName !== newDescription
@@ -418,14 +410,14 @@ export function useFinanceData() {
       if (!res.ok) {
         throw new Error(await res.text());
       }
-      // refresh original snapshot for that entry
+
       setOriginalData((prev) => ({
         ...prev,
         [entryType]: prev[entryType].map((e) =>
           e.id === id ? { ...e, description: newDescription } : e
         ),
       }));
-      // Re-evaluate if entries differ from original snapshot (after we update original they should not)
+
       setHasEntryChanges(false);
       return { success: true } as const;
     } catch (e) {
@@ -434,7 +426,6 @@ export function useFinanceData() {
     }
   };
 
-  // Commit only a single month amount for an entry
   const commitEntryAmount = async (
     entryType: "incomes" | "expenses",
     id: string,
@@ -443,15 +434,13 @@ export function useFinanceData() {
   ): Promise<CommitResult> => {
     const originalEntry = originalData[entryType].find((e) => e.id === id);
     if (originalEntry && originalEntry.amounts[monthIndex] === amount) {
-      return { success: false }; // no change
+      return { success: false };
     }
     try {
       const currentYear = new Date().getFullYear();
-      // monthIndex is 0-based position within the ROLLING (shifted) array shown in the UI.
-      // We first shift data so that index 0 == current calendar month. Therefore the actual
-      // calendar month number is (currentMonth + monthIndex) % 12.
-      const currentMonth = new Date().getMonth(); // 0-11
-      const actualMonth = (currentMonth + monthIndex) % 12; // 0-11 calendar month
+
+      const currentMonth = new Date().getMonth();
+      const actualMonth = (currentMonth + monthIndex) % 12;
       const latest = await fetchLatestEntriesNoCache();
       if (latest) {
         const target = latest.entries.find((e: any) => e.id.toString() === id);
@@ -544,7 +533,7 @@ export function useFinanceData() {
   const updateBankAmount = (amount: number) => {
     setData((prev) => {
       const next = { ...prev, bankAmount: amount };
-      // Determine if bank differs from original snapshot
+
       const bankChanged = next.bankAmount !== originalData.bankAmount;
       setHasBankChanges(bankChanged);
       return next;
@@ -552,7 +541,6 @@ export function useFinanceData() {
   };
 
   const addEntry = (type: "incomes" | "expenses") => {
-    // Persist first to get real server ID to avoid later 404 on PATCH
     (async () => {
       try {
         const res = await fetch("/api/entries/create", {
@@ -580,7 +568,7 @@ export function useFinanceData() {
           ...prev,
           [type]: [...prev[type], newEntry],
         }));
-        setHasEntryChanges(true); // local unsaved edits before commit
+        setHasEntryChanges(true);
       } catch (e) {
         console.error("Create entry exception", e);
       }
@@ -608,7 +596,7 @@ export function useFinanceData() {
         return entry;
       });
       const next = { ...prev, [type]: updatedList } as FinanceData;
-      // Compare flattened entries vs original snapshot to set change flag accurately
+
       const compareEntries = (
         current: FinanceEntry[],
         original: FinanceEntry[]
@@ -617,7 +605,7 @@ export function useFinanceData() {
         for (let i = 0; i < current.length; i++) {
           const c = current[i];
           const o = original[i];
-          if (!o || c.id !== o.id) return true; // structural change
+          if (!o || c.id !== o.id) return true;
           if (c.description !== o.description) return true;
           for (let m = 0; m < 12; m++) {
             if ((c.amounts[m] || 0) !== (o.amounts[m] || 0)) return true;
@@ -648,7 +636,6 @@ export function useFinanceData() {
       if (!response.ok) {
         const errorData = await response.json();
         if (response.status === 404) {
-          // Treat as stale: refresh data silently
           await loadDataFromServer();
           return;
         }
@@ -663,7 +650,7 @@ export function useFinanceData() {
         ...prev,
         [type]: prev[type].filter((entry) => entry.id !== id),
       }));
-      setHasEntryChanges(false); // commit succeeded reflects original snapshot
+      setHasEntryChanges(false);
     } catch (error) {
       console.error("Error deleting entry:", error);
       throw error;
@@ -755,8 +742,6 @@ export function useFinanceData() {
     setHasBankChanges(true);
     setHasEntryChanges(true);
 
-    // When importing/restoring a backup we need to persist BOTH bank amount and all entries.
-    // Use forceSaveData which handles unshifting the rotated month arrays back to Jan..Dec order.
     if (saveImmediately) {
       await forceSaveData(newData);
     }
@@ -765,13 +750,13 @@ export function useFinanceData() {
   return {
     data,
     hasChanges,
-    // granular flags (exported in case future UI wants separate indicators)
+
     hasBankChanges,
     hasEntryChanges,
     isLoading,
     conflictData,
     conflictType,
-    saveBankAmount, // partial save for bank only
+    saveBankAmount,
     commitEntryDescription,
     commitEntryAmount,
     forceSaveData,

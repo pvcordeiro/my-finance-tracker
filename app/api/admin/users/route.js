@@ -42,7 +42,6 @@ export async function GET(request) {
       );
     });
 
-    // Group users by id and collect their groups
     const usersMap = new Map();
     userRows.forEach((row) => {
       if (!usersMap.has(row.id)) {
@@ -99,7 +98,6 @@ export async function DELETE(request) {
 
     const db = await getDatabase();
 
-    // First, delete groups created by this user that have no other members
     await new Promise((resolve, reject) => {
       db.run(
         `
@@ -116,7 +114,6 @@ export async function DELETE(request) {
       );
     });
 
-    // For groups that still exist (have other members), set created_by to NULL
     try {
       await new Promise((resolve, reject) => {
         db.run(
@@ -129,8 +126,6 @@ export async function DELETE(request) {
         );
       });
     } catch (error) {
-      // If UPDATE fails (column is NOT NULL), we can't proceed with deletion
-      // This would happen on existing databases
       return NextResponse.json(
         {
           error:

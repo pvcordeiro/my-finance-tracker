@@ -36,9 +36,9 @@ export function GroupSelector() {
             /* silent */
           });
       }
-      return; // no dropdown needed
+      return;
     }
-    // If multiple groups but current invalid, fall back to first and persist
+
     if (
       groups.length > 1 &&
       active &&
@@ -82,14 +82,13 @@ export function GroupSelector() {
       });
 
       if (response.ok) {
-        // Refresh user data to get updated current_group_id
         await refreshUser();
         toast.success(
           "Switched to " +
             (user.groups?.find((g) => g.group_id === groupId)?.name ||
               "selected group")
         );
-        // Reload the page to refresh all data
+
         window.location.reload();
       } else {
         toast.error("Failed to switch group");

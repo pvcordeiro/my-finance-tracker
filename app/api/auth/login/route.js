@@ -11,7 +11,6 @@ import {
 
 export async function POST(request) {
   try {
-    // Rate limiting
     const clientIp = getClientIp(request);
     if (!rateLimit(clientIp, { maxRequests: 5, windowMs: 15 * 60 * 1000 })) {
       return NextResponse.json(
@@ -22,7 +21,6 @@ export async function POST(request) {
 
     const body = await request.json();
 
-    // Validate input
     const validation = loginSchema.safeParse(body);
     if (!validation.success) {
       return NextResponse.json(
@@ -61,10 +59,8 @@ export async function POST(request) {
       );
     }
 
-    // Create session
     const sessionToken = await createSession(user.id);
 
-    // Create response with session cookie
     const response = NextResponse.json({
       user: {
         id: user.id,
@@ -74,7 +70,6 @@ export async function POST(request) {
       message: "Login successful",
     });
 
-    // Set secure HTTP-only cookie
     response.cookies.set(
       SESSION_COOKIE_NAME,
       sessionToken,

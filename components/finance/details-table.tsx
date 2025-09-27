@@ -54,7 +54,6 @@ export function DetailsTable({ data }: DetailsTableProps) {
   const currentMonth = now.getMonth();
   const currentYear = now.getFullYear();
 
-  // fullscreen logic (mobile only UI trigger, but safe everywhere)
   const [fullscreen, setFullscreen] = useState<null | "income" | "expense">(
     null
   );
@@ -66,23 +65,18 @@ export function DetailsTable({ data }: DetailsTableProps) {
     if (document.fullscreenElement) {
       try {
         await document.exitFullscreen();
-      } catch (_) {
-        /* ignore */
-      }
+      } catch (_) {}
     }
   }, []);
 
   const requestOrientationLock = async () => {
-    // Attempt to lock orientation to landscape if supported (mostly mobile browsers & installed PWAs)
     try {
-      // @ts-ignore - experimental API
+      // @ts-ignore
       if (screen.orientation && screen.orientation.lock) {
         // @ts-ignore
         await screen.orientation.lock("landscape");
       }
-    } catch (_) {
-      // silence failures (iOS Safari often rejects)
-    }
+    } catch (_) {}
   };
 
   const enterFullscreen = useCallback(
@@ -95,21 +89,17 @@ export function DetailsTable({ data }: DetailsTableProps) {
         which === "income"
           ? incomeWrapperRef.current
           : expenseWrapperRef.current;
-      // Fallback: if Fullscreen API unsupported, just flag state (overlay CSS still applied)
       setFullscreen(which);
       if (target && target.requestFullscreen) {
         try {
           await target.requestFullscreen();
           await requestOrientationLock();
-        } catch (_) {
-          // Ignore; user can still view overlay styling.
-        }
+        } catch (_) {}
       }
     },
     [exitFullscreen, fullscreen]
   );
 
-  // Sync state if user exits fullscreen via system gesture
   useEffect(() => {
     const handler = () => {
       if (!document.fullscreenElement) {
@@ -120,7 +110,6 @@ export function DetailsTable({ data }: DetailsTableProps) {
     return () => document.removeEventListener("fullscreenchange", handler);
   }, []);
 
-  // Prevent body scroll when our manual overlay (non-fullscreen) active
   useEffect(() => {
     if (fullscreen) {
       const original = document.body.style.overflow;

@@ -304,7 +304,6 @@ export function EntryForm({
                                 if (e.key === "Enter") {
                                   (e.target as HTMLInputElement).blur();
                                 } else if (e.key === "Escape") {
-                                  // Cancel editing: revert pending change if not committed by reloading from changedFields? For simplicity just exit.
                                   e.preventDefault();
                                   setEditingDescriptionId(null);
                                 }
@@ -476,11 +475,10 @@ export function EntryForm({
                 if (entryToDelete) {
                   try {
                     await onRemoveEntry(entryToDelete);
-                    // No need to call saveData since deletion is immediate via API
+
                     setEntryToDelete(null);
                   } catch (error) {
                     console.error("Failed to delete entry:", error);
-                    // You could show an error message to the user here
                   }
                 }
                 setDeleteDialogOpen(false);

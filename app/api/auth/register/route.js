@@ -10,7 +10,6 @@ import {
 
 export async function POST(request) {
   try {
-    // Check if registration is allowed
     const db = await getDatabase();
     const registrationSetting = await new Promise((resolve, reject) => {
       db.get(
@@ -30,7 +29,6 @@ export async function POST(request) {
       );
     }
 
-    // Rate limiting
     const clientIp = getClientIp(request);
     if (
       !rateLimit(`register_${clientIp}`, {
@@ -46,7 +44,6 @@ export async function POST(request) {
 
     const body = await request.json();
 
-    // Validate input
     const validation = registerSchema.safeParse(body);
     if (!validation.success) {
       return NextResponse.json(
@@ -57,7 +54,6 @@ export async function POST(request) {
 
     const { username, password } = validation.data;
 
-    // Check if user already exists
     const existingUser = await new Promise((resolve, reject) => {
       db.get(
         "SELECT id FROM users WHERE username = ?",
@@ -75,10 +71,8 @@ export async function POST(request) {
       );
     }
 
-    // Hash password
     const hashedPassword = hashPassword(password);
 
-    // Create user
     const userId = await new Promise((resolve, reject) => {
       db.run(
         "INSERT INTO users (username, password_hash) VALUES (?, ?)",
@@ -90,7 +84,6 @@ export async function POST(request) {
       );
     });
 
-    // Create a personal group for the user
     const groupName = `${username}'s group`;
     const groupId = await new Promise((resolve, reject) => {
       db.run(
@@ -103,7 +96,6 @@ export async function POST(request) {
       );
     });
 
-    // Assign user to their personal group
     await new Promise((resolve, reject) => {
       db.run(
         "INSERT INTO user_groups (user_id, group_id) VALUES (?, ?)",
@@ -115,16 +107,13 @@ export async function POST(request) {
       );
     });
 
-    // Create session
     const sessionToken = await createSession(userId);
 
-    // Create response with session cookie
     const response = NextResponse.json({
       user: { id: userId, username },
       message: "User created successfully",
     });
 
-    // Set secure HTTP-only cookie
     response.cookies.set(
       SESSION_COOKIE_NAME,
       sessionToken,

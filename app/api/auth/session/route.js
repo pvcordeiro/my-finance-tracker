@@ -6,14 +6,12 @@ import {
 
 export async function GET(request) {
   try {
-    // Get session token from cookie
     const sessionToken = getSessionFromRequest(request);
 
     if (!sessionToken) {
       return NextResponse.json({ error: "No session found" }, { status: 401 });
     }
 
-    // Validate session and get user data
     const user = await validateSession(sessionToken);
 
     if (!user) {

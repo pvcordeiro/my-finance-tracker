@@ -69,7 +69,6 @@ export async function POST(request) {
 
     const db = await getDatabase();
 
-    // Check if user exists
     const user = await new Promise((resolve, reject) => {
       db.get("SELECT id FROM users WHERE id = ?", [userId], (err, row) => {
         if (err) reject(err);
@@ -81,7 +80,6 @@ export async function POST(request) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Check if group exists
     const group = await new Promise((resolve, reject) => {
       db.get("SELECT id FROM groups WHERE id = ?", [groupId], (err, row) => {
         if (err) reject(err);
@@ -93,7 +91,6 @@ export async function POST(request) {
       return NextResponse.json({ error: "Group not found" }, { status: 404 });
     }
 
-    // Check if already assigned
     const existing = await new Promise((resolve, reject) => {
       db.get(
         "SELECT id FROM user_groups WHERE user_id = ? AND group_id = ?",
@@ -112,7 +109,6 @@ export async function POST(request) {
       );
     }
 
-    // Add to group (allow multiple groups per user)
     await new Promise((resolve, reject) => {
       db.run(
         `INSERT INTO user_groups (user_id, group_id, joined_at) VALUES (?, ?, CURRENT_TIMESTAMP)`,
@@ -170,7 +166,6 @@ export async function DELETE(request) {
       );
     }
 
-    // If the user was removed from their last selected group, clear the preference
     await new Promise((resolve, reject) => {
       db.run(
         "UPDATE users SET last_selected_group_id = NULL WHERE id = ? AND last_selected_group_id = ?",

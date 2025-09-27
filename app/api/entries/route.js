@@ -109,7 +109,6 @@ export const POST = withAuth(async (request) => {
       );
     }
 
-    // Validate each entry
     for (const entry of entries) {
       const validation = entrySchema.safeParse(entry);
       if (!validation.success) {
@@ -290,7 +289,6 @@ export const DELETE = withAuth(async (request) => {
   }
 });
 
-// Partial updates for a single entry (description or single month amount)
 export const PATCH = withAuth(async (request) => {
   try {
     const user = getAuthenticatedUser(request);
@@ -310,7 +308,7 @@ export const PATCH = withAuth(async (request) => {
       );
     }
     const db = await getDatabase();
-    // Verify entry belongs to group
+
     const entry = await new Promise((resolve, reject) => {
       db.get(
         "SELECT id FROM entries WHERE id = ? AND group_id = ?",
@@ -344,7 +342,7 @@ export const PATCH = withAuth(async (request) => {
       const numericMonth = Number(month);
       const numericAmount = Number(amount) || 0;
       const effectiveYear = year || new Date().getFullYear();
-      // Try update first
+
       const updateResult = await new Promise((resolve, reject) => {
         db.run(
           `UPDATE entry_amounts SET amount = ?, updated_at = CURRENT_TIMESTAMP WHERE entry_id = ? AND month = ? AND year = ?`,

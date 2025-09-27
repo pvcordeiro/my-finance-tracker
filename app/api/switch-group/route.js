@@ -20,7 +20,6 @@ export const POST = withAuth(async (request) => {
       );
     }
 
-    // Verify the user has access to this group
     const hasAccess = user.groups.some((group) => group.group_id === groupId);
     if (!hasAccess) {
       return NextResponse.json(
@@ -29,7 +28,6 @@ export const POST = withAuth(async (request) => {
       );
     }
 
-    // Switch the active group
     await switchGroup(sessionToken, groupId);
 
     return NextResponse.json({ success: true });

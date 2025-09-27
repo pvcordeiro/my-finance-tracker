@@ -27,17 +27,15 @@ export function GroupSelector() {
     const groups = user.groups || [];
     const active = user.current_group_id || null;
 
-    // If active group is valid, set it.
     if (active && groups.some((g: Group) => g.group_id === active)) {
       setCurrentGroupId(active);
       return;
     }
 
-    // If only one group, auto-select it and persist via switch endpoint (so backend session updates)
     if (groups.length === 1) {
       const sole = groups[0];
       setCurrentGroupId(sole.group_id);
-      // Fire-and-forget sync to backend if different
+
       if (active !== sole.group_id) {
         fetch("/api/switch-group", {
           method: "POST",
@@ -57,7 +55,6 @@ export function GroupSelector() {
       return;
     }
 
-    // If multiple groups but current is invalid (e.g., original group deleted), pick first available and persist.
     if (
       groups.length > 1 &&
       active &&
@@ -93,7 +90,7 @@ export function GroupSelector() {
 
       if (response.ok) {
         setCurrentGroupId(parseInt(groupId));
-        refreshUser(); // Refresh user data to update current group
+        refreshUser();
         toast.success("Group switched successfully");
       } else {
         toast.error("Failed to switch group");
@@ -107,7 +104,6 @@ export function GroupSelector() {
     return null;
   }
 
-  // If only one group, we auto-selected it above; don't render dropdown UI.
   if (user.groups.length === 1) {
     return null;
   }

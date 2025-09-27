@@ -30,9 +30,7 @@ export function DesktopTopNav() {
           const data = await response.json();
           setAdminUser(data.admin);
         }
-      } catch (error) {
-        // ignore
-      }
+      } catch (error) {}
     };
     checkAdmin();
   }, []);

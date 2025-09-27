@@ -105,7 +105,7 @@ export function DashboardHeader() {
                           });
 
                           if (response.ok) {
-                            window.location.reload(); // Refresh to update the group
+                            window.location.reload();
                           } else {
                             toast.error("Failed to switch group");
                           }

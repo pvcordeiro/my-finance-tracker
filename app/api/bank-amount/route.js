@@ -54,7 +54,6 @@ export const POST = withAuth(async (request) => {
 
   const body = await request.json();
 
-  // Validate input
   const validation = bankAmountSchema.safeParse({ amount: body.amount });
   if (!validation.success) {
     return NextResponse.json(
@@ -67,7 +66,6 @@ export const POST = withAuth(async (request) => {
 
   const db = await getDatabase();
 
-  // Insert new bank amount entry (keeping history)
   await new Promise((resolve, reject) => {
     db.run(
       `INSERT INTO bank_amounts (group_id, user_id, amount, updated_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)`,

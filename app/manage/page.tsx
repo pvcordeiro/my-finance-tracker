@@ -19,7 +19,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { ConflictConfirmationDialog } from "@/components/finance/conflict-confirmation-dialog";
-import { toast } from "sonner"; // still used for import/export errors maybe
+import { toast } from "sonner";
 
 function HomePage() {
   const { user, isLoading, logout } = useAuth();
@@ -110,12 +110,11 @@ function HomePage() {
     await setData(emptyData, true);
   };
 
-  // Track last saved element to flash (bank, entry-description, entry-amount)
   const [lastSaved, setLastSaved] = useState<{
     kind: "bank" | "entry-desc" | "entry-amount";
     id?: string;
     monthIndex?: number;
-    token: number; // incrementing token to force re-flash
+    token: number;
   } | null>(null);
   const flashCounterRef = useRef(0);
 
@@ -126,7 +125,7 @@ function HomePage() {
     try {
       const result = await saveBankAmount(dataToSave, onSessionExpired);
       if ((result as any)?.conflict) {
-        return; // Conflict dialog shown
+        return;
       }
       if (result?.success) {
         flashCounterRef.current += 1;
@@ -139,11 +138,8 @@ function HomePage() {
 
   const handleForceSave = async () => {
     try {
-      // Currently forceSaveData still saves everything. In future we can branch by conflictType if partial force save required.
       const result = await forceSaveData(undefined, handleSessionExpired);
       if (result?.success) {
-        // If conflict overwrite happened, we cannot granularly know which field user intended
-        // For now just flash bank if that was the conflict; otherwise no toast.
         flashCounterRef.current += 1;
         setLastSaved({ kind: "bank", token: flashCounterRef.current });
       }

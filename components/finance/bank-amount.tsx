@@ -9,7 +9,7 @@ interface BankAmountProps {
   amount: number;
   onChange: (amount: number) => void;
   onBlur: () => void;
-  flashToken?: number; // changing token retriggers flash animation
+  flashToken?: number;
 }
 
 export function BankAmount({

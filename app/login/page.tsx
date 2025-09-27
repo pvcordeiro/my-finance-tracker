@@ -41,9 +41,6 @@ function LoginPageInner() {
     return success;
   };
 
-  // Don't show loading on login page - users expect to see login form immediately
-  // The useEffect above will redirect authenticated users to the main page
-
   return (
     <>
       {showSessionExpired && (

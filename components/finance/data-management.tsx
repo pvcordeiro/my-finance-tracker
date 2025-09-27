@@ -57,7 +57,6 @@ export function DataManagement({
       try {
         const importedData = JSON.parse(e.target?.result as string);
 
-        // Validate imported data structure
         if (!validateFinanceData(importedData)) {
           toast.error(
             "Invalid file format. Please ensure the file contains valid finance data."
@@ -75,19 +74,16 @@ export function DataManagement({
     };
     reader.readAsText(file);
 
-    // Reset input
     event.target.value = "";
   };
 
   const validateFinanceData = (data: any): data is FinanceData => {
     if (typeof data !== "object" || data === null) return false;
 
-    // Check required properties
     if (typeof data.bankAmount !== "number") return false;
     if (!Array.isArray(data.incomes) || !Array.isArray(data.expenses))
       return false;
 
-    // Validate entries structure
     const validateEntries = (entries: any[]) => {
       return entries.every(
         (entry) =>
