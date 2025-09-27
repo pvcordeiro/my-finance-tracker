@@ -41,6 +41,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -74,6 +75,7 @@ export function AdminDashboard() {
   const { user, logout } = useAuth();
   const router = useRouter();
   const { setTheme, resolvedTheme } = useTheme();
+  const isMobile = useIsMobile();
   const [mounted, setMounted] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
@@ -89,6 +91,7 @@ export function AdminDashboard() {
   const [renameGroupDialogOpen, setRenameGroupDialogOpen] = useState(false);
   const [groupToRename, setGroupToRename] = useState<Group | null>(null);
   const [renameGroupName, setRenameGroupName] = useState("");
+  const [activeTab, setActiveTab] = useState("users");
 
   useEffect(() => {
     setMounted(true);
@@ -446,22 +449,32 @@ export function AdminDashboard() {
         </div>
       </header>
 
-      <main className="container mx-auto p-4 space-y-6">
-        <Tabs defaultValue="users" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="users">
-              <Users className="w-4 h-4 mr-2" />
-              User Management
-            </TabsTrigger>
-            <TabsTrigger value="groups">
-              <Shield className="w-4 h-4 mr-2" />
-              Group Management
-            </TabsTrigger>
-            <TabsTrigger value="settings">
-              <Settings className="w-4 h-4 mr-2" />
-              System Settings
-            </TabsTrigger>
-          </TabsList>
+      <main
+        className={`container mx-auto p-2 sm:p-4 space-y-6 ${
+          isMobile ? "pb-20" : ""
+        }`}
+      >
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="space-y-6"
+        >
+          {!isMobile && (
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="users">
+                <Users className="w-4 h-4 mr-2" />
+                User Management
+              </TabsTrigger>
+              <TabsTrigger value="groups">
+                <Shield className="w-4 h-4 mr-2" />
+                Group Management
+              </TabsTrigger>
+              <TabsTrigger value="settings">
+                <Settings className="w-4 h-4 mr-2" />
+                System Settings
+              </TabsTrigger>
+            </TabsList>
+          )}
 
           <TabsContent value="users">
             <Card>
@@ -509,81 +522,158 @@ export function AdminDashboard() {
                   </div>
 
                   <div className="border rounded-lg">
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead className="border-b">
-                          <tr>
-                            <th className="text-left p-4 font-medium">
-                              Username
-                            </th>
-                            <th className="text-left p-4 font-medium">
-                              Created
-                            </th>
-                            <th className="text-left p-4 font-medium">Group</th>
-                            <th className="text-right p-4 font-medium">
-                              Actions
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {users.map((userItem) => (
-                            <tr key={userItem.id} className="border-b">
-                              <td className="p-4 font-medium">
-                                {userItem.username}
-                              </td>
-                              <td className="p-4 text-muted-foreground">
-                                <div className="flex items-center space-x-1">
-                                  <Calendar className="w-3 h-3" />
-                                  <span>{formatDate(userItem.created_at)}</span>
+                    {isMobile ? (
+                      <div className="space-y-4 p-4">
+                        {users.map((userItem) => (
+                          <Card key={userItem.id}>
+                            <CardContent className="p-4">
+                              <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <h3 className="font-medium">
+                                    {userItem.username}
+                                  </h3>
+                                  <div className="flex space-x-2">
+                                    {user?.id === 1 && userItem.id !== 1 && (
+                                      <Button
+                                        variant={
+                                          userItem.is_admin
+                                            ? "default"
+                                            : "outline"
+                                        }
+                                        size="sm"
+                                        onClick={() => toggleAdmin(userItem.id)}
+                                      >
+                                        <Shield className="w-3 h-3" />
+                                      </Button>
+                                    )}
+                                    {userItem.id !== 1 && (
+                                      <Button
+                                        variant="destructive"
+                                        size="sm"
+                                        onClick={() => deleteUser(userItem.id)}
+                                      >
+                                        <Trash2 className="w-3 h-3" />
+                                      </Button>
+                                    )}
+                                  </div>
                                 </div>
-                              </td>
-                              <td className="p-4">
-                                <div className="flex flex-wrap gap-1">
-                                  {userItem.groups.length > 0 ? (
-                                    userItem.groups.map((group) => (
-                                      <Badge key={group.id} variant="outline">
-                                        {group.name}
-                                      </Badge>
-                                    ))
-                                  ) : (
-                                    <Badge variant="outline">No Groups</Badge>
-                                  )}
+                                <div className="text-sm text-muted-foreground">
+                                  <Calendar className="w-3 h-3 inline mr-1" />
+                                  {formatDate(userItem.created_at)}
                                 </div>
-                              </td>
-                              <td className="p-4 text-right">
-                                <div className="flex items-center justify-end space-x-2">
-                                  {user?.id === 1 && userItem.id !== 1 && (
-                                    <Button
-                                      variant={
-                                        userItem.is_admin
-                                          ? "default"
-                                          : "outline"
-                                      }
-                                      size="sm"
-                                      onClick={() => toggleAdmin(userItem.id)}
-                                      className="transition-all duration-200 hover:scale-[1.02]"
-                                    >
-                                      <Shield className="w-3 h-3" />
-                                    </Button>
-                                  )}
-                                  {userItem.id !== 1 && (
-                                    <Button
-                                      variant="destructive"
-                                      size="sm"
-                                      onClick={() => deleteUser(userItem.id)}
-                                      className="transition-all duration-200 hover:scale-[1.02]"
-                                    >
-                                      <Trash2 className="w-3 h-3" />
-                                    </Button>
-                                  )}
+                                <div>
+                                  <div className="text-sm font-medium mb-1">
+                                    Groups:
+                                  </div>
+                                  <div className="flex flex-wrap gap-1">
+                                    {userItem.groups.length > 0 ? (
+                                      userItem.groups.map((group) => (
+                                        <Badge key={group.id} variant="outline">
+                                          {group.name}
+                                        </Badge>
+                                      ))
+                                    ) : (
+                                      <Badge variant="outline">No Groups</Badge>
+                                    )}
+                                  </div>
                                 </div>
-                              </td>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                        {users.length === 0 && (
+                          <div className="text-center py-8 text-muted-foreground">
+                            No users found
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead className="border-b">
+                            <tr>
+                              <th className="text-left p-2 sm:p-4 font-medium">
+                                Username
+                              </th>
+                              <th className="text-left p-2 sm:p-4 font-medium hidden sm:table-cell">
+                                Created
+                              </th>
+                              <th className="text-left p-2 sm:p-4 font-medium">
+                                Group
+                              </th>
+                              <th className="text-right p-2 sm:p-4 font-medium">
+                                Actions
+                              </th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                    {users.length === 0 && (
+                          </thead>
+                          <tbody>
+                            {users.map((userItem) => (
+                              <tr key={userItem.id} className="border-b">
+                                <td className="p-2 sm:p-4 font-medium">
+                                  <div>
+                                    <div>{userItem.username}</div>
+                                    <div className="text-xs text-muted-foreground sm:hidden">
+                                      <Calendar className="w-3 h-3 inline mr-1" />
+                                      {formatDate(userItem.created_at)}
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="p-2 sm:p-4 text-muted-foreground hidden sm:table-cell">
+                                  <div className="flex items-center space-x-1">
+                                    <Calendar className="w-3 h-3" />
+                                    <span>
+                                      {formatDate(userItem.created_at)}
+                                    </span>
+                                  </div>
+                                </td>
+                                <td className="p-2 sm:p-4">
+                                  <div className="flex flex-wrap gap-1">
+                                    {userItem.groups.length > 0 ? (
+                                      userItem.groups.map((group) => (
+                                        <Badge key={group.id} variant="outline">
+                                          {group.name}
+                                        </Badge>
+                                      ))
+                                    ) : (
+                                      <Badge variant="outline">No Groups</Badge>
+                                    )}
+                                  </div>
+                                </td>
+                                <td className="p-4 text-right">
+                                  <div className="flex flex-col sm:flex-row items-end sm:justify-end space-y-2 sm:space-y-0 sm:space-x-2">
+                                    {user?.id === 1 && userItem.id !== 1 && (
+                                      <Button
+                                        variant={
+                                          userItem.is_admin
+                                            ? "default"
+                                            : "outline"
+                                        }
+                                        size="sm"
+                                        onClick={() => toggleAdmin(userItem.id)}
+                                        className="transition-all duration-200 hover:scale-[1.02] "
+                                      >
+                                        <Shield className="w-3 h-3 " />
+                                      </Button>
+                                    )}
+                                    {userItem.id !== 1 && (
+                                      <Button
+                                        variant="destructive"
+                                        size="sm"
+                                        onClick={() => deleteUser(userItem.id)}
+                                        className="transition-all duration-200 hover:scale-[1.02]"
+                                      >
+                                        <Trash2 className="w-3 h-3 mr-1 sm:mr-0" />
+                                      </Button>
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                    {!isMobile && users.length === 0 && (
                       <div className="text-center py-8 text-muted-foreground">
                         No users found
                       </div>
@@ -620,54 +710,44 @@ export function AdminDashboard() {
                     </Button>
                   </div>
                   <div className="border rounded-lg">
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead className="border-b">
-                          <tr>
-                            <th className="text-left p-4 font-medium">
-                              Group Name
-                            </th>
-                            <th className="text-left p-4 font-medium">
-                              Members
-                            </th>
-                            <th className="text-left p-4 font-medium">
-                              Created
-                            </th>
-                            <th className="text-right p-4 font-medium">
-                              Actions
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {groups.map((group) => (
-                            <tr key={group.id} className="border-b">
-                              <td className="p-4 font-medium">
-                                <div className="flex items-center space-x-2">
-                                  <span>{group.name}</span>
-                                  {group.created_by_admin && (
-                                    <Badge
-                                      variant="secondary"
-                                      className="text-xs"
-                                    >
-                                      Admin
-                                    </Badge>
-                                  )}
+                    {isMobile ? (
+                      <div className="space-y-4 p-4">
+                        {groups.map((group) => (
+                          <Card key={group.id}>
+                            <CardContent className="p-4">
+                              <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center space-x-2">
+                                    <h3 className="font-medium">
+                                      {group.name}
+                                    </h3>
+                                    {group.created_by_admin && (
+                                      <Badge
+                                        variant="secondary"
+                                        className="text-xs"
+                                      >
+                                        Admin
+                                      </Badge>
+                                    )}
+                                  </div>
                                 </div>
-                              </td>
-                              <td className="p-4">
-                                <Badge variant="outline">
-                                  {group.member_count}
-                                </Badge>
-                              </td>
-                              <td className="p-4 text-muted-foreground">
-                                {formatDate(group.created_at)}
-                              </td>
-                              <td className="p-4 text-right">
-                                <div className="flex items-center justify-end space-x-2">
+                                <div className="text-sm text-muted-foreground">
+                                  Created: {formatDate(group.created_at)}
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <span className="text-sm font-medium">
+                                    Members:
+                                  </span>
+                                  <Badge variant="outline">
+                                    {group.member_count}
+                                  </Badge>
+                                </div>
+                                <div className="flex flex-wrap gap-2">
                                   <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                       <Button variant="outline" size="sm">
-                                        Assign User
+                                        <UserPlus className="w-3 h-3 mr-1" />
+                                        Add User
                                       </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent>
@@ -696,6 +776,7 @@ export function AdminDashboard() {
                                   <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                       <Button variant="outline" size="sm">
+                                        <User className="w-3 h-3 mr-1" />
                                         Remove User
                                       </Button>
                                     </DropdownMenuTrigger>
@@ -726,7 +807,8 @@ export function AdminDashboard() {
                                     size="sm"
                                     onClick={() => renameGroup(group)}
                                   >
-                                    <Edit className="w-3 h-3" />
+                                    <Edit className="w-3 h-3 mr-1" />
+                                    Rename
                                   </Button>
                                   <Button
                                     variant="destructive"
@@ -734,16 +816,169 @@ export function AdminDashboard() {
                                     onClick={() => deleteGroup(group.id)}
                                     disabled={group.id === 1}
                                   >
-                                    <Trash2 className="w-3 h-3" />
+                                    <Trash2 className="w-3 h-3 mr-1" />
+                                    Delete
                                   </Button>
                                 </div>
-                              </td>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                        {groups.length === 0 && (
+                          <div className="text-center py-8 text-muted-foreground">
+                            No groups found
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead className="border-b">
+                            <tr>
+                              <th className="text-left p-2 sm:p-4 font-medium">
+                                Group Name
+                              </th>
+                              <th className="text-left p-2 sm:p-4 font-medium">
+                                Members
+                              </th>
+                              <th className="text-left p-2 sm:p-4 font-medium hidden sm:table-cell">
+                                Created
+                              </th>
+                              <th className="text-right p-2 sm:p-4 font-medium">
+                                Actions
+                              </th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                    {groups.length === 0 && (
+                          </thead>
+                          <tbody>
+                            {groups.map((group) => (
+                              <tr key={group.id} className="border-b">
+                                <td className="p-2 sm:p-4 font-medium">
+                                  <div>
+                                    <div className="flex items-center space-x-2">
+                                      <span>{group.name}</span>
+                                      {group.created_by_admin && (
+                                        <Badge
+                                          variant="secondary"
+                                          className="text-xs"
+                                        >
+                                          Admin
+                                        </Badge>
+                                      )}
+                                    </div>
+                                    <div className="text-xs text-muted-foreground sm:hidden">
+                                      {formatDate(group.created_at)}
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="p-2 sm:p-4">
+                                  <Badge variant="outline">
+                                    {group.member_count}
+                                  </Badge>
+                                </td>
+                                <td className="p-2 sm:p-4 text-muted-foreground hidden sm:table-cell">
+                                  {formatDate(group.created_at)}
+                                </td>
+                                <td className="p-4 text-right">
+                                  <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-center sm:justify-end sm:space-x-2">
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          className="w-full sm:w-auto"
+                                        >
+                                          <UserPlus className="w-3 h-3 mr-1 sm:mr-0" />
+                                          <span className="sm:hidden">
+                                            Add User
+                                          </span>
+                                        </Button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent>
+                                        {users
+                                          .filter(
+                                            (u) =>
+                                              !u.groups.some(
+                                                (g) => g.id === group.id
+                                              )
+                                          )
+                                          .map((user) => (
+                                            <DropdownMenuItem
+                                              key={user.id}
+                                              onClick={() =>
+                                                assignUserToGroup(
+                                                  user.id,
+                                                  group.id
+                                                )
+                                              }
+                                            >
+                                              {user.username}
+                                            </DropdownMenuItem>
+                                          ))}
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          className="w-full sm:w-auto"
+                                        >
+                                          <User className="w-3 h-3 mr-1 sm:mr-0" />
+                                          <span className="sm:hidden">
+                                            Remove User
+                                          </span>
+                                        </Button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent>
+                                        {users
+                                          .filter((u) =>
+                                            u.groups.some(
+                                              (g) => g.id === group.id
+                                            )
+                                          )
+                                          .map((user) => (
+                                            <DropdownMenuItem
+                                              key={user.id}
+                                              onClick={() =>
+                                                removeUserFromGroup(
+                                                  user.id,
+                                                  group.id
+                                                )
+                                              }
+                                            >
+                                              {user.username}
+                                            </DropdownMenuItem>
+                                          ))}
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => renameGroup(group)}
+                                      className="w-full sm:w-auto"
+                                    >
+                                      <Edit className="w-3 h-3 mr-1 sm:mr-0" />
+                                      <span className="sm:hidden">Rename</span>
+                                    </Button>
+                                    <Button
+                                      variant="destructive"
+                                      size="sm"
+                                      onClick={() => deleteGroup(group.id)}
+                                      disabled={group.id === 1}
+                                      className="w-full sm:w-auto"
+                                    >
+                                      <Trash2 className="w-3 h-3 mr-1 sm:mr-0" />
+                                      <span className="sm:hidden">Delete</span>
+                                    </Button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                    {!isMobile && groups.length === 0 && (
                       <div className="text-center py-8 text-muted-foreground">
                         No groups found
                       </div>
@@ -791,6 +1026,43 @@ export function AdminDashboard() {
           </TabsContent>
         </Tabs>
       </main>
+
+      {isMobile && (
+        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border shadow-lg">
+          <div className="flex justify-around items-center h-16 px-4">
+            <button
+              onClick={() => setActiveTab("users")}
+              className={`flex flex-col items-center justify-center flex-1 py-2 px-1 transition-colors min-h-[44px] ${
+                activeTab === "users"
+                  ? "text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Users className="w-6 h-6" />
+            </button>
+            <button
+              onClick={() => setActiveTab("groups")}
+              className={`flex flex-col items-center justify-center flex-1 py-2 px-1 transition-colors min-h-[44px] ${
+                activeTab === "groups"
+                  ? "text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Shield className="w-6 h-6" />
+            </button>
+            <button
+              onClick={() => setActiveTab("settings")}
+              className={`flex flex-col items-center justify-center flex-1 py-2 px-1 transition-colors min-h-[44px] ${
+                activeTab === "settings"
+                  ? "text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Settings className="w-6 h-6" />
+            </button>
+          </div>
+        </nav>
+      )}
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
