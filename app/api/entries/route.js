@@ -9,7 +9,12 @@ import {
 export const GET = withAuth(async (request) => {
   try {
     const user = getAuthenticatedUser(request);
-    const userId = user.id;
+    const groupId = user.group_id;
+
+    if (!groupId) {
+      return NextResponse.json({ entries: [] });
+    }
+
     const currentYear = new Date().getFullYear();
 
     const db = await getDatabase();
@@ -22,10 +27,10 @@ export const GET = withAuth(async (request) => {
           ea.month, ea.amount
         FROM entries e
         LEFT JOIN entry_amounts ea ON e.id = ea.entry_id AND ea.year = ?
-        WHERE e.user_id = ?
+        WHERE e.group_id = ?
         ORDER BY e.created_at DESC, ea.month ASC
       `,
-        [currentYear, userId],
+        [currentYear, groupId],
         (err, rows) => {
           if (err) reject(err);
           else resolve(rows);
@@ -68,7 +73,15 @@ export const GET = withAuth(async (request) => {
 export const POST = withAuth(async (request) => {
   try {
     const user = getAuthenticatedUser(request);
-    const userId = user.id;
+    const groupId = user.group_id;
+
+    if (!groupId) {
+      return NextResponse.json(
+        { error: "User is not assigned to a group" },
+        { status: 403 }
+      );
+    }
+
     const currentYear = new Date().getFullYear();
 
     const body = await request.json();
@@ -106,9 +119,9 @@ export const POST = withAuth(async (request) => {
         db.run(
           `
           DELETE FROM entry_amounts 
-          WHERE entry_id IN (SELECT id FROM entries WHERE user_id = ?)
+          WHERE entry_id IN (SELECT id FROM entries WHERE group_id = ?)
         `,
-          [userId],
+          [groupId],
           (err) => {
             if (err) reject(err);
             else resolve();
@@ -117,7 +130,7 @@ export const POST = withAuth(async (request) => {
       });
 
       await new Promise((resolve, reject) => {
-        db.run("DELETE FROM entries WHERE user_id = ?", [userId], (err) => {
+        db.run("DELETE FROM entries WHERE group_id = ?", [groupId], (err) => {
           if (err) reject(err);
           else resolve();
         });
@@ -128,9 +141,9 @@ export const POST = withAuth(async (request) => {
         if (entry.name && entry.type && entry.amounts) {
           const entryId = await new Promise((resolve, reject) => {
             db.run(
-              `INSERT INTO entries (user_id, name, type, created_at, updated_at) 
+              `INSERT INTO entries (group_id, name, type, created_at, updated_at) 
                VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-              [userId, entry.name, entry.type],
+              [groupId, entry.name, entry.type],
               function (err) {
                 if (err) reject(err);
                 else resolve(this.lastID);

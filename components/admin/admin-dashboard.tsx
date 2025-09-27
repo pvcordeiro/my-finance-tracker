@@ -54,12 +54,19 @@ interface User {
   username: string;
   is_admin: boolean;
   created_at: string;
-  entry_count: number;
-  last_activity: string | null;
+  group_name: string | null;
+  group_id: number | null;
 }
 
 interface AdminSettings {
   allow_registration: boolean;
+}
+
+interface Group {
+  id: number;
+  name: string;
+  created_at: string;
+  member_count: number;
 }
 
 export function AdminDashboard() {
@@ -68,6 +75,8 @@ export function AdminDashboard() {
   const { setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
+  const [groups, setGroups] = useState<Group[]>([]);
+  const [newGroupName, setNewGroupName] = useState("");
   const [settings, setSettings] = useState<AdminSettings>({
     allow_registration: true,
   });
@@ -95,6 +104,22 @@ export function AdminDashboard() {
     }
   };
 
+  const loadGroups = async () => {
+    try {
+      const response = await fetch("/api/admin/groups", {
+        credentials: "include",
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setGroups(data.groups);
+      } else {
+        toast.error("Failed to load groups");
+      }
+    } catch (error) {
+      toast.error("Error loading groups");
+    }
+  };
+
   const loadSettings = async () => {
     try {
       const response = await fetch("/api/admin/settings", {
@@ -113,7 +138,7 @@ export function AdminDashboard() {
 
   useEffect(() => {
     const loadData = async () => {
-      await Promise.all([loadUsers(), loadSettings()]);
+      await Promise.all([loadUsers(), loadGroups(), loadSettings()]);
       setIsLoading(false);
     };
     loadData();
@@ -192,6 +217,55 @@ export function AdminDashboard() {
       }
     } catch (error) {
       toast.error("Error updating admin status");
+    }
+  };
+
+  const createGroup = async () => {
+    if (!newGroupName.trim()) return;
+
+    try {
+      const response = await fetch("/api/admin/groups", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name: newGroupName.trim() }),
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        toast.success("Group created successfully");
+        setNewGroupName("");
+        loadGroups();
+        loadUsers(); // Refresh users to show updated group info
+      } else {
+        toast.error("Failed to create group");
+      }
+    } catch (error) {
+      toast.error("Error creating group");
+    }
+  };
+
+  const assignUserToGroup = async (userId: number, groupId: number) => {
+    try {
+      const response = await fetch("/api/admin/user-groups", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId, groupId }),
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        toast.success("User assigned to group successfully");
+        loadGroups();
+        loadUsers();
+      } else {
+        toast.error("Failed to assign user to group");
+      }
+    } catch (error) {
+      toast.error("Error assigning user to group");
     }
   };
 
@@ -277,10 +351,14 @@ export function AdminDashboard() {
 
       <main className="container mx-auto p-4 space-y-6">
         <Tabs defaultValue="users" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="users">
               <Users className="w-4 h-4 mr-2" />
               User Management
+            </TabsTrigger>
+            <TabsTrigger value="groups">
+              <Shield className="w-4 h-4 mr-2" />
+              Group Management
             </TabsTrigger>
             <TabsTrigger value="settings">
               <Settings className="w-4 h-4 mr-2" />
@@ -298,7 +376,7 @@ export function AdminDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                     <Card>
                       <CardContent className="pt-6">
                         <div className="flex items-center space-x-2">
@@ -306,19 +384,6 @@ export function AdminDashboard() {
                           <div>
                             <p className="text-sm font-medium">Total Users</p>
                             <p className="text-2xl font-bold">{users.length}</p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardContent className="pt-6">
-                        <div className="flex items-center space-x-2">
-                          <Activity className="w-4 h-4 text-green-600" />
-                          <div>
-                            <p className="text-sm font-medium">Active Users</p>
-                            <p className="text-2xl font-bold">
-                              {users.filter((u) => u.entry_count > 0).length}
-                            </p>
                           </div>
                         </div>
                       </CardContent>
@@ -357,12 +422,7 @@ export function AdminDashboard() {
                             <th className="text-left p-4 font-medium">
                               Created
                             </th>
-                            <th className="text-left p-4 font-medium">
-                              Entries
-                            </th>
-                            <th className="text-left p-4 font-medium">
-                              Last Activity
-                            </th>
+                            <th className="text-left p-4 font-medium">Group</th>
                             <th className="text-right p-4 font-medium">
                               Actions
                             </th>
@@ -382,13 +442,8 @@ export function AdminDashboard() {
                               </td>
                               <td className="p-4">
                                 <Badge variant="outline">
-                                  {userItem.entry_count}
+                                  {userItem.group_name || "No Group"}
                                 </Badge>
-                              </td>
-                              <td className="p-4 text-muted-foreground">
-                                {userItem.last_activity
-                                  ? formatDate(userItem.last_activity)
-                                  : "Never"}
                               </td>
                               <td className="p-4 text-right">
                                 <div className="flex items-center justify-end space-x-2">
@@ -426,6 +481,104 @@ export function AdminDashboard() {
                     {users.length === 0 && (
                       <div className="text-center py-8 text-muted-foreground">
                         No users found
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="groups">
+            <Card>
+              <CardHeader>
+                <CardTitle>Group Management</CardTitle>
+                <CardDescription>
+                  Create groups and assign users to them
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="text"
+                      placeholder="New group name"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      value={newGroupName}
+                      onChange={(e) => setNewGroupName(e.target.value)}
+                    />
+                    <Button
+                      onClick={createGroup}
+                      disabled={!newGroupName.trim()}
+                    >
+                      Create Group
+                    </Button>
+                  </div>
+                  <div className="border rounded-lg">
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead className="border-b">
+                          <tr>
+                            <th className="text-left p-4 font-medium">
+                              Group Name
+                            </th>
+                            <th className="text-left p-4 font-medium">
+                              Members
+                            </th>
+                            <th className="text-left p-4 font-medium">
+                              Created
+                            </th>
+                            <th className="text-right p-4 font-medium">
+                              Actions
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {groups.map((group) => (
+                            <tr key={group.id} className="border-b">
+                              <td className="p-4 font-medium">{group.name}</td>
+                              <td className="p-4">
+                                <Badge variant="outline">
+                                  {group.member_count}
+                                </Badge>
+                              </td>
+                              <td className="p-4 text-muted-foreground">
+                                {formatDate(group.created_at)}
+                              </td>
+                              <td className="p-4 text-right">
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" size="sm">
+                                      Assign User
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent>
+                                    {users
+                                      .filter(
+                                        (u) =>
+                                          !u.group_id || u.group_id !== group.id
+                                      )
+                                      .map((user) => (
+                                        <DropdownMenuItem
+                                          key={user.id}
+                                          onClick={() =>
+                                            assignUserToGroup(user.id, group.id)
+                                          }
+                                        >
+                                          {user.username}
+                                        </DropdownMenuItem>
+                                      ))}
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    {groups.length === 0 && (
+                      <div className="text-center py-8 text-muted-foreground">
+                        No groups found
                       </div>
                     )}
                   </div>

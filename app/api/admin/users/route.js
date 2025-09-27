@@ -27,11 +27,11 @@ export async function GET(request) {
             u.username, 
             u.is_admin,
             u.created_at,
-            COUNT(e.id) as entry_count,
-            MAX(e.updated_at) as last_activity
+            g.name as group_name,
+            g.id as group_id
           FROM users u 
-          LEFT JOIN entries e ON u.id = e.user_id 
-          GROUP BY u.id, u.username, u.is_admin, u.created_at
+          LEFT JOIN user_groups ug ON u.id = ug.user_id
+          LEFT JOIN groups g ON ug.group_id = g.id
           ORDER BY u.created_at DESC
         `,
         [],
