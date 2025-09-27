@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,6 +18,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Download, Trash2, AlertTriangle, CheckCircle } from "lucide-react";
 import type { FinanceData } from "@/hooks/use-finance-data";
+import { toast } from "sonner";
 
 interface DataManagementProps {
   data: FinanceData;
@@ -31,10 +31,6 @@ export function DataManagement({
   onImportData,
   onClearData,
 }: DataManagementProps) {
-  const [importStatus, setImportStatus] = useState<
-    "idle" | "success" | "error"
-  >("idle");
-  const [importError, setImportError] = useState("");
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
 
   const exportData = () => {
@@ -63,24 +59,18 @@ export function DataManagement({
 
         // Validate imported data structure
         if (!validateFinanceData(importedData)) {
-          setImportStatus("error");
-          setImportError(
+          toast.error(
             "Invalid file format. Please ensure the file contains valid finance data."
           );
           return;
         }
 
         onImportData(importedData);
-        setImportStatus("success");
-        setImportError("");
-
-        // Reset success message after 3 seconds
-        setTimeout(() => setImportStatus("idle"), 3000);
-      } catch (error) {
-        setImportStatus("error");
-        setImportError(
-          "Failed to parse JSON file. Please check the file format."
+        toast.success(
+          "Data imported successfully! Your financial data has been updated."
         );
+      } catch (error) {
+        toast.error("Failed to parse JSON file. Please check the file format.");
       }
     };
     reader.readAsText(file);
@@ -214,24 +204,6 @@ export function DataManagement({
               Import financial data from a previously exported JSON file.
             </p>
           </div>
-
-          {/* Import Status Messages */}
-          {importStatus === "success" && (
-            <Alert className="border-emerald-200 bg-emerald-50">
-              <CheckCircle className="w-4 h-4 text-emerald-600" />
-              <AlertDescription className="text-emerald-800">
-                Data imported successfully! Your financial data has been
-                updated.
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {importStatus === "error" && (
-            <Alert variant="destructive">
-              <AlertTriangle className="w-4 h-4" />
-              <AlertDescription>{importError}</AlertDescription>
-            </Alert>
-          )}
 
           {/* Clear Data */}
           <div className="space-y-2 pt-4 border-t">

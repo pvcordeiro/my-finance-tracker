@@ -19,7 +19,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { FullPageLoader } from "@/components/ui/loading";
+import { toast } from "sonner";
 
 function HomePage() {
   const { user, isLoading, logout } = useAuth();
@@ -38,7 +38,6 @@ function HomePage() {
   const [incomeOpen, setIncomeOpen] = useState(false);
   const [expenseOpen, setExpenseOpen] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [showSaved, setShowSaved] = useState(false);
   const nextRouteRef = useRef<string | null>(null);
   const sessionExpiredRef = useRef(false);
 
@@ -98,8 +97,7 @@ function HomePage() {
 
   const triggerSavedPopup = () => {
     setTimeout(() => {
-      setShowSaved(true);
-      setTimeout(() => setShowSaved(false), 1000);
+      toast.success("Your changes have been saved", { duration: 1000 });
     }, 300);
   };
 
@@ -122,11 +120,6 @@ function HomePage() {
   return (
     <div className="min-h-screen finance-gradient">
       <DashboardHeader />
-      {showSaved && (
-        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-emerald-600 text-white px-4 py-2 rounded shadow z-50 transition-opacity pointer-events-none text-sm whitespace-nowrap">
-          Your changes have been saved
-        </div>
-      )}
       <main className="container mx-auto p-4 space-y-6">
         <Tabs defaultValue="main" className="space-y-6">
           <TabsList className="grid w-full grid-cols-2">
