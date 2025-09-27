@@ -1,17 +1,20 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { LogOut, Menu, EuroIcon } from "lucide-react";
+import { LogOut, EuroIcon, ChevronDown, Shield, User } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { useState } from "react";
-import { cn } from "@/lib/utils";
 import { DarkModeToggle } from "@/components/ui/dark-mode-toggle";
 import { useRouter, usePathname } from "next/navigation";
 import { Edit, BarChart3, FileText } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export function DashboardHeader() {
   const { user, logout } = useAuth();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const isMobile = useIsMobile();
@@ -49,32 +52,36 @@ export function DashboardHeader() {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4">
-            {/* Desktop view */}
-            <div className="hidden sm:flex items-center gap-4">
-              <span className="text-sm text-muted-foreground">
-                Welcome, {user?.username}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleLogout}
-                className="transition-all duration-200 hover:scale-[1.02] touch-manipulation"
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Sign Out
-              </Button>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2"
+                >
+                  <User className="w-4 h-4" />
+                  <span>{user?.username}</span>
+                  <ChevronDown className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={() => router.push("/admin")}
+                  className="cursor-pointer"
+                >
+                  <Shield className="w-4 h-4 mr-2" />
+                  Admin Panel
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  className="cursor-pointer"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <DarkModeToggle />
-
-            {/* Mobile menu button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="sm:hidden touch-manipulation"
-            >
-              <Menu className="w-5 h-5" />
-            </Button>
           </div>
         </div>
 
@@ -98,31 +105,6 @@ export function DashboardHeader() {
             })}
           </nav>
         )}
-
-        {/* Mobile menu */}
-        <div
-          className={cn(
-            "sm:hidden transition-all duration-200 overflow-hidden",
-            isMenuOpen ? "max-h-20 mt-3 opacity-100" : "max-h-0 opacity-0"
-          )}
-        >
-          <div className="flex flex-col gap-2 pt-2 border-t border-border/50">
-            <span className="text-sm text-muted-foreground">
-              Welcome, {user?.username}
-            </span>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleLogout}
-                className="transition-all duration-200 active:scale-[0.98] touch-manipulation"
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Sign Out
-              </Button>
-            </div>
-          </div>
-        </div>
       </div>
     </header>
   );

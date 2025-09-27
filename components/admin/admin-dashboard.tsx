@@ -33,9 +33,20 @@ import {
   UserPlus,
   Activity,
   Calendar,
+  ChevronDown,
+  Home,
+  User,
 } from "lucide-react";
 import { useAdmin } from "@/hooks/use-admin";
 import { DarkModeToggle } from "@/components/ui/dark-mode-toggle";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/use-auth";
 
 interface User {
   id: number;
@@ -51,6 +62,8 @@ interface AdminSettings {
 
 export function AdminDashboard() {
   const { logoutAdmin } = useAdmin();
+  const { user, logout } = useAuth();
+  const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
   const [settings, setSettings] = useState<AdminSettings>({
     allow_registration: true,
@@ -186,15 +199,36 @@ export function AdminDashboard() {
               </div>
             </div>
             <div className="flex items-center gap-4">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-2"
+                  >
+                    <User className="w-4 h-4" />
+                    <span>{user?.username}</span>
+                    <ChevronDown className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    onClick={() => router.push("/")}
+                    className="cursor-pointer"
+                  >
+                    <Home className="w-4 h-4 mr-2" />
+                    Back to App
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={logoutAdmin}
+                    className="cursor-pointer"
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <DarkModeToggle />
-              <Button
-                variant="outline"
-                onClick={logoutAdmin}
-                className="transition-all duration-200 active:scale-[0.98]"
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Sign Out
-              </Button>
             </div>
           </div>
         </div>
