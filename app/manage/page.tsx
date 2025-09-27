@@ -19,6 +19,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { ConflictConfirmationDialog } from "@/components/finance/conflict-confirmation-dialog";
 import { toast } from "sonner";
 
 function HomePage() {
@@ -28,7 +29,10 @@ function HomePage() {
     data,
     hasChanges,
     isLoading: dataLoading,
+    conflictData,
     saveData,
+    forceSaveData,
+    cancelConflict,
     updateBankAmount,
     addEntry,
     updateEntry,
@@ -101,6 +105,30 @@ function HomePage() {
     }, 300);
   };
 
+  const handleSaveData = async (
+    dataToSave?: any,
+    onSessionExpired?: () => void
+  ) => {
+    try {
+      const result = await saveData(dataToSave, onSessionExpired);
+      if (result?.conflict) {
+        return;
+      }
+      triggerSavedPopup();
+    } catch (error) {
+      console.error("Failed to save data:", error);
+    }
+  };
+
+  const handleForceSave = async () => {
+    try {
+      await forceSaveData(undefined, handleSessionExpired);
+      triggerSavedPopup();
+    } catch (error) {
+      console.error("Failed to force save data:", error);
+    }
+  };
+
   const handleSessionExpired = async () => {
     sessionExpiredRef.current = true;
     await logout();
@@ -138,10 +166,7 @@ function HomePage() {
               <BankAmount
                 amount={data.bankAmount}
                 onChange={updateBankAmount}
-                onBlur={() => {
-                  saveData(undefined, handleSessionExpired);
-                  triggerSavedPopup();
-                }}
+                onBlur={() => handleSaveData(undefined, handleSessionExpired)}
               />
               <EntryForm
                 title="Income"
@@ -161,7 +186,7 @@ function HomePage() {
                 type="income"
                 isOpen={incomeOpen}
                 onToggle={() => setIncomeOpen(!incomeOpen)}
-                saveData={saveData}
+                saveData={handleSaveData}
                 triggerSavedPopup={triggerSavedPopup}
                 handleSessionExpired={handleSessionExpired}
               />
@@ -184,7 +209,7 @@ function HomePage() {
                 type="expense"
                 isOpen={expenseOpen}
                 onToggle={() => setExpenseOpen(!expenseOpen)}
-                saveData={saveData}
+                saveData={handleSaveData}
                 triggerSavedPopup={triggerSavedPopup}
                 handleSessionExpired={handleSessionExpired}
               />
@@ -200,6 +225,13 @@ function HomePage() {
           </TabsContent>
         </Tabs>
       </main>
+      <ConflictConfirmationDialog
+        isOpen={!!conflictData}
+        conflictingData={conflictData}
+        currentData={data}
+        onConfirm={handleForceSave}
+        onCancel={cancelConflict}
+      />
       {/* Confirmation Dialog */}
       <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
         <DialogContent>

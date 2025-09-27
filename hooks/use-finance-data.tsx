@@ -48,8 +48,17 @@ function unshiftDataForStorage(amounts: number[]): number[] {
 
 export function useFinanceData() {
   const [data, setData] = useState<FinanceData>(defaultData);
+  const [originalData, setOriginalData] = useState<FinanceData>(defaultData);
+  const [lastUpdated, setLastUpdated] = useState<{
+    bankAmount: string | null;
+    entries: string | null;
+  }>({
+    bankAmount: null,
+    entries: null,
+  });
   const [hasChanges, setHasChanges] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [conflictData, setConflictData] = useState<FinanceData | null>(null);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -120,15 +129,93 @@ export function useFinanceData() {
           amounts: shiftDataForRollingMonths(entry.amounts),
         }));
 
-      setData({
+      const loadedData = {
         bankAmount: bankData.amount || 0,
         incomes,
         expenses,
+      };
+
+      setData(loadedData);
+      setOriginalData(loadedData);
+
+      const bankUpdated = bankData.updated_at || null;
+      const entriesUpdated = entriesData.last_updated || null; // We'll need to add this to the API
+
+      setLastUpdated({
+        bankAmount: bankUpdated,
+        entries: entriesUpdated,
       });
     } catch (error) {
       console.error("Error loading data from server:", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const checkConflicts = async (): Promise<FinanceData | null> => {
+    try {
+      const bankResponse = await fetch("/api/bank-amount", {
+        credentials: "include",
+      });
+
+      if (!bankResponse.ok) {
+        if (bankResponse.status === 401) return null;
+        throw new Error(`Bank API error: ${bankResponse.status}`);
+      }
+
+      const bankData = await bankResponse.json();
+
+      const entriesResponse = await fetch("/api/entries", {
+        credentials: "include",
+      });
+
+      if (!entriesResponse.ok) {
+        if (entriesResponse.status === 401) return null;
+        throw new Error(`Entries API error: ${entriesResponse.status}`);
+      }
+
+      const entriesData = await entriesResponse.json();
+
+      const entries = entriesData?.entries || [];
+      const currentIncomes = entries
+        .filter((entry: any) => entry.type === "income")
+        .map((entry: any) => ({
+          id: entry.id.toString(),
+          description: entry.name,
+          amounts: shiftDataForRollingMonths(entry.amounts),
+        }));
+
+      const currentExpenses = entries
+        .filter((entry: any) => entry.type === "expense")
+        .map((entry: any) => ({
+          id: entry.id.toString(),
+          description: entry.name,
+          amounts: shiftDataForRollingMonths(entry.amounts),
+        }));
+
+      const currentData = {
+        bankAmount: bankData.amount || 0,
+        incomes: currentIncomes,
+        expenses: currentExpenses,
+      };
+
+      const hasBankConflict =
+        currentData.bankAmount !== originalData.bankAmount;
+      const hasIncomeConflict =
+        JSON.stringify(currentData.incomes) !==
+        JSON.stringify(originalData.incomes);
+      const hasExpenseConflict =
+        JSON.stringify(currentData.expenses) !==
+        JSON.stringify(originalData.expenses);
+
+      if (hasBankConflict || hasIncomeConflict || hasExpenseConflict) {
+        return currentData;
+      }
+
+      return null;
+    } catch (error) {
+      console.error("Error checking conflicts:", error);
+      return null;
     }
   };
 
@@ -139,7 +226,12 @@ export function useFinanceData() {
     try {
       const currentData = dataToSave || data;
 
-      // Save bank amount
+      const conflictingData = await checkConflicts();
+      if (conflictingData) {
+        setConflictData(conflictingData);
+        return { conflict: true, conflictingData };
+      }
+
       const bankResponse = await fetch("/api/bank-amount", {
         method: "POST",
         headers: {
@@ -194,6 +286,7 @@ export function useFinanceData() {
       }
 
       setHasChanges(false);
+      return { success: true };
     } catch (error) {
       console.error("Error saving data to server:", error);
       throw error;
@@ -265,6 +358,80 @@ export function useFinanceData() {
     }
   };
 
+  const forceSaveData = async (
+    dataToSave?: FinanceData,
+    onSessionExpired?: () => void
+  ) => {
+    try {
+      const currentData = dataToSave || data;
+
+      const bankResponse = await fetch("/api/bank-amount", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          amount: currentData.bankAmount,
+        }),
+        credentials: "include",
+      });
+
+      if (!bankResponse.ok) {
+        console.error("Bank amount save failed:", await bankResponse.text());
+        if (bankResponse.status === 401) {
+          if (onSessionExpired) onSessionExpired();
+          return;
+        }
+      }
+
+      const allEntries = [
+        ...currentData.incomes
+          .filter((entry) => entry.description.trim() !== "")
+          .map((entry) => ({
+            name: entry.description,
+            type: "income",
+            amounts: unshiftDataForStorage(entry.amounts),
+          })),
+        ...currentData.expenses
+          .filter((entry) => entry.description.trim() !== "")
+          .map((entry) => ({
+            name: entry.description,
+            type: "expense",
+            amounts: unshiftDataForStorage(entry.amounts),
+          })),
+      ];
+
+      const entriesResponse = await fetch("/api/entries", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          entries: allEntries,
+        }),
+        credentials: "include",
+      });
+
+      if (!entriesResponse.ok) {
+        const errorText = await entriesResponse.text();
+        console.error("Entries save failed:", errorText);
+        throw new Error(`Failed to save entries: ${errorText}`);
+      }
+
+      setHasChanges(false);
+      setConflictData(null);
+      await loadDataFromServer();
+      return { success: true };
+    } catch (error) {
+      console.error("Error force saving data to server:", error);
+      throw error;
+    }
+  };
+
+  const cancelConflict = () => {
+    setConflictData(null);
+  };
+
   const setDataForImport = async (
     newData: FinanceData,
     saveImmediately = false
@@ -281,7 +448,10 @@ export function useFinanceData() {
     data,
     hasChanges,
     isLoading,
+    conflictData,
     saveData,
+    forceSaveData,
+    cancelConflict,
     updateBankAmount,
     addEntry,
     updateEntry,

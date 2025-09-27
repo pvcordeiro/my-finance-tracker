@@ -60,7 +60,18 @@ export const GET = withAuth(async (request) => {
 
     const entries = Array.from(entriesMap.values());
 
-    return NextResponse.json({ entries });
+    const lastUpdated = await new Promise((resolve, reject) => {
+      db.get(
+        "SELECT MAX(updated_at) as last_updated FROM entries WHERE group_id = ?",
+        [groupId],
+        (err, row) => {
+          if (err) reject(err);
+          else resolve(row?.last_updated || null);
+        }
+      );
+    });
+
+    return NextResponse.json({ entries, last_updated: lastUpdated });
   } catch (error) {
     console.error("Get entries error:", error);
     return NextResponse.json(

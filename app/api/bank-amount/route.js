@@ -18,7 +18,7 @@ export const GET = withAuth(async (request) => {
     const db = await getDatabase();
     const bankAmount = await new Promise((resolve, reject) => {
       db.get(
-        "SELECT amount FROM bank_amounts WHERE group_id = ? ORDER BY updated_at DESC LIMIT 1",
+        "SELECT amount, updated_at FROM bank_amounts WHERE group_id = ? ORDER BY updated_at DESC LIMIT 1",
         [groupId],
         (err, row) => {
           if (err) reject(err);
@@ -27,7 +27,10 @@ export const GET = withAuth(async (request) => {
       );
     });
 
-    return NextResponse.json({ amount: bankAmount?.amount || 0 });
+    return NextResponse.json({
+      amount: bankAmount?.amount || 0,
+      updated_at: bankAmount?.updated_at || null,
+    });
   } catch (error) {
     console.error("Get bank amount error:", error);
     return NextResponse.json(
