@@ -1,7 +1,9 @@
 "use client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, TrendingDown } from "lucide-react";
+import { TrendingUp, TrendingDown, Maximize2, Minimize2 } from "lucide-react";
+import { useState, useRef, useCallback, useEffect } from "react";
+import { cn } from "@/lib/utils";
 import type { FinanceData } from "@/hooks/use-finance-data";
 
 interface DetailsTableProps {
@@ -52,82 +54,246 @@ export function DetailsTable({ data }: DetailsTableProps) {
   const currentMonth = now.getMonth();
   const currentYear = now.getFullYear();
 
+  // fullscreen logic (mobile only UI trigger, but safe everywhere)
+  const [fullscreen, setFullscreen] = useState<null | "income" | "expense">(
+    null
+  );
+  const incomeWrapperRef = useRef<HTMLDivElement | null>(null);
+  const expenseWrapperRef = useRef<HTMLDivElement | null>(null);
+
+  const exitFullscreen = useCallback(async () => {
+    setFullscreen(null);
+    if (document.fullscreenElement) {
+      try {
+        await document.exitFullscreen();
+      } catch (_) {
+        /* ignore */
+      }
+    }
+  }, []);
+
+  const requestOrientationLock = async () => {
+    // Attempt to lock orientation to landscape if supported (mostly mobile browsers & installed PWAs)
+    try {
+      // @ts-ignore - experimental API
+      if (screen.orientation && screen.orientation.lock) {
+        // @ts-ignore
+        await screen.orientation.lock("landscape");
+      }
+    } catch (_) {
+      // silence failures (iOS Safari often rejects)
+    }
+  };
+
+  const enterFullscreen = useCallback(
+    async (which: "income" | "expense") => {
+      if (fullscreen === which) {
+        await exitFullscreen();
+        return;
+      }
+      const target =
+        which === "income"
+          ? incomeWrapperRef.current
+          : expenseWrapperRef.current;
+      // Fallback: if Fullscreen API unsupported, just flag state (overlay CSS still applied)
+      setFullscreen(which);
+      if (target && target.requestFullscreen) {
+        try {
+          await target.requestFullscreen();
+          await requestOrientationLock();
+        } catch (_) {
+          // Ignore; user can still view overlay styling.
+        }
+      }
+    },
+    [exitFullscreen, fullscreen]
+  );
+
+  // Sync state if user exits fullscreen via system gesture
+  useEffect(() => {
+    const handler = () => {
+      if (!document.fullscreenElement) {
+        setFullscreen(null);
+      }
+    };
+    document.addEventListener("fullscreenchange", handler);
+    return () => document.removeEventListener("fullscreenchange", handler);
+  }, []);
+
+  // Prevent body scroll when our manual overlay (non-fullscreen) active
+  useEffect(() => {
+    if (fullscreen) {
+      const original = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = original;
+      };
+    }
+  }, [fullscreen]);
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Income Details */}
-      <Card className="income-card">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-emerald-700">
-            <TrendingUp className="w-5 h-5" />
-            Income Details
+      <Card
+        className={cn(
+          "income-card shadow-sm relative",
+          fullscreen === "income" && "z-50"
+        )}
+      >
+        <CardHeader className="flex flex-row items-start justify-between gap-2">
+          <CardTitle className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-emerald-600/10 ring-1 ring-emerald-600/30 dark:bg-emerald-500/10 dark:ring-emerald-400/40">
+              <TrendingUp className="w-4 h-4" />
+            </span>
+            <span className="tracking-tight">Income Details</span>
           </CardTitle>
+          <div className="md:hidden ml-auto -mt-1">
+            <button
+              type="button"
+              aria-label={
+                fullscreen === "income" ? "Exit fullscreen" : "Enter fullscreen"
+              }
+              onClick={() => enterFullscreen("income")}
+              className="inline-flex items-center justify-center rounded-md border border-emerald-300/60 dark:border-emerald-600/40 bg-white/60 dark:bg-emerald-900/40 backdrop-blur px-2 py-1 text-emerald-700 dark:text-emerald-200 shadow-sm hover:bg-emerald-50 dark:hover:bg-emerald-800/60 active:scale-[0.97] transition text-xs font-medium"
+            >
+              {fullscreen === "income" ? (
+                <Minimize2 className="w-4 h-4" />
+              ) : (
+                <Maximize2 className="w-4 h-4" />
+              )}
+            </button>
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse min-w-[600px] text-sm">
-              <thead>
-                <tr className="border-b bg-emerald-50 dark:bg-emerald-700/20">
-                  <th className="sticky left-0 bg-emerald-100 dark:bg-emerald-100 text-left p-2 font-semibold border-r min-w-[80px] z-10">
+          <div
+            ref={incomeWrapperRef}
+            className={cn(
+              "overflow-x-auto rounded-lg border border-emerald-200/60 dark:border-emerald-500/20 shadow-sm transition-[width_height]",
+              fullscreen === "income" &&
+                "fixed inset-0 z-50 !m-0 w-screen h-screen rounded-none border-0 bg-background dark:bg-background/95 flex flex-col p-0"
+            )}
+            data-fullscreen={fullscreen === "income" || undefined}
+          >
+            {fullscreen === "income" && (
+              <div className="flex items-center justify-between mb-2 md:hidden px-3 pt-3">
+                <h2 className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">
+                  Income Details (Fullscreen)
+                </h2>
+                <button
+                  type="button"
+                  aria-label="Exit fullscreen"
+                  onClick={exitFullscreen}
+                  className="inline-flex items-center justify-center rounded-md border border-emerald-300/60 dark:border-emerald-600/40 bg-white/60 dark:bg-emerald-900/40 backdrop-blur px-2 py-1 text-emerald-700 dark:text-emerald-200 shadow-sm hover:bg-emerald-50 dark:hover:bg-emerald-800/60 active:scale-[0.97] transition text-xs font-medium"
+                >
+                  <Minimize2 className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+            <table className="w-full border-collapse min-w-[700px] text-xs sm:text-sm leading-tight">
+              <thead
+                className={cn(
+                  "text-[11px] uppercase tracking-wide text-emerald-700/90 dark:text-emerald-300/80",
+                  fullscreen === "income" && "sticky top-0 z-30 shadow-sm"
+                )}
+              >
+                <tr
+                  className={cn(
+                    "bg-gradient-to-r from-emerald-50 to-emerald-100 dark:from-emerald-900/30 dark:to-emerald-800/20 border-b border-emerald-200/70 dark:border-emerald-700/40",
+                    fullscreen === "income" &&
+                      "backdrop-blur supports-[backdrop-filter]:bg-emerald-100/80 dark:supports-[backdrop-filter]:bg-emerald-900/70"
+                  )}
+                >
+                  <th
+                    className={cn(
+                      "sticky left-0 bg-emerald-100/90 dark:bg-emerald-900/60 backdrop-blur text-left px-2 py-2 font-semibold border-r border-emerald-200/60 dark:border-emerald-700/40 min-w-[120px] z-20",
+                      fullscreen === "income" && "pl-3 min-w-[110px]"
+                    )}
+                  >
                     Description
                   </th>
-                  {months.map((month) => (
-                    <th
-                      key={month.label}
-                      className="text-center p-2 font-semibold min-w-[70px]"
-                    >
-                      <div className="flex flex-col items-center">
-                        <span>{month.label}</span>
-                        {month.year === currentYear &&
-                          month.month === currentMonth && (
-                            <Badge variant="secondary" className="text-xs mt-1">
-                              Current
+                  {months.map((month) => {
+                    const isCurrent =
+                      month.year === currentYear &&
+                      month.month === currentMonth;
+                    return (
+                      <th
+                        key={month.label}
+                        className={cn(
+                          "text-center px-2 py-2 font-semibold min-w-[70px] relative",
+                          isCurrent && "text-emerald-900 dark:text-emerald-100"
+                        )}
+                      >
+                        <div className="flex flex-col items-center gap-0.5">
+                          <span>{month.label}</span>
+                          {isCurrent && (
+                            <Badge
+                              variant="secondary"
+                              className="text-[10px] px-1.5 py-0 h-4 leading-4"
+                            >
+                              Now
                             </Badge>
                           )}
-                      </div>
-                    </th>
-                  ))}
+                        </div>
+                      </th>
+                    );
+                  })}
                 </tr>
               </thead>
-              <tbody>
-                {/* Bank Amount Row */}
+              <tbody className="[&_tr:nth-child(even)]:bg-emerald-50/50 dark:[&_tr:nth-child(even)]:bg-emerald-900/20">
                 {data.bankAmount > 0 && (
-                  <tr className="border-b hover:bg-emerald-50 dark:hover:bg-emerald-950/10 transition-colors">
-                    <td className="sticky left-0 bg-muted p-2 font-medium border-r z-10">
-                      Bank Balance
+                  <tr className="border-b border-emerald-200/60 dark:border-emerald-800/50 hover:bg-emerald-100/70 dark:hover:bg-emerald-800/40 transition-colors group">
+                    <td className="sticky left-0 bg-muted/80 backdrop-blur px-3 py-2 font-medium border-r border-emerald-200/60 dark:border-emerald-700/50 z-10">
+                      <span className="inline-flex items-center gap-1.5 text-emerald-700 dark:text-emerald-300">
+                        Bank Balance
+                      </span>
                     </td>
                     {months.map((month) => (
-                      <td key={month.label} className="text-center p-2">
+                      <td
+                        key={month.label}
+                        className="text-center px-2 py-2 tabular-nums font-medium"
+                      >
                         {month.year === currentYear &&
                         month.month === currentMonth ? (
-                          <span className="font-bold text-emerald-600">
+                          <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
                             €{data.bankAmount.toFixed(2)}
                           </span>
                         ) : (
-                          <span className="text-muted-foreground">-</span>
+                          <span className="text-muted-foreground/60">–</span>
                         )}
                       </td>
                     ))}
                   </tr>
                 )}
-                {/* Income Entries */}
                 {data.incomes.map((income) => (
                   <tr
                     key={income.id}
-                    className="border-b hover:bg-emerald-50 dark:hover:bg-emerald-950/10 transition-colors"
+                    className="border-b border-emerald-200/60 dark:border-emerald-800/50 hover:bg-emerald-100/70 dark:hover:bg-emerald-800/40 transition-colors group"
                   >
-                    <td className="sticky left-0 bg-muted p-2 font-medium border-r z-10">
-                      {income.description || "(No description)"}
+                    <td className="sticky left-0 bg-muted/60 backdrop-blur px-2 py-2 font-medium border-r border-emerald-200/60 dark:border-emerald-700/50 z-10">
+                      <span className="text-emerald-800 dark:text-emerald-200">
+                        {income.description || "(No description)"}
+                      </span>
                     </td>
                     {months.map((month, idx) => {
                       const amount = income.amounts[idx] || 0;
+                      const isCurrent =
+                        month.year === currentYear &&
+                        month.month === currentMonth;
                       return (
-                        <td key={month.label} className="text-center p-2">
+                        <td
+                          key={month.label}
+                          className={cn(
+                            "text-center px-2 py-2 tabular-nums",
+                            isCurrent &&
+                              "bg-emerald-600/5 dark:bg-emerald-500/10 font-semibold"
+                          )}
+                        >
                           {amount > 0 ? (
-                            <span className="font-medium text-emerald-600">
+                            <span className="text-emerald-600 dark:text-emerald-400">
                               €{amount.toFixed(2)}
                             </span>
                           ) : (
-                            <span className="text-muted-foreground">-</span>
+                            <span className="text-muted-foreground/50">–</span>
                           )}
                         </td>
                       );
@@ -138,8 +304,7 @@ export function DetailsTable({ data }: DetailsTableProps) {
                   <tr>
                     <td
                       colSpan={13}
-                      className="text-center p-6 text-muted-foreground"
-                      style={{ zIndex: 1 }}
+                      className="text-center px-6 py-8 text-muted-foreground text-sm"
                     >
                       No income entries found
                     </td>
@@ -152,58 +317,144 @@ export function DetailsTable({ data }: DetailsTableProps) {
       </Card>
 
       {/* Expense Details */}
-      <Card className="expense-card">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-red-700">
-            <TrendingDown className="w-5 h-5" />
-            Expense Details
+      <Card
+        className={cn(
+          "expense-card shadow-sm relative",
+          fullscreen === "expense" && "z-50"
+        )}
+      >
+        <CardHeader className="flex flex-row items-start justify-between gap-2">
+          <CardTitle className="flex items-center gap-2 text-red-700 dark:text-red-400">
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-red-600/10 ring-1 ring-red-600/30 dark:bg-red-500/10 dark:ring-red-400/40">
+              <TrendingDown className="w-4 h-4" />
+            </span>
+            <span className="tracking-tight">Expense Details</span>
           </CardTitle>
+          <div className="md:hidden ml-auto -mt-1">
+            <button
+              type="button"
+              aria-label={
+                fullscreen === "expense"
+                  ? "Exit fullscreen"
+                  : "Enter fullscreen"
+              }
+              onClick={() => enterFullscreen("expense")}
+              className="inline-flex items-center justify-center rounded-md border border-red-300/60 dark:border-red-600/40 bg-white/60 dark:bg-red-900/40 backdrop-blur px-2 py-1 text-red-700 dark:text-red-200 shadow-sm hover:bg-red-50 dark:hover:bg-red-800/60 active:scale-[0.97] transition text-xs font-medium"
+            >
+              {fullscreen === "expense" ? (
+                <Minimize2 className="w-4 h-4" />
+              ) : (
+                <Maximize2 className="w-4 h-4" />
+              )}
+            </button>
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse min-w-[600px] text-sm">
-              <thead>
-                <tr className="border-b bg-red-50 dark:bg-red-700/20">
-                  <th className="sticky left-0 bg-red-100 dark:bg-red-100 text-left p-2 font-semibold border-r min-w-[80px] z-10">
+          <div
+            ref={expenseWrapperRef}
+            className={cn(
+              "overflow-x-auto rounded-lg border border-red-200/60 dark:border-red-500/20 shadow-sm transition-[width_height]",
+              fullscreen === "expense" &&
+                "fixed inset-0 z-50 !m-0 w-screen h-screen rounded-none border-0 bg-background dark:bg-background/95 flex flex-col p-0"
+            )}
+            data-fullscreen={fullscreen === "expense" || undefined}
+          >
+            {fullscreen === "expense" && (
+              <div className="flex items-center justify-between mb-2 md:hidden px-3 pt-3">
+                <h2 className="text-sm font-semibold text-red-700 dark:text-red-300">
+                  Expense Details (Fullscreen)
+                </h2>
+                <button
+                  type="button"
+                  aria-label="Exit fullscreen"
+                  onClick={exitFullscreen}
+                  className="inline-flex items-center justify-center rounded-md border border-red-300/60 dark:border-red-600/40 bg-white/60 dark:bg-red-900/40 backdrop-blur px-2 py-1 text-red-700 dark:text-red-200 shadow-sm hover:bg-red-50 dark:hover:bg-red-800/60 active:scale-[0.97] transition text-xs font-medium"
+                >
+                  <Minimize2 className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+            <table className="w-full border-collapse min-w-[700px] text-xs sm:text-sm leading-tight">
+              <thead
+                className={cn(
+                  "text-[11px] uppercase tracking-wide text-red-700/90 dark:text-red-300/80",
+                  fullscreen === "expense" && "sticky top-0 z-30 shadow-sm"
+                )}
+              >
+                <tr
+                  className={cn(
+                    "bg-gradient-to-r from-red-50 to-red-100 dark:from-red-900/30 dark:to-red-800/20 border-b border-red-200/70 dark:border-red-700/40",
+                    fullscreen === "expense" &&
+                      "backdrop-blur supports-[backdrop-filter]:bg-red-100/80 dark:supports-[backdrop-filter]:bg-red-900/70"
+                  )}
+                >
+                  <th
+                    className={cn(
+                      "sticky left-0 bg-red-100/90 dark:bg-red-900/60 backdrop-blur text-left px-2 py-2 font-semibold border-r border-red-200/60 dark:border-red-700/40 min-w-[120px] z-20",
+                      fullscreen === "expense" && "pl-3 min-w-[110px]"
+                    )}
+                  >
                     Description
                   </th>
-                  {months.map((month) => (
-                    <th
-                      key={month.label}
-                      className="text-center p-2 font-semibold min-w-[70px]"
-                    >
-                      <div className="flex flex-col items-center">
-                        <span>{month.label}</span>
-                        {month.year === currentYear &&
-                          month.month === currentMonth && (
-                            <Badge variant="secondary" className="text-xs mt-1">
-                              Current
+                  {months.map((month) => {
+                    const isCurrent =
+                      month.year === currentYear &&
+                      month.month === currentMonth;
+                    return (
+                      <th
+                        key={month.label}
+                        className={cn(
+                          "text-center px-2 py-2 font-semibold min-w-[70px] relative",
+                          isCurrent && "text-red-900 dark:text-red-100"
+                        )}
+                      >
+                        <div className="flex flex-col items-center gap-0.5">
+                          <span>{month.label}</span>
+                          {isCurrent && (
+                            <Badge
+                              variant="secondary"
+                              className="text-[10px] px-1.5 py-0 h-4 leading-4"
+                            >
+                              Now
                             </Badge>
                           )}
-                      </div>
-                    </th>
-                  ))}
+                        </div>
+                      </th>
+                    );
+                  })}
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="[&_tr:nth-child(even)]:bg-red-50/50 dark:[&_tr:nth-child(even)]:bg-red-900/20">
                 {data.expenses.map((expense) => (
                   <tr
                     key={expense.id}
-                    className="border-b hover:bg-red-50 dark:hover:bg-red-950/10 transition-colors"
+                    className="border-b border-red-200/60 dark:border-red-800/50 hover:bg-red-100/70 dark:hover:bg-red-800/40 transition-colors group"
                   >
-                    <td className="sticky left-0 bg-muted p-2 font-medium border-r z-10">
-                      {expense.description || "(No description)"}
+                    <td className="sticky left-0 bg-muted/60 backdrop-blur px-2 py-2 font-medium border-r border-red-200/60 dark:border-red-700/50 z-10">
+                      <span className="text-red-800 dark:text-red-200">
+                        {expense.description || "(No description)"}
+                      </span>
                     </td>
                     {months.map((month, idx) => {
                       const amount = expense.amounts[idx] || 0;
+                      const isCurrent =
+                        month.year === currentYear &&
+                        month.month === currentMonth;
                       return (
-                        <td key={month.label} className="text-center p-2">
+                        <td
+                          key={month.label}
+                          className={cn(
+                            "text-center px-2 py-2 tabular-nums",
+                            isCurrent &&
+                              "bg-red-600/5 dark:bg-red-500/10 font-semibold"
+                          )}
+                        >
                           {amount > 0 ? (
-                            <span className="font-medium text-red-600">
+                            <span className="text-red-600 dark:text-red-400">
                               €{amount.toFixed(2)}
                             </span>
                           ) : (
-                            <span className="text-muted-foreground">-</span>
+                            <span className="text-muted-foreground/50">–</span>
                           )}
                         </td>
                       );
@@ -214,7 +465,7 @@ export function DetailsTable({ data }: DetailsTableProps) {
                   <tr>
                     <td
                       colSpan={13}
-                      className="text-center p-6 text-muted-foreground"
+                      className="text-center px-6 py-8 text-muted-foreground text-sm"
                     >
                       No expense entries found
                     </td>
