@@ -125,18 +125,62 @@ export function SummaryTable({ data }: SummaryTableProps) {
   });
 
   const finalBalance = monthlyData[monthlyData.length - 1]?.balance || 0;
-  const netSavings = annualIncome - annualExpenses + (data.bankAmount || 0);
+  const currentBalance =
+    monthlyData.find((m) => m.isCurrentMonth)?.balance || 0;
+  const nextMonthBalance = monthlyData[1]?.balance || 0;
 
   return (
     <div className="space-y-4 sm:space-y-6">
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-3 sm:gap-4">
+        <Card className="bg-accent/10 border-primary/50">
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-center gap-2">
+              <EuroIcon className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm font-bold text-primary text-shadow-sm">
+                  Current Month
+                </p>
+                <p
+                  className={cn(
+                    "text-lg sm:text-2xl font-bold truncate text-shadow-sm",
+                    currentBalance >= 0 ? "text-emerald-600" : "text-red-600"
+                  )}
+                >
+                  €{currentBalance.toFixed(2)}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-accent/10 border-primary/50">
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-center gap-2">
+              <EuroIcon className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm font-bold text-primary text-shadow-sm">
+                  Next Month
+                </p>
+                <p
+                  className={cn(
+                    "text-lg sm:text-2xl font-bold truncate text-shadow-sm",
+                    nextMonthBalance >= 0 ? "text-emerald-600" : "text-red-600"
+                  )}
+                >
+                  €{nextMonthBalance.toFixed(2)}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         <Card className="income-card">
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2">
               <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600 flex-shrink-0" />
               <div className="min-w-0">
-                <p className="text-xs sm:text-sm font-medium text-emerald-700 text-shadow-sm">
-                  Total Income
+                <p className="text-xs sm:text-sm font-bold text-emerald-700 text-shadow-sm">
+                  1 Year Income
                 </p>
                 <p className="text-lg sm:text-2xl font-bold text-emerald-800 truncate text-shadow-sm">
                   €{annualIncome.toFixed(2)}
@@ -151,53 +195,11 @@ export function SummaryTable({ data }: SummaryTableProps) {
             <div className="flex items-center gap-2">
               <TrendingDown className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 flex-shrink-0" />
               <div className="min-w-0">
-                <p className="text-xs sm:text-sm font-medium text-red-700 text-shadow-sm">
-                  Total Expenses
+                <p className="text-xs sm:text-sm font-bold text-red-700 text-shadow-sm">
+                  1 Year Expense
                 </p>
                 <p className="text-lg sm:text-2xl font-bold text-red-800 truncate text-shadow-sm">
                   €{annualExpenses.toFixed(2)}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-accent/30 border-primary/50">
-          <CardContent className="p-3 sm:p-4">
-            <div className="flex items-center gap-2">
-              <EuroIcon className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
-              <div className="min-w-0">
-                <p className="text-xs sm:text-sm font-medium text-primary text-shadow-sm">
-                  Net Savings
-                </p>
-                <p
-                  className={cn(
-                    "text-lg sm:text-2xl font-bold truncate text-shadow-sm",
-                    netSavings >= 0 ? "text-emerald-600" : "text-red-600"
-                  )}
-                >
-                  €{netSavings.toFixed(2)}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-accent/30 border-primary/50">
-          <CardContent className="p-3 sm:p-4">
-            <div className="flex items-center gap-2">
-              <EuroIcon className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
-              <div className="min-w-0">
-                <p className="text-xs sm:text-sm font-medium text-primary text-shadow-sm">
-                  Final Balance
-                </p>
-                <p
-                  className={cn(
-                    "text-lg sm:text-2xl font-bold truncate text-shadow-sm",
-                    finalBalance >= 0 ? "text-emerald-600" : "text-red-600"
-                  )}
-                >
-                  €{finalBalance.toFixed(2)}
                 </p>
               </div>
             </div>
