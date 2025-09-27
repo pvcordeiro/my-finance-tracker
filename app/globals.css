@@ -176,6 +176,21 @@
   }
 }
 
+/* Subtle text shadow utilities for better legibility on light backgrounds */
+.text-soft-shadow {
+  text-shadow: 0 1px 0 rgba(255,255,255,0.6), 0 0 1px rgba(0,0,0,0.15);
+}
+.dark .text-soft-shadow {
+  text-shadow: 0 1px 0 rgba(0,0,0,0.7), 0 0 2px rgba(0,0,0,0.35);
+}
+
+.text-soft-shadow-strong {
+  text-shadow: 0 1px 1px rgba(0,0,0,0.18), 0 0 2px rgba(0,0,0,0.12);
+}
+.dark .text-soft-shadow-strong {
+  text-shadow: 0 1px 1px rgba(0,0,0,0.55), 0 0 2px rgba(0,0,0,0.45);
+}
+
 /* Inline field save success flash */
 .flash-success {
   position: relative;

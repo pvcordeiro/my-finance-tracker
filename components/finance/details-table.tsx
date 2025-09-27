@@ -168,9 +168,9 @@ export function DetailsTable({ data }: DetailsTableProps) {
           <div
             ref={incomeWrapperRef}
             className={cn(
-              "overflow-x-auto rounded-lg border border-emerald-200/60 dark:border-emerald-500/20 shadow-sm transition-[width_height]",
+              "overflow-x-auto rounded-lg border border-emerald-200/60 dark:border-emerald-500/20 shadow-sm transition-[width_height] bg-emerald-50/60 dark:bg-emerald-950/20",
               fullscreen === "income" &&
-                "fixed inset-0 z-50 !m-0 w-screen h-screen rounded-none border-0 bg-background dark:bg-background/95 flex flex-col p-0"
+                "fixed inset-0 z-50 !m-0 w-screen h-screen rounded-none border-0 flex flex-col p-0 bg-emerald-50/60 dark:bg-emerald-950/20"
             )}
             data-fullscreen={fullscreen === "income" || undefined}
           >
@@ -189,10 +189,10 @@ export function DetailsTable({ data }: DetailsTableProps) {
                 </button>
               </div>
             )}
-            <table className="w-full border-collapse min-w-[700px] text-xs sm:text-sm leading-tight">
+            <table className="w-full border-collapse min-w-[700px] text-xs sm:text-sm leading-tight text-neutral-800 dark:text-neutral-200">
               <thead
                 className={cn(
-                  "text-[11px] uppercase tracking-wide text-emerald-700/90 dark:text-emerald-300/80",
+                  "text-[11px] uppercase tracking-wide text-emerald-900 dark:text-emerald-200",
                   fullscreen === "income" && "sticky top-0 z-30 shadow-sm"
                 )}
               >
@@ -205,8 +205,9 @@ export function DetailsTable({ data }: DetailsTableProps) {
                 >
                   <th
                     className={cn(
-                      "sticky left-0 bg-emerald-100/90 dark:bg-emerald-900/60 backdrop-blur text-left px-2 py-2 font-semibold border-r border-emerald-200/60 dark:border-emerald-700/40 min-w-[120px] z-20",
-                      fullscreen === "income" && "pl-3 min-w-[110px]"
+                      "sticky left-0 bg-emerald-100/90 dark:bg-emerald-900/60 backdrop-blur text-left px-2 py-2 font-semibold border-r border-emerald-200/60 dark:border-emerald-700/40 min-w-[120px] z-20 text-emerald-900 dark:text-emerald-200",
+                      fullscreen === "income" && "pl-3 min-w-[110px]",
+                      "text-soft-shadow-strong"
                     )}
                   >
                     Description
@@ -219,7 +220,7 @@ export function DetailsTable({ data }: DetailsTableProps) {
                       <th
                         key={month.label}
                         className={cn(
-                          "text-center px-2 py-2 font-semibold min-w-[70px] relative",
+                          "text-center px-2 py-2 font-semibold min-w-[70px] relative text-soft-shadow",
                           isCurrent && "text-emerald-900 dark:text-emerald-100"
                         )}
                       >
@@ -239,11 +240,11 @@ export function DetailsTable({ data }: DetailsTableProps) {
                   })}
                 </tr>
               </thead>
-              <tbody className="[&_tr:nth-child(even)]:bg-emerald-50/50 dark:[&_tr:nth-child(even)]:bg-emerald-900/20">
+              <tbody className="[&_tr:nth-child(even)]:bg-emerald-50 dark:[&_tr:nth-child(even)]:bg-emerald-900/20">
                 {data.bankAmount > 0 && (
                   <tr className="border-b border-emerald-200/60 dark:border-emerald-800/50 hover:bg-emerald-100/70 dark:hover:bg-emerald-800/40 transition-colors group">
                     <td className="sticky left-0 bg-muted/80 backdrop-blur px-3 py-2 font-medium border-r border-emerald-200/60 dark:border-emerald-700/50 z-10">
-                      <span className="inline-flex items-center gap-1.5 text-emerald-700 dark:text-emerald-300">
+                      <span className="inline-flex items-center gap-1.5 text-emerald-800 dark:text-emerald-300">
                         Bank Balance
                       </span>
                     </td>
@@ -254,11 +255,11 @@ export function DetailsTable({ data }: DetailsTableProps) {
                       >
                         {month.year === currentYear &&
                         month.month === currentMonth ? (
-                          <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                          <span className="text-emerald-700 dark:text-emerald-400 font-semibold">
                             €{data.bankAmount.toFixed(2)}
                           </span>
                         ) : (
-                          <span className="text-muted-foreground/60">–</span>
+                          <span className="text-muted-foreground/70">–</span>
                         )}
                       </td>
                     ))}
@@ -269,8 +270,8 @@ export function DetailsTable({ data }: DetailsTableProps) {
                     key={income.id}
                     className="border-b border-emerald-200/60 dark:border-emerald-800/50 hover:bg-emerald-100/70 dark:hover:bg-emerald-800/40 transition-colors group"
                   >
-                    <td className="sticky left-0 bg-muted/60 backdrop-blur px-2 py-2 font-medium border-r border-emerald-200/60 dark:border-emerald-700/50 z-10">
-                      <span className="text-emerald-800 dark:text-emerald-200">
+                    <td className="sticky left-0 bg-muted/60 backdrop-blur px-2 py-2 font-medium border-r border-emerald-200/60 dark:border-emerald-700/50 z-10 text-soft-shadow-strong">
+                      <span className="text-emerald-950 dark:text-emerald-100">
                         {income.description || "(No description)"}
                       </span>
                     </td>
@@ -289,11 +290,13 @@ export function DetailsTable({ data }: DetailsTableProps) {
                           )}
                         >
                           {amount > 0 ? (
-                            <span className="text-emerald-600 dark:text-emerald-400">
+                            <span className="text-emerald-700 dark:text-emerald-400 text-soft-shadow">
                               €{amount.toFixed(2)}
                             </span>
                           ) : (
-                            <span className="text-muted-foreground/50">–</span>
+                            <span className="text-muted-foreground/70 text-soft-shadow">
+                              –
+                            </span>
                           )}
                         </td>
                       );
@@ -353,9 +356,9 @@ export function DetailsTable({ data }: DetailsTableProps) {
           <div
             ref={expenseWrapperRef}
             className={cn(
-              "overflow-x-auto rounded-lg border border-red-200/60 dark:border-red-500/20 shadow-sm transition-[width_height]",
+              "overflow-x-auto rounded-lg border border-red-200/60 dark:border-red-500/20 shadow-sm transition-[width_height] bg-red-50/60 dark:bg-red-950/20",
               fullscreen === "expense" &&
-                "fixed inset-0 z-50 !m-0 w-screen h-screen rounded-none border-0 bg-background dark:bg-background/95 flex flex-col p-0"
+                "fixed inset-0 z-50 !m-0 w-screen h-screen rounded-none border-0 flex flex-col p-0 bg-red-50/60 dark:bg-red-950/20"
             )}
             data-fullscreen={fullscreen === "expense" || undefined}
           >
@@ -374,10 +377,10 @@ export function DetailsTable({ data }: DetailsTableProps) {
                 </button>
               </div>
             )}
-            <table className="w-full border-collapse min-w-[700px] text-xs sm:text-sm leading-tight">
+            <table className="w-full border-collapse min-w-[700px] text-xs sm:text-sm leading-tight text-neutral-800 dark:text-neutral-200">
               <thead
                 className={cn(
-                  "text-[11px] uppercase tracking-wide text-red-700/90 dark:text-red-300/80",
+                  "text-[11px] uppercase tracking-wide text-red-900 dark:text-red-200",
                   fullscreen === "expense" && "sticky top-0 z-30 shadow-sm"
                 )}
               >
@@ -390,8 +393,9 @@ export function DetailsTable({ data }: DetailsTableProps) {
                 >
                   <th
                     className={cn(
-                      "sticky left-0 bg-red-100/90 dark:bg-red-900/60 backdrop-blur text-left px-2 py-2 font-semibold border-r border-red-200/60 dark:border-red-700/40 min-w-[120px] z-20",
-                      fullscreen === "expense" && "pl-3 min-w-[110px]"
+                      "sticky left-0 bg-red-100/90 dark:bg-red-900/60 backdrop-blur text-left px-2 py-2 font-semibold border-r border-red-200/60 dark:border-red-700/40 min-w-[120px] z-20 text-red-900 dark:text-red-200",
+                      fullscreen === "expense" && "pl-3 min-w-[110px]",
+                      "text-soft-shadow-strong"
                     )}
                   >
                     Description
@@ -404,7 +408,7 @@ export function DetailsTable({ data }: DetailsTableProps) {
                       <th
                         key={month.label}
                         className={cn(
-                          "text-center px-2 py-2 font-semibold min-w-[70px] relative",
+                          "text-center px-2 py-2 font-semibold min-w-[70px] relative text-soft-shadow",
                           isCurrent && "text-red-900 dark:text-red-100"
                         )}
                       >
@@ -424,14 +428,14 @@ export function DetailsTable({ data }: DetailsTableProps) {
                   })}
                 </tr>
               </thead>
-              <tbody className="[&_tr:nth-child(even)]:bg-red-50/50 dark:[&_tr:nth-child(even)]:bg-red-900/20">
+              <tbody className="[&_tr:nth-child(even)]:bg-red-50 dark:[&_tr:nth-child(even)]:bg-red-900/20">
                 {data.expenses.map((expense) => (
                   <tr
                     key={expense.id}
                     className="border-b border-red-200/60 dark:border-red-800/50 hover:bg-red-100/70 dark:hover:bg-red-800/40 transition-colors group"
                   >
-                    <td className="sticky left-0 bg-muted/60 backdrop-blur px-2 py-2 font-medium border-r border-red-200/60 dark:border-red-700/50 z-10">
-                      <span className="text-red-800 dark:text-red-200">
+                    <td className="sticky left-0 bg-muted/60 backdrop-blur px-2 py-2 font-medium border-r border-red-200/60 dark:border-red-700/50 z-10 text-soft-shadow-strong">
+                      <span className="text-red-950 dark:text-red-100">
                         {expense.description || "(No description)"}
                       </span>
                     </td>
@@ -450,11 +454,13 @@ export function DetailsTable({ data }: DetailsTableProps) {
                           )}
                         >
                           {amount > 0 ? (
-                            <span className="text-red-600 dark:text-red-400">
+                            <span className="text-red-700 dark:text-red-400 text-soft-shadow">
                               €{amount.toFixed(2)}
                             </span>
                           ) : (
-                            <span className="text-muted-foreground/50">–</span>
+                            <span className="text-muted-foreground/70 text-soft-shadow">
+                              –
+                            </span>
                           )}
                         </td>
                       );
