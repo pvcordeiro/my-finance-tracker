@@ -129,6 +129,13 @@ export function AdminDashboard() {
   const confirmDeleteUser = async () => {
     if (!userToDelete) return;
 
+    if (userToDelete === 1) {
+      setError("Cannot delete the primary admin user");
+      setDeleteDialogOpen(false);
+      setUserToDelete(null);
+      return;
+    }
+
     try {
       const response = await fetch(`/api/admin/users?userId=${userToDelete}`, {
         method: "DELETE",
@@ -379,14 +386,16 @@ export function AdminDashboard() {
                                   : "Never"}
                               </td>
                               <td className="p-4 text-right">
-                                <Button
-                                  variant="destructive"
-                                  size="sm"
-                                  onClick={() => deleteUser(user.id)}
-                                  className="transition-all duration-200 hover:scale-[1.02]"
-                                >
-                                  <Trash2 className="w-3 h-3" />
-                                </Button>
+                                {user.id !== 1 && (
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={() => deleteUser(user.id)}
+                                    className="transition-all duration-200 hover:scale-[1.02]"
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </Button>
+                                )}
                               </td>
                             </tr>
                           ))}

@@ -65,6 +65,13 @@ export async function DELETE(request) {
       return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
     }
 
+    if (validation.data.userId === 1) {
+      return NextResponse.json(
+        { error: "Cannot delete the primary admin user" },
+        { status: 403 }
+      );
+    }
+
     const db = await getDatabase();
 
     const result = await new Promise((resolve, reject) => {
