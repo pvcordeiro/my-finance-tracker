@@ -13,14 +13,17 @@ export const registerSchema = z.object({
 export const entrySchema = z.object({
   name: z.string().min(1, "Entry name is required").max(255),
   type: z.enum(["income", "expense"]),
-  amounts: z.string().refine((val: string) => {
-    try {
-      const parsed = JSON.parse(val);
-      return Array.isArray(parsed) && parsed.length === 12;
-    } catch {
-      return false;
-    }
-  }, "Amounts must be a valid array of 12 numbers"),
+  amounts: z.union([
+    z.array(z.number()).length(12, "Amounts must be an array of 12 numbers"),
+    z.string().refine((val: string) => {
+      try {
+        const parsed = JSON.parse(val);
+        return Array.isArray(parsed) && parsed.length === 12;
+      } catch {
+        return false;
+      }
+    }, "Amounts must be a valid JSON array of 12 numbers"),
+  ]),
 });
 
 export const bankAmountSchema = z.object({

@@ -165,14 +165,14 @@ export function useFinanceData() {
           .map((entry) => ({
             name: entry.description,
             type: "income",
-            amounts: JSON.stringify(unshiftDataForStorage(entry.amounts)),
+            amounts: unshiftDataForStorage(entry.amounts),
           })),
         ...currentData.expenses
           .filter((entry) => entry.description.trim() !== "")
           .map((entry) => ({
             name: entry.description,
             type: "expense",
-            amounts: JSON.stringify(unshiftDataForStorage(entry.amounts)),
+            amounts: unshiftDataForStorage(entry.amounts),
           })),
       ];
 
