@@ -60,18 +60,22 @@ export const GET = withAuth(async (request) => {
 
     const entries = Array.from(entriesMap.values());
 
-    const lastUpdated = await new Promise((resolve, reject) => {
+    const lastUpdatedInfo = await new Promise((resolve, reject) => {
       db.get(
-        "SELECT MAX(updated_at) as last_updated FROM entries WHERE group_id = ?",
+        "SELECT MAX(updated_at) as last_updated, user_id as last_updated_user_id FROM entries WHERE group_id = ?",
         [groupId],
         (err, row) => {
           if (err) reject(err);
-          else resolve(row?.last_updated || null);
+          else resolve(row);
         }
       );
     });
 
-    return NextResponse.json({ entries, last_updated: lastUpdated });
+    return NextResponse.json({
+      entries,
+      last_updated: lastUpdatedInfo?.last_updated || null,
+      last_updated_user_id: lastUpdatedInfo?.last_updated_user_id || null,
+    });
   } catch (error) {
     console.error("Get entries error:", error);
     return NextResponse.json(
@@ -152,9 +156,9 @@ export const POST = withAuth(async (request) => {
         if (entry.name && entry.type && entry.amounts) {
           const entryId = await new Promise((resolve, reject) => {
             db.run(
-              `INSERT INTO entries (group_id, name, type, created_at, updated_at) 
-               VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-              [groupId, entry.name, entry.type],
+              `INSERT INTO entries (group_id, user_id, name, type, created_at, updated_at) 
+               VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+              [groupId, user.id, entry.name, entry.type],
               function (err) {
                 if (err) reject(err);
                 else resolve(this.lastID);
@@ -226,7 +230,7 @@ export const POST = withAuth(async (request) => {
 export const DELETE = withAuth(async (request) => {
   try {
     const user = getAuthenticatedUser(request);
-    const userId = user.id;
+    const groupId = user.current_group_id;
 
     const { searchParams } = new URL(request.url);
     const entryId = searchParams.get("id");
@@ -242,8 +246,8 @@ export const DELETE = withAuth(async (request) => {
 
     const entry = await new Promise((resolve, reject) => {
       db.get(
-        "SELECT id FROM entries WHERE id = ? AND user_id = ?",
-        [entryId, userId],
+        "SELECT id FROM entries WHERE id = ? AND group_id = ?",
+        [entryId, groupId],
         (err, row) => {
           if (err) reject(err);
           else resolve(row);
@@ -260,8 +264,8 @@ export const DELETE = withAuth(async (request) => {
 
     const result = await new Promise((resolve, reject) => {
       db.run(
-        "DELETE FROM entries WHERE id = ? AND user_id = ?",
-        [entryId, userId],
+        "DELETE FROM entries WHERE id = ? AND group_id = ?",
+        [entryId, groupId],
         function (err) {
           if (err) reject(err);
           else resolve({ changes: this.changes });
@@ -279,6 +283,98 @@ export const DELETE = withAuth(async (request) => {
     });
   } catch (error) {
     console.error("Delete entry error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+});
+
+// Partial updates for a single entry (description or single month amount)
+export const PATCH = withAuth(async (request) => {
+  try {
+    const user = getAuthenticatedUser(request);
+    const groupId = user.current_group_id;
+    if (!groupId) {
+      return NextResponse.json(
+        { error: "No active group selected" },
+        { status: 403 }
+      );
+    }
+    const body = await request.json();
+    const { id, name, month, amount, year } = body || {};
+    if (!id) {
+      return NextResponse.json(
+        { error: "Entry id is required" },
+        { status: 400 }
+      );
+    }
+    const db = await getDatabase();
+    // Verify entry belongs to group
+    const entry = await new Promise((resolve, reject) => {
+      db.get(
+        "SELECT id FROM entries WHERE id = ? AND group_id = ?",
+        [id, groupId],
+        (err, row) => {
+          if (err) reject(err);
+          else resolve(row);
+        }
+      );
+    });
+    if (!entry) {
+      return NextResponse.json({ error: "Entry not found" }, { status: 404 });
+    }
+
+    const updates = {};
+    if (name !== undefined) {
+      await new Promise((resolve, reject) => {
+        db.run(
+          `UPDATE entries SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+          [name, id],
+          function (err) {
+            if (err) reject(err);
+            else resolve();
+          }
+        );
+      });
+      updates.name = name;
+    }
+
+    if (month !== undefined && amount !== undefined) {
+      const numericMonth = Number(month);
+      const numericAmount = Number(amount) || 0;
+      const effectiveYear = year || new Date().getFullYear();
+      // Try update first
+      const updateResult = await new Promise((resolve, reject) => {
+        db.run(
+          `UPDATE entry_amounts SET amount = ?, updated_at = CURRENT_TIMESTAMP WHERE entry_id = ? AND month = ? AND year = ?`,
+          [numericAmount, id, numericMonth, effectiveYear],
+          function (err) {
+            if (err) reject(err);
+            else resolve({ changes: this.changes });
+          }
+        );
+      });
+      if (updateResult.changes === 0) {
+        await new Promise((resolve, reject) => {
+          db.run(
+            `INSERT INTO entry_amounts (entry_id, month, year, amount) VALUES (?, ?, ?, ?)`,
+            [id, numericMonth, effectiveYear, numericAmount],
+            function (err) {
+              if (err) reject(err);
+              else resolve();
+            }
+          );
+        });
+      }
+      updates.month = numericMonth;
+      updates.amount = numericAmount;
+      updates.year = effectiveYear;
+    }
+
+    return NextResponse.json({ success: true, updates });
+  } catch (error) {
+    console.error("Patch entry error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

@@ -18,7 +18,7 @@ export const GET = withAuth(async (request) => {
     const db = await getDatabase();
     const bankAmount = await new Promise((resolve, reject) => {
       db.get(
-        "SELECT amount, updated_at FROM bank_amounts WHERE group_id = ? ORDER BY updated_at DESC LIMIT 1",
+        "SELECT amount, updated_at, user_id FROM bank_amounts WHERE group_id = ? ORDER BY updated_at DESC LIMIT 1",
         [groupId],
         (err, row) => {
           if (err) reject(err);
@@ -30,6 +30,7 @@ export const GET = withAuth(async (request) => {
     return NextResponse.json({
       amount: bankAmount?.amount || 0,
       updated_at: bankAmount?.updated_at || null,
+      last_updated_user_id: bankAmount?.user_id || null,
     });
   } catch (error) {
     console.error("Get bank amount error:", error);
@@ -69,8 +70,8 @@ export const POST = withAuth(async (request) => {
   // Insert new bank amount entry (keeping history)
   await new Promise((resolve, reject) => {
     db.run(
-      `INSERT INTO bank_amounts (group_id, amount, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)`,
-      [groupId, amount],
+      `INSERT INTO bank_amounts (group_id, user_id, amount, updated_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)`,
+      [groupId, user.id, amount],
       function (err) {
         if (err) reject(err);
         else resolve();

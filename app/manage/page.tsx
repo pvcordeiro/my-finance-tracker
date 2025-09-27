@@ -19,7 +19,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { ConflictConfirmationDialog } from "@/components/finance/conflict-confirmation-dialog";
-import { toast } from "sonner";
+import { toast } from "sonner"; // still used for import/export errors maybe
 
 function HomePage() {
   const { user, isLoading, logout } = useAuth();
@@ -30,7 +30,10 @@ function HomePage() {
     hasChanges,
     isLoading: dataLoading,
     conflictData,
-    saveData,
+    conflictType,
+    saveBankAmount,
+    commitEntryDescription,
+    commitEntryAmount,
     forceSaveData,
     cancelConflict,
     updateBankAmount,
@@ -107,31 +110,39 @@ function HomePage() {
     await setData(emptyData, true);
   };
 
-  const triggerSavedPopup = () => {
-    setTimeout(() => {
-      toast.success("Your changes have been saved", { duration: 1000 });
-    }, 300);
-  };
+  // Track last saved element to flash (bank, entry-description, entry-amount)
+  const [lastSaved, setLastSaved] = useState<{
+    kind: "bank" | "entry-desc" | "entry-amount";
+    id?: string;
+    monthIndex?: number;
+  } | null>(null);
 
-  const handleSaveData = async (
+  const handleSaveBankAmount = async (
     dataToSave?: any,
     onSessionExpired?: () => void
   ) => {
     try {
-      const result = await saveData(dataToSave, onSessionExpired);
-      if (result?.conflict) {
-        return;
+      const result = await saveBankAmount(dataToSave, onSessionExpired);
+      if ((result as any)?.conflict) {
+        return; // Conflict dialog shown
       }
-      triggerSavedPopup();
+      if (result?.success) {
+        setLastSaved({ kind: "bank" });
+      }
     } catch (error) {
-      console.error("Failed to save data:", error);
+      console.error("Failed to save bank amount:", error);
     }
   };
 
   const handleForceSave = async () => {
     try {
-      await forceSaveData(undefined, handleSessionExpired);
-      triggerSavedPopup();
+      // Currently forceSaveData still saves everything. In future we can branch by conflictType if partial force save required.
+      const result = await forceSaveData(undefined, handleSessionExpired);
+      if (result?.success) {
+        // If conflict overwrite happened, we cannot granularly know which field user intended
+        // For now just flash bank if that was the conflict; otherwise no toast.
+        setLastSaved({ kind: "bank" });
+      }
     } catch (error) {
       console.error("Failed to force save data:", error);
     }
@@ -167,7 +178,10 @@ function HomePage() {
               <BankAmount
                 amount={data.bankAmount}
                 onChange={updateBankAmount}
-                onBlur={() => handleSaveData(undefined, handleSessionExpired)}
+                onBlur={() =>
+                  handleSaveBankAmount(undefined, handleSessionExpired)
+                }
+                flash={lastSaved?.kind === "bank"}
               />
               <EntryForm
                 title="Income"
@@ -179,7 +193,7 @@ function HomePage() {
                 onRemoveEntry={async (id) => {
                   try {
                     await removeEntry("incomes", id);
-                    triggerSavedPopup();
+                    setLastSaved({ kind: "entry-desc", id });
                   } catch (error) {
                     console.error("Failed to delete income entry:", error);
                   }
@@ -187,9 +201,24 @@ function HomePage() {
                 type="income"
                 isOpen={incomeOpen}
                 onToggle={() => setIncomeOpen(!incomeOpen)}
-                saveData={handleSaveData}
-                triggerSavedPopup={triggerSavedPopup}
-                handleSessionExpired={handleSessionExpired}
+                onCommitDescription={async (id, desc) => {
+                  const res = await commitEntryDescription("incomes", id, desc);
+                  if ((res as any).conflict) return false;
+                  if (res.success) setLastSaved({ kind: "entry-desc", id });
+                  return res.success;
+                }}
+                onCommitAmount={async (id, monthIndex, amount) => {
+                  const res = await commitEntryAmount(
+                    "incomes",
+                    id,
+                    monthIndex,
+                    amount
+                  );
+                  if ((res as any).conflict) return false;
+                  if (res.success)
+                    setLastSaved({ kind: "entry-amount", id, monthIndex });
+                  return res.success;
+                }}
               />
 
               <EntryForm
@@ -202,7 +231,7 @@ function HomePage() {
                 onRemoveEntry={async (id) => {
                   try {
                     await removeEntry("expenses", id);
-                    triggerSavedPopup();
+                    setLastSaved({ kind: "entry-desc", id });
                   } catch (error) {
                     console.error("Failed to delete expense entry:", error);
                   }
@@ -210,9 +239,28 @@ function HomePage() {
                 type="expense"
                 isOpen={expenseOpen}
                 onToggle={() => setExpenseOpen(!expenseOpen)}
-                saveData={handleSaveData}
-                triggerSavedPopup={triggerSavedPopup}
-                handleSessionExpired={handleSessionExpired}
+                onCommitDescription={async (id, desc) => {
+                  const res = await commitEntryDescription(
+                    "expenses",
+                    id,
+                    desc
+                  );
+                  if ((res as any).conflict) return false;
+                  if (res.success) setLastSaved({ kind: "entry-desc", id });
+                  return res.success;
+                }}
+                onCommitAmount={async (id, monthIndex, amount) => {
+                  const res = await commitEntryAmount(
+                    "expenses",
+                    id,
+                    monthIndex,
+                    amount
+                  );
+                  if ((res as any).conflict) return false;
+                  if (res.success)
+                    setLastSaved({ kind: "entry-amount", id, monthIndex });
+                  return res.success;
+                }}
               />
             </div>
           </TabsContent>
@@ -232,6 +280,7 @@ function HomePage() {
         currentData={data}
         onConfirm={handleForceSave}
         onCancel={cancelConflict}
+        conflictType={conflictType}
       />
       {/* Confirmation Dialog */}
       <Dialog open={showConfirm} onOpenChange={setShowConfirm}>

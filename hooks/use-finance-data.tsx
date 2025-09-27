@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "./use-auth";
 import type { FinanceEntry } from "@/components/finance/entry-form";
 
@@ -46,19 +46,60 @@ function unshiftDataForStorage(amounts: number[]): number[] {
   return [...fromCurrentMonthBack, ...restOfArray];
 }
 
+// Standard result type for commit operations
+type CommitResult =
+  | { success: true }
+  | { success: false; conflict?: true; error?: string };
+
+async function fetchLatestEntriesNoCache(): Promise<{
+  entries: any[];
+  last_updated_user_id: number | null;
+} | null> {
+  try {
+    const res = await fetch(`/api/entries?ts=${Date.now()}`, {
+      credentials: "include",
+      cache: "no-store",
+      headers: {
+        "Cache-Control": "no-cache, no-store, max-age=0, must-revalidate",
+        Pragma: "no-cache",
+        Expires: "0",
+      },
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    return {
+      entries: json.entries || [],
+      last_updated_user_id: json.last_updated_user_id || null,
+    };
+  } catch (_e) {
+    return null;
+  }
+}
+
 export function useFinanceData() {
   const [data, setData] = useState<FinanceData>(defaultData);
   const [originalData, setOriginalData] = useState<FinanceData>(defaultData);
   const [lastUpdated, setLastUpdated] = useState<{
-    bankAmount: string | null;
-    entries: string | null;
+    bankAmount: { timestamp: string | null; userId: number | null };
+    entries: { timestamp: string | null; userId: number | null };
   }>({
-    bankAmount: null,
-    entries: null,
+    bankAmount: { timestamp: null, userId: null },
+    entries: { timestamp: null, userId: null },
   });
-  const [hasChanges, setHasChanges] = useState(false);
+  // Track changes independently so we can save bank amount and entries separately
+  const [hasBankChanges, setHasBankChanges] = useState(false);
+  const [hasEntryChanges, setHasEntryChanges] = useState(false);
+  // Derived overall changes flag (kept for existing consumers)
+  const hasChanges = useMemo(
+    () => hasBankChanges || hasEntryChanges,
+    [hasBankChanges, hasEntryChanges]
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [conflictData, setConflictData] = useState<FinanceData | null>(null);
+  // Track which domain the conflict relates to: 'bank' | 'entries' | 'all'
+  const [conflictType, setConflictType] = useState<
+    null | "bank" | "entries" | "all"
+  >(null);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -66,7 +107,8 @@ export function useFinanceData() {
       loadDataFromServer();
     } else {
       setData(defaultData);
-      setHasChanges(false);
+      setHasBankChanges(false);
+      setHasEntryChanges(false);
       setIsLoading(false);
     }
   }, [user]);
@@ -137,13 +179,18 @@ export function useFinanceData() {
 
       setData(loadedData);
       setOriginalData(loadedData);
+      // On a clean server load we should clear change flags
+      setHasBankChanges(false);
+      setHasEntryChanges(false);
 
       const bankUpdated = bankData.updated_at || null;
-      const entriesUpdated = entriesData.last_updated || null; // We'll need to add this to the API
+      const bankUserId = bankData.last_updated_user_id || null;
+      const entriesUpdated = entriesData.last_updated || null;
+      const entriesUserId = entriesData.last_updated_user_id || null;
 
       setLastUpdated({
-        bankAmount: bankUpdated,
-        entries: entriesUpdated,
+        bankAmount: { timestamp: bankUpdated, userId: bankUserId },
+        entries: { timestamp: entriesUpdated, userId: entriesUserId },
       });
     } catch (error) {
       console.error("Error loading data from server:", error);
@@ -200,13 +247,16 @@ export function useFinanceData() {
       };
 
       const hasBankConflict =
-        currentData.bankAmount !== originalData.bankAmount;
+        currentData.bankAmount !== originalData.bankAmount &&
+        bankData.last_updated_user_id !== user?.id;
       const hasIncomeConflict =
         JSON.stringify(currentData.incomes) !==
-        JSON.stringify(originalData.incomes);
+          JSON.stringify(originalData.incomes) &&
+        entriesData.last_updated_user_id !== user?.id;
       const hasExpenseConflict =
         JSON.stringify(currentData.expenses) !==
-        JSON.stringify(originalData.expenses);
+          JSON.stringify(originalData.expenses) &&
+        entriesData.last_updated_user_id !== user?.id;
 
       if (hasBankConflict || hasIncomeConflict || hasExpenseConflict) {
         return currentData;
@@ -219,96 +269,299 @@ export function useFinanceData() {
     }
   };
 
-  const saveData = async (
+  /**
+   * Save ONLY the bank amount (no entries) -- used on blur of the bank amount input.
+   */
+  const saveBankAmount = async (
     dataToSave?: FinanceData,
     onSessionExpired?: () => void
   ) => {
     try {
       const currentData = dataToSave || data;
-
-      const conflictingData = await checkConflicts();
-      if (conflictingData) {
-        setConflictData(conflictingData);
-        return { conflict: true, conflictingData };
-      }
-
-      const bankResponse = await fetch("/api/bank-amount", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          amount: currentData.bankAmount,
-        }),
+      // Conflict check: re-fetch bank only and compare if last update user differs
+      const bankResponseCheck = await fetch("/api/bank-amount", {
         credentials: "include",
       });
-
-      if (!bankResponse.ok) {
-        console.error("Bank amount save failed:", await bankResponse.text());
-        if (bankResponse.status === 401) {
-          if (onSessionExpired) onSessionExpired();
-          return;
+      if (bankResponseCheck.ok) {
+        const serverBank = await bankResponseCheck.json();
+        const serverAmount = serverBank.amount || 0;
+        const lastUser = serverBank.last_updated_user_id || null;
+        if (
+          serverAmount !== originalData.bankAmount &&
+          lastUser !== user?.id &&
+          serverAmount !== currentData.bankAmount
+        ) {
+          // Conflict: capture minimal dataset (only bank) to show difference
+          setConflictData({
+            bankAmount: serverAmount,
+            incomes: originalData.incomes,
+            expenses: originalData.expenses,
+          });
+          setConflictType("bank");
+          return { conflict: true } as const;
         }
       }
-
-      const allEntries = [
-        ...currentData.incomes
-          .filter((entry) => entry.description.trim() !== "")
-          .map((entry) => ({
-            name: entry.description,
-            type: "income",
-            amounts: unshiftDataForStorage(entry.amounts),
-          })),
-        ...currentData.expenses
-          .filter((entry) => entry.description.trim() !== "")
-          .map((entry) => ({
-            name: entry.description,
-            type: "expense",
-            amounts: unshiftDataForStorage(entry.amounts),
-          })),
-      ];
-
-      const entriesResponse = await fetch("/api/entries", {
+      const bankResponse = await fetch("/api/bank-amount", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: currentData.bankAmount }),
+        credentials: "include",
+      });
+      if (!bankResponse.ok) {
+        console.error("Bank amount save failed:", await bankResponse.text());
+        if (bankResponse.status === 401 && onSessionExpired) {
+          onSessionExpired();
+          return;
+        }
+        throw new Error("Failed to save bank amount");
+      }
+      // Update original snapshot only for bank amount
+      setOriginalData((prev) => ({
+        ...prev,
+        bankAmount: currentData.bankAmount,
+      }));
+      setHasBankChanges(false);
+      return { success: true };
+    } catch (error) {
+      console.error("Error saving bank amount:", error);
+      throw error;
+    }
+  };
+
+  // Commit only a description change for a single entry (optimistic update)
+  const commitEntryDescription = async (
+    entryType: "incomes" | "expenses",
+    id: string,
+    newDescription: string
+  ): Promise<CommitResult> => {
+    // optimistic local update already happened via updateEntry
+    try {
+      const latest = await fetchLatestEntriesNoCache();
+      if (latest) {
+        const target = latest.entries.find((e: any) => e.id.toString() === id);
+        const originalEntry = originalData[entryType].find((e) => e.id === id);
+        // If the target entry no longer exists on server but we have it locally => treat as conflict
+        if (!target && originalEntry) {
+          const incomesServer = latest.entries
+            .filter((e: any) => e.type === "income")
+            .map((e: any) => ({
+              id: e.id.toString(),
+              description: e.name,
+              amounts: shiftDataForRollingMonths(e.amounts),
+            }));
+          const expensesServer = latest.entries
+            .filter((e: any) => e.type === "expense")
+            .map((e: any) => ({
+              id: e.id.toString(),
+              description: e.name,
+              amounts: shiftDataForRollingMonths(e.amounts),
+            }));
+          setConflictData({
+            bankAmount: originalData.bankAmount,
+            incomes: incomesServer,
+            expenses: expensesServer,
+          });
+          setConflictType("entries");
+          return { success: false, conflict: true };
+        }
+        if (target && originalEntry) {
+          const serverName = target.name;
+          // Conflict criteria: server differs from original snapshot & server not equal to attempted value
+          if (
+            serverName !== originalEntry.description &&
+            serverName !== newDescription
+          ) {
+            const incomesServer = latest.entries
+              .filter((e: any) => e.type === "income")
+              .map((e: any) => ({
+                id: e.id.toString(),
+                description: e.name,
+                amounts: shiftDataForRollingMonths(e.amounts),
+              }));
+            const expensesServer = latest.entries
+              .filter((e: any) => e.type === "expense")
+              .map((e: any) => ({
+                id: e.id.toString(),
+                description: e.name,
+                amounts: shiftDataForRollingMonths(e.amounts),
+              }));
+            setConflictData({
+              bankAmount: originalData.bankAmount,
+              incomes: incomesServer,
+              expenses: expensesServer,
+            });
+            setConflictType("entries");
+            return { success: false, conflict: true };
+          }
+        }
+      }
+      const res = await fetch("/api/entries", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, name: newDescription }),
+        credentials: "include",
+      });
+      if (!res.ok) {
+        throw new Error(await res.text());
+      }
+      // refresh original snapshot for that entry
+      setOriginalData((prev) => ({
+        ...prev,
+        [entryType]: prev[entryType].map((e) =>
+          e.id === id ? { ...e, description: newDescription } : e
+        ),
+      }));
+      // Re-evaluate if entries differ from original snapshot (after we update original they should not)
+      setHasEntryChanges(false);
+      return { success: true } as const;
+    } catch (e) {
+      console.error("Description commit failed", e);
+      return { success: false, error: (e as Error).message };
+    }
+  };
+
+  // Commit only a single month amount for an entry
+  const commitEntryAmount = async (
+    entryType: "incomes" | "expenses",
+    id: string,
+    monthIndex: number,
+    amount: number
+  ): Promise<CommitResult> => {
+    try {
+      const currentYear = new Date().getFullYear();
+      // monthIndex is 0-based position within the ROLLING (shifted) array shown in the UI.
+      // We first shift data so that index 0 == current calendar month. Therefore the actual
+      // calendar month number is (currentMonth + monthIndex) % 12.
+      const currentMonth = new Date().getMonth(); // 0-11
+      const actualMonth = (currentMonth + monthIndex) % 12; // 0-11 calendar month
+      const latest = await fetchLatestEntriesNoCache();
+      if (latest) {
+        const target = latest.entries.find((e: any) => e.id.toString() === id);
+        const originalEntry = originalData[entryType].find((e) => e.id === id);
+        if (!target && originalEntry) {
+          const incomesServer = latest.entries
+            .filter((e: any) => e.type === "income")
+            .map((e: any) => ({
+              id: e.id.toString(),
+              description: e.name,
+              amounts: shiftDataForRollingMonths(e.amounts),
+            }));
+          const expensesServer = latest.entries
+            .filter((e: any) => e.type === "expense")
+            .map((e: any) => ({
+              id: e.id.toString(),
+              description: e.name,
+              amounts: shiftDataForRollingMonths(e.amounts),
+            }));
+          setConflictData({
+            bankAmount: originalData.bankAmount,
+            incomes: incomesServer,
+            expenses: expensesServer,
+          });
+          setConflictType("entries");
+          return { success: false, conflict: true };
+        }
+        if (target && originalEntry) {
+          const serverShifted = shiftDataForRollingMonths(target.amounts);
+          const serverValue = serverShifted[monthIndex];
+          const originalValue = originalEntry.amounts[monthIndex];
+          if (serverValue !== originalValue && serverValue !== amount) {
+            const incomesServer = latest.entries
+              .filter((e: any) => e.type === "income")
+              .map((e: any) => ({
+                id: e.id.toString(),
+                description: e.name,
+                amounts: shiftDataForRollingMonths(e.amounts),
+              }));
+            const expensesServer = latest.entries
+              .filter((e: any) => e.type === "expense")
+              .map((e: any) => ({
+                id: e.id.toString(),
+                description: e.name,
+                amounts: shiftDataForRollingMonths(e.amounts),
+              }));
+            setConflictData({
+              bankAmount: originalData.bankAmount,
+              incomes: incomesServer,
+              expenses: expensesServer,
+            });
+            setConflictType("entries");
+            return { success: false, conflict: true };
+          }
+        }
+      }
+      const res = await fetch("/api/entries", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          entries: allEntries,
+          id,
+          month: actualMonth + 1,
+          amount,
+          year: currentYear,
         }),
         credentials: "include",
       });
-
-      if (!entriesResponse.ok) {
-        const errorText = await entriesResponse.text();
-        console.error("Entries save failed:", errorText);
-        throw new Error(`Failed to save entries: ${errorText}`);
+      if (!res.ok) {
+        throw new Error(await res.text());
       }
-
-      setHasChanges(false);
-      return { success: true };
-    } catch (error) {
-      console.error("Error saving data to server:", error);
-      throw error;
+      setOriginalData((prev) => ({
+        ...prev,
+        [entryType]: prev[entryType].map((e) => {
+          if (e.id === id) {
+            const newAmounts = [...e.amounts];
+            newAmounts[monthIndex] = amount;
+            return { ...e, amounts: newAmounts };
+          }
+          return e;
+        }),
+      }));
+      setHasEntryChanges(false);
+      return { success: true } as const;
+    } catch (e) {
+      console.error("Amount commit failed", e);
+      return { success: false, error: (e as Error).message };
     }
   };
 
   const updateBankAmount = (amount: number) => {
     setData((prev) => ({ ...prev, bankAmount: amount }));
-    setHasChanges(true);
+    setHasBankChanges(true);
   };
 
   const addEntry = (type: "incomes" | "expenses") => {
-    const newEntry: FinanceEntry = {
-      id: Date.now().toString(),
-      description: "",
-      amounts: new Array(12).fill(0),
-    };
-    setData((prev) => ({
-      ...prev,
-      [type]: [...prev[type], newEntry],
-    }));
-    setHasChanges(true);
+    // Persist first to get real server ID to avoid later 404 on PATCH
+    (async () => {
+      try {
+        const res = await fetch("/api/entries/create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: type === "incomes" ? "income" : "expense",
+            name: "",
+          }),
+          credentials: "include",
+        });
+        if (!res.ok) {
+          console.error("Failed to create entry", await res.text());
+          return;
+        }
+        const json = await res.json();
+        const serverId = json.id.toString();
+        const newEntry: FinanceEntry = {
+          id: serverId,
+          description: "",
+          amounts: new Array(12).fill(0),
+        };
+        setData((prev) => ({ ...prev, [type]: [...prev[type], newEntry] }));
+        setOriginalData((prev) => ({
+          ...prev,
+          [type]: [...prev[type], newEntry],
+        }));
+        setHasEntryChanges(true); // local unsaved edits before commit
+      } catch (e) {
+        console.error("Create entry exception", e);
+      }
+    })();
   };
 
   const updateEntry = (
@@ -333,7 +586,7 @@ export function useFinanceData() {
         return entry;
       }),
     }));
-    setHasChanges(true);
+    setHasEntryChanges(true);
   };
 
   const removeEntry = async (type: "incomes" | "expenses", id: string) => {
@@ -345,6 +598,11 @@ export function useFinanceData() {
 
       if (!response.ok) {
         const errorData = await response.json();
+        if (response.status === 404) {
+          // Treat as stale: refresh data silently
+          await loadDataFromServer();
+          return;
+        }
         throw new Error(errorData.error || "Failed to delete entry");
       }
 
@@ -352,6 +610,11 @@ export function useFinanceData() {
         ...prev,
         [type]: prev[type].filter((entry) => entry.id !== id),
       }));
+      setOriginalData((prev) => ({
+        ...prev,
+        [type]: prev[type].filter((entry) => entry.id !== id),
+      }));
+      setHasEntryChanges(false); // commit succeeded reflects original snapshot
     } catch (error) {
       console.error("Error deleting entry:", error);
       throw error;
@@ -418,8 +681,10 @@ export function useFinanceData() {
         throw new Error(`Failed to save entries: ${errorText}`);
       }
 
-      setHasChanges(false);
+      setHasBankChanges(false);
+      setHasEntryChanges(false);
       setConflictData(null);
+      setConflictType(null);
       await loadDataFromServer();
       return { success: true };
     } catch (error) {
@@ -430,6 +695,7 @@ export function useFinanceData() {
 
   const cancelConflict = () => {
     setConflictData(null);
+    setConflictType(null);
   };
 
   const setDataForImport = async (
@@ -437,19 +703,28 @@ export function useFinanceData() {
     saveImmediately = false
   ) => {
     setData(newData);
-    setHasChanges(true);
+    setHasBankChanges(true);
+    setHasEntryChanges(true);
 
+    // When importing/restoring a backup we need to persist BOTH bank amount and all entries.
+    // Use forceSaveData which handles unshifting the rotated month arrays back to Jan..Dec order.
     if (saveImmediately) {
-      await saveData(newData);
+      await forceSaveData(newData);
     }
   };
 
   return {
     data,
     hasChanges,
+    // granular flags (exported in case future UI wants separate indicators)
+    hasBankChanges,
+    hasEntryChanges,
     isLoading,
     conflictData,
-    saveData,
+    conflictType,
+    saveBankAmount, // partial save for bank only
+    commitEntryDescription,
+    commitEntryAmount,
     forceSaveData,
     cancelConflict,
     updateBankAmount,

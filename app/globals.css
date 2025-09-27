@@ -175,3 +175,27 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* Inline field save success flash */
+.flash-success {
+  position: relative;
+  animation: flashSuccess 1200ms ease-out;
+}
+
+@keyframes flashSuccess {
+  0% { box-shadow: 0 0 0 0 rgba(34,197,94,0.6); background-color: rgba(34,197,94,0.10); }
+  35% { box-shadow: 0 0 0 3px rgba(34,197,94,0.4); background-color: rgba(34,197,94,0.15); }
+  60% { box-shadow: 0 0 0 2px rgba(34,197,94,0.25); background-color: rgba(34,197,94,0.10); }
+  100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); background-color: transparent; }
+}
+
+.dark .flash-success {
+  animation: flashSuccessDark 1200ms ease-out;
+}
+
+@keyframes flashSuccessDark {
+  0% { box-shadow: 0 0 0 0 rgba(16,185,129,0.7); background-color: rgba(16,185,129,0.15); }
+  35% { box-shadow: 0 0 0 3px rgba(16,185,129,0.5); background-color: rgba(16,185,129,0.22); }
+  60% { box-shadow: 0 0 0 2px rgba(16,185,129,0.3); background-color: rgba(16,185,129,0.15); }
+  100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); background-color: transparent; }
+}

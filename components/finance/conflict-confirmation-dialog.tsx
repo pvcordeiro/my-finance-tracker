@@ -15,8 +15,9 @@ interface ConflictConfirmationDialogProps {
   isOpen: boolean;
   conflictingData: FinanceData | null;
   currentData: FinanceData;
-  onConfirm: () => void;
+  onConfirm: () => void | Promise<void>;
   onCancel: () => void;
+  conflictType?: "bank" | "entries" | "all" | null;
 }
 
 export function ConflictConfirmationDialog({
@@ -25,6 +26,7 @@ export function ConflictConfirmationDialog({
   currentData,
   onConfirm,
   onCancel,
+  conflictType,
 }: ConflictConfirmationDialogProps) {
   if (!conflictingData) return null;
 
@@ -112,19 +114,33 @@ export function ConflictConfirmationDialog({
 
   const conflicts = getConflictingFields();
 
+  const titleMap: Record<string, string> = {
+    bank: "Bank Amount Conflict",
+    entries: "Entries Conflict",
+    all: "Data Conflict Detected",
+  };
+  const dialogTitle = conflictType
+    ? titleMap[conflictType] || titleMap.all
+    : "Data Conflict Detected";
+  const introText =
+    conflictType === "bank"
+      ? "Another user has updated the bank amount since you last loaded it."
+      : conflictType === "entries"
+      ? "Another user has updated one or more entries since you last loaded them."
+      : "Another user has modified the data since you last loaded it.";
+
   return (
     <Dialog open={isOpen} onOpenChange={onCancel}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <AlertTriangle className="w-5 h-5 text-yellow-500" />
-            Data Conflict Detected
+            {dialogTitle}
           </DialogTitle>
         </DialogHeader>
         <div className="py-4">
           <p className="mb-4">
-            Another user has modified the data since you last loaded it. The
-            following changes conflict with your modifications:
+            {introText} The following changes conflict with your modifications:
           </p>
           <div className="space-y-2 max-h-60 overflow-y-auto">
             {conflicts.map((conflict, index) => (

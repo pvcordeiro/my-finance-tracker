@@ -34,11 +34,13 @@ import {
   UserMinus,
   Calendar,
   ChevronDown,
-  Home,
+  Calculator,
   User,
   Moon,
   Sun,
   Edit,
+  MoreHorizontal,
+  ShieldOff,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
@@ -439,7 +441,7 @@ export function AdminDashboard() {
                     onClick={() => router.push("/")}
                     className="cursor-pointer"
                   >
-                    <Home className="w-4 h-4 mr-2" />
+                    <Calculator className="w-4 h-4 mr-2" />
                     Back to App
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={logout} className="cursor-pointer">
@@ -533,33 +535,57 @@ export function AdminDashboard() {
                             <CardContent className="p-4">
                               <div className="space-y-3">
                                 <div className="flex items-center justify-between">
-                                  <h3 className="font-medium">
+                                  <h3 className="font-medium flex items-center gap-1">
                                     {userItem.username}
+                                    {userItem.is_admin && (
+                                      <Shield
+                                        className="w-4 h-4 text-blue-600 dark:text-blue-400"
+                                        aria-label="Admin user"
+                                      />
+                                    )}
                                   </h3>
-                                  <div className="flex space-x-2">
-                                    {user?.id === 1 && userItem.id !== 1 && (
-                                      <Button
-                                        variant={
-                                          userItem.is_admin
-                                            ? "default"
-                                            : "outline"
-                                        }
-                                        size="sm"
-                                        onClick={() => toggleAdmin(userItem.id)}
-                                      >
-                                        <Shield className="w-3 h-3" />
-                                      </Button>
-                                    )}
-                                    {userItem.id !== 1 && (
-                                      <Button
-                                        variant="destructive"
-                                        size="sm"
-                                        onClick={() => deleteUser(userItem.id)}
-                                      >
-                                        <Trash2 className="w-3 h-3" />
-                                      </Button>
-                                    )}
-                                  </div>
+                                  {userItem.id !== 1 && (
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-8 w-8 p-0"
+                                          aria-label={`Actions for ${userItem.username}`}
+                                        >
+                                          <MoreHorizontal className="w-4 h-4" />
+                                        </Button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent align="end">
+                                        {user?.id === 1 && (
+                                          <DropdownMenuItem
+                                            onClick={() =>
+                                              toggleAdmin(userItem.id)
+                                            }
+                                            className="cursor-pointer"
+                                          >
+                                            {userItem.is_admin ? (
+                                              <ShieldOff className="w-4 h-4 mr-2" />
+                                            ) : (
+                                              <Shield className="w-4 h-4 mr-2" />
+                                            )}
+                                            {userItem.is_admin
+                                              ? "Revoke Admin"
+                                              : "Make Admin"}
+                                          </DropdownMenuItem>
+                                        )}
+                                        <DropdownMenuItem
+                                          onClick={() =>
+                                            deleteUser(userItem.id)
+                                          }
+                                          className="cursor-pointer text-destructive focus:text-destructive"
+                                        >
+                                          <Trash2 className="w-4 h-4 mr-2" />{" "}
+                                          Delete User
+                                        </DropdownMenuItem>
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
+                                  )}
                                 </div>
                                 <div className="text-sm text-muted-foreground">
                                   <Calendar className="w-3 h-3 inline mr-1" />
@@ -615,7 +641,15 @@ export function AdminDashboard() {
                               <tr key={userItem.id} className="border-b">
                                 <td className="p-2 sm:p-4 font-medium">
                                   <div>
-                                    <div>{userItem.username}</div>
+                                    <div className="flex items-center gap-1">
+                                      <span>{userItem.username}</span>
+                                      {userItem.is_admin && (
+                                        <Shield
+                                          className="w-4 h-4 text-blue-600 dark:text-blue-400"
+                                          aria-label="Admin user"
+                                        />
+                                      )}
+                                    </div>
                                     <div className="text-xs text-muted-foreground sm:hidden">
                                       <Calendar className="w-3 h-3 inline mr-1" />
                                       {formatDate(userItem.created_at)}
@@ -644,30 +678,48 @@ export function AdminDashboard() {
                                   </div>
                                 </td>
                                 <td className="p-4 text-right">
-                                  <div className="flex flex-col sm:flex-row items-end sm:justify-end space-y-2 sm:space-y-0 sm:space-x-2">
-                                    {user?.id === 1 && userItem.id !== 1 && (
-                                      <Button
-                                        variant={
-                                          userItem.is_admin
-                                            ? "default"
-                                            : "outline"
-                                        }
-                                        size="sm"
-                                        onClick={() => toggleAdmin(userItem.id)}
-                                        className="transition-all duration-200 hover:scale-[1.02] "
-                                      >
-                                        <Shield className="w-3 h-3 " />
-                                      </Button>
-                                    )}
+                                  <div className="flex justify-end">
                                     {userItem.id !== 1 && (
-                                      <Button
-                                        variant="destructive"
-                                        size="sm"
-                                        onClick={() => deleteUser(userItem.id)}
-                                        className="transition-all duration-200 hover:scale-[1.02]"
-                                      >
-                                        <Trash2 className="w-3 h-3 mr-1 sm:mr-0" />
-                                      </Button>
+                                      <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-8 w-8 p-0 hover:bg-muted"
+                                            aria-label={`Actions for ${userItem.username}`}
+                                          >
+                                            <MoreHorizontal className="w-4 h-4" />
+                                          </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                          {user?.id === 1 && (
+                                            <DropdownMenuItem
+                                              onClick={() =>
+                                                toggleAdmin(userItem.id)
+                                              }
+                                              className="cursor-pointer"
+                                            >
+                                              {userItem.is_admin ? (
+                                                <ShieldOff className="w-4 h-4 mr-2" />
+                                              ) : (
+                                                <Shield className="w-4 h-4 mr-2" />
+                                              )}
+                                              {userItem.is_admin
+                                                ? "Revoke Admin"
+                                                : "Make Admin"}
+                                            </DropdownMenuItem>
+                                          )}
+                                          <DropdownMenuItem
+                                            onClick={() =>
+                                              deleteUser(userItem.id)
+                                            }
+                                            className="cursor-pointer text-destructive focus:text-destructive"
+                                          >
+                                            <Trash2 className="w-4 h-4 mr-2" />{" "}
+                                            Delete User
+                                          </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                      </DropdownMenu>
                                     )}
                                   </div>
                                 </td>
@@ -746,15 +798,21 @@ export function AdminDashboard() {
                                     {group.member_count}
                                   </Badge>
                                 </div>
-                                <div className="flex flex-wrap gap-2">
+                                <div className="flex">
                                   <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                       <Button variant="outline" size="sm">
-                                        <UserPlus className="w-3 h-3 mr-1" />
-                                        Add User
+                                        <MoreHorizontal className="w-3 h-3 mr-1" />
+                                        Manage
                                       </Button>
                                     </DropdownMenuTrigger>
-                                    <DropdownMenuContent>
+                                    <DropdownMenuContent className="max-h-80 overflow-y-auto">
+                                      <DropdownMenuItem
+                                        disabled
+                                        className="opacity-70 select-none"
+                                      >
+                                        Add User
+                                      </DropdownMenuItem>
                                       {users
                                         .filter(
                                           (u) =>
@@ -771,20 +829,18 @@ export function AdminDashboard() {
                                                 group.id
                                               )
                                             }
+                                            className="cursor-pointer"
                                           >
+                                            <UserPlus className="w-3 h-3 mr-2" />
                                             {user.username}
                                           </DropdownMenuItem>
                                         ))}
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                      <Button variant="outline" size="sm">
-                                        <User className="w-3 h-3 mr-1" />
+                                      <DropdownMenuItem
+                                        disabled
+                                        className="opacity-70 mt-1 select-none"
+                                      >
                                         Remove User
-                                      </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent>
+                                      </DropdownMenuItem>
                                       {users
                                         .filter((u) =>
                                           u.groups.some(
@@ -800,29 +856,29 @@ export function AdminDashboard() {
                                                 group.id
                                               )
                                             }
+                                            className="cursor-pointer"
                                           >
+                                            <UserMinus className="w-3 h-3 mr-2" />
                                             {user.username}
                                           </DropdownMenuItem>
                                         ))}
+                                      <DropdownMenuItem
+                                        onClick={() => renameGroup(group)}
+                                        className="cursor-pointer mt-1"
+                                      >
+                                        <Edit className="w-3 h-3 mr-2" />
+                                        Rename Group
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem
+                                        onClick={() => deleteGroup(group.id)}
+                                        disabled={group.id === 1}
+                                        className="cursor-pointer text-destructive focus:text-destructive"
+                                      >
+                                        <Trash2 className="w-3 h-3 mr-2" />
+                                        Delete Group
+                                      </DropdownMenuItem>
                                     </DropdownMenuContent>
                                   </DropdownMenu>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => renameGroup(group)}
-                                  >
-                                    <Edit className="w-3 h-3 mr-1" />
-                                    Rename
-                                  </Button>
-                                  <Button
-                                    variant="destructive"
-                                    size="sm"
-                                    onClick={() => deleteGroup(group.id)}
-                                    disabled={group.id === 1}
-                                  >
-                                    <Trash2 className="w-3 h-3 mr-1" />
-                                    Delete
-                                  </Button>
                                 </div>
                               </div>
                             </CardContent>
@@ -883,21 +939,27 @@ export function AdminDashboard() {
                                   {formatDate(group.created_at)}
                                 </td>
                                 <td className="p-4 text-right">
-                                  <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-center sm:justify-end sm:space-x-2">
+                                  <div className="flex justify-end">
                                     <DropdownMenu>
                                       <DropdownMenuTrigger asChild>
                                         <Button
-                                          variant="outline"
+                                          variant="ghost"
                                           size="sm"
-                                          className="w-full sm:w-auto"
+                                          className="h-8 w-8 p-0 hover:bg-muted"
                                         >
-                                          <UserPlus className="w-3 h-3 mr-1 sm:mr-0" />
-                                          <span className="sm:hidden">
-                                            Add User
-                                          </span>
+                                          <MoreHorizontal className="w-4 h-4" />
                                         </Button>
                                       </DropdownMenuTrigger>
-                                      <DropdownMenuContent>
+                                      <DropdownMenuContent
+                                        align="end"
+                                        className="max-h-80 overflow-y-auto"
+                                      >
+                                        <DropdownMenuItem
+                                          disabled
+                                          className="opacity-70 select-none"
+                                        >
+                                          Add User
+                                        </DropdownMenuItem>
                                         {users
                                           .filter(
                                             (u) =>
@@ -914,26 +976,18 @@ export function AdminDashboard() {
                                                   group.id
                                                 )
                                               }
+                                              className="cursor-pointer"
                                             >
+                                              <UserPlus className="w-3 h-3 mr-2" />
                                               {user.username}
                                             </DropdownMenuItem>
                                           ))}
-                                      </DropdownMenuContent>
-                                    </DropdownMenu>
-                                    <DropdownMenu>
-                                      <DropdownMenuTrigger asChild>
-                                        <Button
-                                          variant="outline"
-                                          size="sm"
-                                          className="w-full sm:w-auto"
+                                        <DropdownMenuItem
+                                          disabled
+                                          className="opacity-70 mt-1 select-none"
                                         >
-                                          <UserMinus className="w-3 h-3 mr-1 sm:mr-0" />
-                                          <span className="sm:hidden">
-                                            Remove User
-                                          </span>
-                                        </Button>
-                                      </DropdownMenuTrigger>
-                                      <DropdownMenuContent>
+                                          Remove User
+                                        </DropdownMenuItem>
                                         {users
                                           .filter((u) =>
                                             u.groups.some(
@@ -949,31 +1003,29 @@ export function AdminDashboard() {
                                                   group.id
                                                 )
                                               }
+                                              className="cursor-pointer"
                                             >
+                                              <UserMinus className="w-3 h-3 mr-2" />
                                               {user.username}
                                             </DropdownMenuItem>
                                           ))}
+                                        <DropdownMenuItem
+                                          onClick={() => renameGroup(group)}
+                                          className="cursor-pointer mt-1"
+                                        >
+                                          <Edit className="w-3 h-3 mr-2" />
+                                          Rename Group
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                          onClick={() => deleteGroup(group.id)}
+                                          disabled={group.id === 1}
+                                          className="cursor-pointer text-destructive focus:text-destructive"
+                                        >
+                                          <Trash2 className="w-3 h-3 mr-2" />
+                                          Delete Group
+                                        </DropdownMenuItem>
                                       </DropdownMenuContent>
                                     </DropdownMenu>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => renameGroup(group)}
-                                      className="w-full sm:w-auto"
-                                    >
-                                      <Edit className="w-3 h-3 mr-1 sm:mr-0" />
-                                      <span className="sm:hidden">Rename</span>
-                                    </Button>
-                                    <Button
-                                      variant="destructive"
-                                      size="sm"
-                                      onClick={() => deleteGroup(group.id)}
-                                      disabled={group.id === 1}
-                                      className="w-full sm:w-auto"
-                                    >
-                                      <Trash2 className="w-3 h-3 mr-1 sm:mr-0" />
-                                      <span className="sm:hidden">Delete</span>
-                                    </Button>
                                   </div>
                                 </td>
                               </tr>

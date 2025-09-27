@@ -110,6 +110,7 @@ export function DataManagement({
   const confirmClearData = () => {
     onClearData();
     setClearDialogOpen(false);
+    toast.success("All data cleared successfully.");
   };
 
   const getDataStats = () => {

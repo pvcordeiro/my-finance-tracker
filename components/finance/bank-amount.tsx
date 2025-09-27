@@ -1,4 +1,5 @@
 "use client";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,9 +9,44 @@ interface BankAmountProps {
   amount: number;
   onChange: (amount: number) => void;
   onBlur: () => void;
+  flash?: boolean; // trigger success flash animation
 }
 
-export function BankAmount({ amount, onChange, onBlur }: BankAmountProps) {
+export function BankAmount({
+  amount,
+  onChange,
+  onBlur,
+  flash,
+}: BankAmountProps) {
+  const [hasChanged, setHasChanged] = useState(false);
+  const [originalValue, setOriginalValue] = useState(amount);
+  const [flashActive, setFlashActive] = useState(false);
+
+  useEffect(() => {
+    if (flash) {
+      // retrigger animation by toggling class
+      setFlashActive(false);
+      const t = setTimeout(() => setFlashActive(true), 10);
+      return () => clearTimeout(t);
+    }
+  }, [flash]);
+
+  const handleFocus = () => {
+    setOriginalValue(amount);
+    setHasChanged(false);
+  };
+
+  const handleChange = (value: number) => {
+    onChange(value);
+    setHasChanged(true);
+  };
+
+  const handleBlur = () => {
+    if (hasChanged && amount !== originalValue) {
+      onBlur();
+    }
+    setHasChanged(false);
+  };
   return (
     <Card className="bg-gradient-to-r from-primary/5 to-accent/5 border-primary/20">
       <CardContent className="p-3 sm:p-4">
@@ -25,7 +61,7 @@ export function BankAmount({ amount, onChange, onBlur }: BankAmountProps) {
             </Label>
           </div>
           <div className="relative w-full sm:w-auto">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none z-10 select-none">
               €
             </span>
             <Input
@@ -34,9 +70,14 @@ export function BankAmount({ amount, onChange, onBlur }: BankAmountProps) {
               inputMode="decimal"
               placeholder="0"
               value={amount || ""}
-              onChange={(e) => onChange(Number.parseFloat(e.target.value) || 0)}
-              onBlur={onBlur}
-              className="pl-8 w-full sm:w-32 transition-all duration-200 focus:ring-2 focus:ring-primary/20 text-sm sm:text-base touch-manipulation"
+              onChange={(e) =>
+                handleChange(Number.parseFloat(e.target.value) || 0)
+              }
+              onFocus={handleFocus}
+              onBlur={handleBlur}
+              className={`pl-8 w-full sm:w-32 transition-all duration-200 focus:ring-2 focus:ring-primary/20 text-sm sm:text-base touch-manipulation ${
+                flashActive ? "flash-success" : ""
+              }`}
             />
           </div>
         </div>
