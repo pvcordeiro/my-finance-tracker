@@ -53,6 +53,7 @@ import { useTheme } from "next-themes";
 interface User {
   id: number;
   username: string;
+  is_admin: boolean;
   created_at: string;
   entry_count: number;
   last_activity: string | null;
@@ -176,6 +177,24 @@ export function AdminDashboard() {
       }
     } catch (error) {
       setError("Error updating settings");
+    }
+  };
+
+  const toggleAdmin = async (userId: number) => {
+    try {
+      const response = await fetch(`/api/admin/users?userId=${userId}`, {
+        method: "PATCH",
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        setMessage("Admin status updated successfully");
+        loadUsers();
+      } else {
+        setError("Failed to update admin status");
+      }
+    } catch (error) {
+      setError("Error updating admin status");
     }
   };
 
@@ -364,38 +383,54 @@ export function AdminDashboard() {
                           </tr>
                         </thead>
                         <tbody>
-                          {users.map((user) => (
-                            <tr key={user.id} className="border-b">
+                          {users.map((userItem) => (
+                            <tr key={userItem.id} className="border-b">
                               <td className="p-4 font-medium">
-                                {user.username}
+                                {userItem.username}
                               </td>
                               <td className="p-4 text-muted-foreground">
                                 <div className="flex items-center space-x-1">
                                   <Calendar className="w-3 h-3" />
-                                  <span>{formatDate(user.created_at)}</span>
+                                  <span>{formatDate(userItem.created_at)}</span>
                                 </div>
                               </td>
                               <td className="p-4">
                                 <Badge variant="outline">
-                                  {user.entry_count}
+                                  {userItem.entry_count}
                                 </Badge>
                               </td>
                               <td className="p-4 text-muted-foreground">
-                                {user.last_activity
-                                  ? formatDate(user.last_activity)
+                                {userItem.last_activity
+                                  ? formatDate(userItem.last_activity)
                                   : "Never"}
                               </td>
                               <td className="p-4 text-right">
-                                {user.id !== 1 && (
-                                  <Button
-                                    variant="destructive"
-                                    size="sm"
-                                    onClick={() => deleteUser(user.id)}
-                                    className="transition-all duration-200 hover:scale-[1.02]"
-                                  >
-                                    <Trash2 className="w-3 h-3" />
-                                  </Button>
-                                )}
+                                <div className="flex items-center justify-end space-x-2">
+                                  {user?.id === 1 && userItem.id !== 1 && (
+                                    <Button
+                                      variant={
+                                        userItem.is_admin
+                                          ? "default"
+                                          : "outline"
+                                      }
+                                      size="sm"
+                                      onClick={() => toggleAdmin(userItem.id)}
+                                      className="transition-all duration-200 hover:scale-[1.02]"
+                                    >
+                                      <Shield className="w-3 h-3" />
+                                    </Button>
+                                  )}
+                                  {userItem.id !== 1 && (
+                                    <Button
+                                      variant="destructive"
+                                      size="sm"
+                                      onClick={() => deleteUser(userItem.id)}
+                                      className="transition-all duration-200 hover:scale-[1.02]"
+                                    >
+                                      <Trash2 className="w-3 h-3" />
+                                    </Button>
+                                  )}
+                                </div>
                               </td>
                             </tr>
                           ))}
