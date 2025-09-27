@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { useFinanceData } from "@/hooks/use-finance-data";
 import { DashboardHeader } from "@/components/finance/dashboard-header";
@@ -21,7 +21,7 @@ import {
 import { ConflictConfirmationDialog } from "@/components/finance/conflict-confirmation-dialog";
 import { toast } from "sonner";
 
-function HomePage() {
+function HomePageContent() {
   const { user, isLoading, logout } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -55,12 +55,6 @@ function HomePage() {
     const tab = searchParams.get("tab");
     setActiveTab(tab === "management" ? "management" : "main");
   }, [searchParams]);
-
-  useEffect(() => {
-    if (!isLoading && !user && !sessionExpiredRef.current) {
-      router.push("/login");
-    }
-  }, [user, isLoading, router]);
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -154,15 +148,7 @@ function HomePage() {
     router.push("/login?session=expired");
   };
 
-  useEffect(() => {
-    if (!isLoading && !user && !sessionExpiredRef.current) {
-      router.push("/login");
-    }
-  }, [user, isLoading, router]);
-
-  if (!user) {
-    return null;
-  }
+  if (!user) return null;
 
   return (
     <div className="min-h-screen finance-gradient">
@@ -346,10 +332,14 @@ function HomePage() {
   );
 }
 
+import { AuthGate } from "@/components/auth/auth-gate";
+
 export default function Page() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <HomePage />
-    </Suspense>
+    <AuthGate>
+      <Suspense fallback={<div>Loading...</div>}>
+        <HomePageContent />
+      </Suspense>
+    </AuthGate>
   );
 }

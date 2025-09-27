@@ -1,27 +1,15 @@
 "use client";
 
-import { useEffect, Suspense } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { AuthProvider } from "@/hooks/use-auth";
 import { useFinanceData } from "@/hooks/use-finance-data";
 import { DashboardHeader } from "@/components/finance/dashboard-header";
 import { DetailsTable } from "@/components/finance/details-table";
+import { AuthGate } from "@/components/auth/auth-gate";
 
-function DetailsPage() {
-  const { user, isLoading } = useAuth();
-  const router = useRouter();
+function DetailsPageContent() {
+  const { user } = useAuth();
   const { data } = useFinanceData();
-
-  useEffect(() => {
-    if (!isLoading && !user) {
-      router.push("/login");
-    }
-  }, [user, isLoading, router]);
-
-  if (!user) {
-    return null;
-  }
 
   return (
     <div className="min-h-screen finance-gradient">
@@ -47,8 +35,8 @@ function DetailsPage() {
 
 export default function Page() {
   return (
-    <AuthProvider>
-      <DetailsPage />
-    </AuthProvider>
+    <AuthGate>
+      <DetailsPageContent />
+    </AuthGate>
   );
 }
