@@ -26,7 +26,11 @@ export function BankAmount({
     if (flashToken !== undefined) {
       setFlashActive(false);
       const t = setTimeout(() => setFlashActive(true), 10);
-      return () => clearTimeout(t);
+      const clearT = setTimeout(() => setFlashActive(false), 660);
+      return () => {
+        clearTimeout(t);
+        clearTimeout(clearT);
+      };
     }
   }, [flashToken]);
 
