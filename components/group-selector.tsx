@@ -50,13 +50,19 @@ export function GroupSelector() {
               refreshUser();
             }
           })
-          .catch(() => {/* silent */});
+          .catch(() => {
+            /* silent */
+          });
       }
       return;
     }
 
     // If multiple groups but current is invalid (e.g., original group deleted), pick first available and persist.
-    if (groups.length > 1 && active && !groups.some((g: Group) => g.group_id === active)) {
+    if (
+      groups.length > 1 &&
+      active &&
+      !groups.some((g: Group) => g.group_id === active)
+    ) {
       const fallback = groups[0];
       setCurrentGroupId(fallback.group_id);
       fetch("/api/switch-group", {
@@ -65,8 +71,12 @@ export function GroupSelector() {
         body: JSON.stringify({ groupId: fallback.group_id }),
         credentials: "include",
       })
-        .then((res) => { if (res.ok) refreshUser(); })
-        .catch(() => {/* silent */});
+        .then((res) => {
+          if (res.ok) refreshUser();
+        })
+        .catch(() => {
+          /* silent */
+        });
     }
   }, [user, refreshUser]);
 

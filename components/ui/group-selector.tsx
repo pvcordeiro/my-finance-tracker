@@ -29,13 +29,21 @@ export function GroupSelector() {
           body: JSON.stringify({ groupId: sole.group_id }),
           credentials: "include",
         })
-          .then((res) => { if (res.ok) refreshUser(); })
-          .catch(() => {/* silent */});
+          .then((res) => {
+            if (res.ok) refreshUser();
+          })
+          .catch(() => {
+            /* silent */
+          });
       }
       return; // no dropdown needed
     }
     // If multiple groups but current invalid, fall back to first and persist
-    if (groups.length > 1 && active && !groups.some(g => g.group_id === active)) {
+    if (
+      groups.length > 1 &&
+      active &&
+      !groups.some((g) => g.group_id === active)
+    ) {
       const fallback = groups[0];
       fetch("/api/switch-group", {
         method: "POST",
@@ -43,8 +51,12 @@ export function GroupSelector() {
         body: JSON.stringify({ groupId: fallback.group_id }),
         credentials: "include",
       })
-        .then((res) => { if (res.ok) refreshUser(); })
-        .catch(() => {/* silent */});
+        .then((res) => {
+          if (res.ok) refreshUser();
+        })
+        .catch(() => {
+          /* silent */
+        });
     }
   }, [user, refreshUser]);
 
