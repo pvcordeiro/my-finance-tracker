@@ -97,6 +97,12 @@ export function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("users");
 
   useEffect(() => {
+    if (isMobile) {
+      window.scrollTo(0, 0);
+    }
+  }, [activeTab, isMobile]);
+
+  useEffect(() => {
     setMounted(true);
   }, []);
 
@@ -375,17 +381,6 @@ export function AdminDashboard() {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-GB");
   };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen finance-gradient flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 border-4 border-destructive border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading admin dashboard...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen finance-gradient">
