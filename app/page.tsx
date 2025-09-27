@@ -7,10 +7,8 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { useFinanceData } from "@/hooks/use-finance-data";
 import { DashboardHeader } from "@/components/finance/dashboard-header";
 import { SummaryTable } from "@/components/finance/summary-table";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft, Edit, FileText } from "lucide-react";
 import { ErrorBoundary } from "@/components/error-boundary";
-import { LoadingState, FullPageLoader } from "@/components/ui/loading";
+import { LoadingState } from "@/components/ui/loading";
 
 const FinancialChart = lazy(() =>
   import("@/components/finance/financial-chart").then((mod) => ({

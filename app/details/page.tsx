@@ -1,22 +1,17 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { AuthProvider } from "@/hooks/use-auth";
 import { useFinanceData } from "@/hooks/use-finance-data";
 import { DashboardHeader } from "@/components/finance/dashboard-header";
 import { DetailsTable } from "@/components/finance/details-table";
-import { DataManagement } from "@/components/finance/data-management";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, FileText, Settings, Edit, BarChart3 } from "lucide-react";
-import { FullPageLoader } from "@/components/ui/loading";
 
 function DetailsPage() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
-  const { data, saveData, setData } = useFinanceData();
+  const { data } = useFinanceData();
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -30,7 +25,9 @@ function DetailsPage() {
 
   return (
     <div className="min-h-screen finance-gradient">
-      <DashboardHeader />
+      <Suspense fallback={<div>Loading...</div>}>
+        <DashboardHeader />
+      </Suspense>
       <main className="container mx-auto p-4 space-y-6">
         <div className="flex items-center justify-between gap-2">
           <div>

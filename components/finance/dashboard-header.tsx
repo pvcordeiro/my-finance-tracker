@@ -8,10 +8,11 @@ import {
   User,
   Moon,
   Sun,
+  Save,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { useRouter, usePathname } from "next/navigation";
-import { Edit, BarChart3, FileText } from "lucide-react";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { Edit, BarChart3, FileSpreadsheet } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   DropdownMenu,
@@ -29,6 +30,7 @@ export function DashboardHeader() {
   const { user, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const isMobile = useIsMobile();
   const { setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -49,7 +51,7 @@ export function DashboardHeader() {
   const navItems = [
     { href: "/manage", label: "Manage", icon: Edit },
     { href: "/", label: "Summary", icon: BarChart3 },
-    { href: "/details", label: "Details", icon: FileText },
+    { href: "/details", label: "Details", icon: FileSpreadsheet },
   ];
 
   return (
@@ -155,6 +157,13 @@ export function DashboardHeader() {
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuItem
+                  onClick={() => router.push("/manage?tab=management")}
+                  className="cursor-pointer"
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  Backup
+                </DropdownMenuItem>
+                <DropdownMenuItem
                   onClick={handleLogout}
                   className="cursor-pointer"
                 >
@@ -170,7 +179,11 @@ export function DashboardHeader() {
         {!isMobile && (
           <nav className="hidden sm:flex justify-center gap-4 pt-2 border-t border-border/50 mt-2">
             {navItems.map(({ href, label, icon: Icon }) => {
-              const isActive = pathname === href;
+              const isActive =
+                href === "/manage"
+                  ? pathname === href &&
+                    searchParams.get("tab") !== "management"
+                  : pathname === href;
               return (
                 <Button
                   key={href}

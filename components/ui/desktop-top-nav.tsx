@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Edit, BarChart3, FileText } from "lucide-react";
+import { Edit, BarChart3, FileSpreadsheet } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/use-auth";
@@ -11,7 +11,7 @@ import { useState, useEffect } from "react";
 const navItems = [
   { href: "/manage", label: "Manage", icon: Edit },
   { href: "/", label: "Summary", icon: BarChart3 },
-  { href: "/details", label: "Details", icon: FileText },
+  { href: "/details", label: "Details", icon: FileSpreadsheet },
 ];
 
 export function DesktopTopNav() {

@@ -1,8 +1,8 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Edit, BarChart3, FileText } from "lucide-react";
+import { Edit, BarChart3, FileSpreadsheet } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/use-auth";
@@ -10,13 +10,14 @@ import { useAuth } from "@/hooks/use-auth";
 const navItems = [
   { href: "/manage", label: "Manage", icon: Edit },
   { href: "/", label: "Summary", icon: BarChart3 },
-  { href: "/details", label: "Details", icon: FileText },
+  { href: "/details", label: "Details", icon: FileSpreadsheet },
 ];
 
 export function MobileBottomNav() {
   const isMobile = useIsMobile();
   const { user } = useAuth();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   if (!isMobile || !user || pathname === "/login" || pathname === "/admin")
     return null;
@@ -25,7 +26,10 @@ export function MobileBottomNav() {
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border shadow-lg">
       <div className="flex justify-around items-center h-16 px-4">
         {navItems.map(({ href, label, icon: Icon }) => {
-          const isActive = pathname === href;
+          const isActive =
+            href === "/manage"
+              ? pathname === href && searchParams.get("tab") !== "management"
+              : pathname === href;
           return (
             <Link
               key={href}

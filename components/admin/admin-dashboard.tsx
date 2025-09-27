@@ -26,11 +26,12 @@ import {
 import {
   Shield,
   Users,
+  UserCog,
   Settings,
   Trash2,
   LogOut,
   UserPlus,
-  Activity,
+  UserMinus,
   Calendar,
   ChevronDown,
   Home,
@@ -370,7 +371,7 @@ export function AdminDashboard() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString();
+    return new Date(dateString).toLocaleDateString("en-GB");
   };
 
   if (isLoading) {
@@ -389,7 +390,10 @@ export function AdminDashboard() {
       <header className="bg-background/90 backdrop-blur-sm border-b border-border/50 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3 sm:py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div
+              className="flex items-center gap-2 sm:gap-3 cursor-pointer"
+              onClick={() => router.push("/")}
+            >
               <div className="w-8 h-8 sm:w-10 sm:h-10 bg-destructive rounded-full flex items-center justify-center">
                 <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-destructive-foreground" />
               </div>
@@ -462,11 +466,11 @@ export function AdminDashboard() {
           {!isMobile && (
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="users">
-                <Users className="w-4 h-4 mr-2" />
+                <UserCog className="w-4 h-4 mr-2" />
                 User Management
               </TabsTrigger>
               <TabsTrigger value="groups">
-                <Shield className="w-4 h-4 mr-2" />
+                <Users className="w-4 h-4 mr-2" />
                 Group Management
               </TabsTrigger>
               <TabsTrigger value="settings">
@@ -923,7 +927,7 @@ export function AdminDashboard() {
                                           size="sm"
                                           className="w-full sm:w-auto"
                                         >
-                                          <User className="w-3 h-3 mr-1 sm:mr-0" />
+                                          <UserMinus className="w-3 h-3 mr-1 sm:mr-0" />
                                           <span className="sm:hidden">
                                             Remove User
                                           </span>

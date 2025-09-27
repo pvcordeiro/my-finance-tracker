@@ -1,16 +1,15 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState, useRef, useCallback, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { useFinanceData } from "@/hooks/use-finance-data";
 import { DashboardHeader } from "@/components/finance/dashboard-header";
 import { BankAmount } from "@/components/finance/bank-amount";
 import { EntryForm } from "@/components/finance/entry-form";
 import { Button } from "@/components/ui/button";
-import { BarChart3, FileText, Settings, Edit } from "lucide-react";
 import { DataManagement } from "@/components/finance/data-management";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 
 import { Dialog } from "@/components/ui/dialog";
 import {
@@ -25,6 +24,7 @@ import { toast } from "sonner";
 function HomePage() {
   const { user, isLoading, logout } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const {
     data,
     hasChanges,
@@ -44,6 +44,14 @@ function HomePage() {
   const [showConfirm, setShowConfirm] = useState(false);
   const nextRouteRef = useRef<string | null>(null);
   const sessionExpiredRef = useRef(false);
+  const [activeTab, setActiveTab] = useState(
+    searchParams.get("tab") === "management" ? "management" : "main"
+  );
+
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    setActiveTab(tab === "management" ? "management" : "main");
+  }, [searchParams]);
 
   useEffect(() => {
     if (!isLoading && !user && !sessionExpiredRef.current) {
@@ -149,18 +157,11 @@ function HomePage() {
     <div className="min-h-screen finance-gradient">
       <DashboardHeader />
       <main className="container mx-auto p-4 space-y-6">
-        <Tabs defaultValue="main" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="main" className="flex items-center gap-2">
-              <Edit className="w-4 h-4" />
-              Edit
-            </TabsTrigger>
-            <TabsTrigger value="management" className="flex items-center gap-2">
-              <Settings className="w-4 h-4" />
-              Backup
-            </TabsTrigger>
-          </TabsList>
-
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="space-y-6"
+        >
           <TabsContent value="main">
             <div className="space-y-4">
               <BankAmount
@@ -257,5 +258,9 @@ function HomePage() {
 }
 
 export default function Page() {
-  return <HomePage />;
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <HomePage />
+    </Suspense>
+  );
 }
