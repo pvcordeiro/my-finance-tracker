@@ -6,6 +6,7 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { ThemeProvider } from "@/components/theme-provider";
 import { MobileBottomNav } from "@/components/ui/mobile-bottom-nav";
+import { Toaster } from "@/components/ui/sonner";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -55,6 +56,7 @@ html {
             <AuthProvider>
               {children}
               <MobileBottomNav />
+              <Toaster />
             </AuthProvider>
           </ErrorBoundary>
         </ThemeProvider>

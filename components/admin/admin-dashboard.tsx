@@ -11,7 +11,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -47,8 +46,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { DarkModeToggle } from "@/components/ui/dark-mode-toggle";
 import { useTheme } from "next-themes";
+import { toast } from "sonner";
 
 interface User {
   id: number;
@@ -73,8 +72,6 @@ export function AdminDashboard() {
     allow_registration: true,
   });
   const [isLoading, setIsLoading] = useState(true);
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<number | null>(null);
 
@@ -91,10 +88,10 @@ export function AdminDashboard() {
         const data = await response.json();
         setUsers(data.users);
       } else {
-        setError("Failed to load users");
+        toast.error("Failed to load users");
       }
     } catch (error) {
-      setError("Error loading users");
+      toast.error("Error loading users");
     }
   };
 
@@ -107,10 +104,10 @@ export function AdminDashboard() {
         const data = await response.json();
         setSettings(data.settings);
       } else {
-        setError("Failed to load settings");
+        toast.error("Failed to load settings");
       }
     } catch (error) {
-      setError("Error loading settings");
+      toast.error("Error loading settings");
     }
   };
 
@@ -131,7 +128,7 @@ export function AdminDashboard() {
     if (!userToDelete) return;
 
     if (userToDelete === 1) {
-      setError("Cannot delete the primary admin user");
+      toast.error("Cannot delete the primary admin user");
       setDeleteDialogOpen(false);
       setUserToDelete(null);
       return;
@@ -144,13 +141,13 @@ export function AdminDashboard() {
       });
 
       if (response.ok) {
-        setMessage("User deleted successfully");
+        toast.success("User deleted successfully");
         loadUsers();
       } else {
-        setError("Failed to delete user");
+        toast.error("Failed to delete user");
       }
     } catch (error) {
-      setError("Error deleting user");
+      toast.error("Error deleting user");
     } finally {
       setDeleteDialogOpen(false);
       setUserToDelete(null);
@@ -171,12 +168,12 @@ export function AdminDashboard() {
 
       if (response.ok) {
         setSettings(updatedSettings);
-        setMessage("Settings updated successfully");
+        toast.success("Settings updated successfully");
       } else {
-        setError("Failed to update settings");
+        toast.error("Failed to update settings");
       }
     } catch (error) {
-      setError("Error updating settings");
+      toast.error("Error updating settings");
     }
   };
 
@@ -188,13 +185,13 @@ export function AdminDashboard() {
       });
 
       if (response.ok) {
-        setMessage("Admin status updated successfully");
+        toast.success("Admin status updated successfully");
         loadUsers();
       } else {
-        setError("Failed to update admin status");
+        toast.error("Failed to update admin status");
       }
     } catch (error) {
-      setError("Error updating admin status");
+      toast.error("Error updating admin status");
     }
   };
 
@@ -279,17 +276,6 @@ export function AdminDashboard() {
       </header>
 
       <main className="container mx-auto p-4 space-y-6">
-        {message && (
-          <Alert>
-            <AlertDescription>{message}</AlertDescription>
-          </Alert>
-        )}
-        {error && (
-          <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
         <Tabs defaultValue="users" className="space-y-6">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="users">
