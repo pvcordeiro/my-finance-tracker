@@ -1,8 +1,15 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { LogOut, EuroIcon, ChevronDown, Shield, User } from "lucide-react";
+import {
+  LogOut,
+  EuroIcon,
+  ChevronDown,
+  Shield,
+  User,
+  Moon,
+  Sun,
+} from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { DarkModeToggle } from "@/components/ui/dark-mode-toggle";
 import { useRouter, usePathname } from "next/navigation";
 import { Edit, BarChart3, FileText } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -12,16 +19,28 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
 
 export function DashboardHeader() {
   const { user, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const isMobile = useIsMobile();
+  const { setTheme, resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleLogout = async () => {
     await logout();
     window.location.href = "/login";
+  };
+
+  const toggleTheme = () => {
+    setTheme(resolvedTheme === "dark" ? "light" : "dark");
   };
 
   const navItems = [
@@ -65,6 +84,19 @@ export function DashboardHeader() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={toggleTheme}
+                  className="cursor-pointer"
+                >
+                  {mounted && resolvedTheme === "dark" ? (
+                    <Sun className="w-4 h-4 mr-2" />
+                  ) : (
+                    <Moon className="w-4 h-4 mr-2" />
+                  )}
+                  {mounted && resolvedTheme === "dark"
+                    ? "Light Mode"
+                    : "Dark Mode"}
+                </DropdownMenuItem>
                 {user?.is_admin && (
                   <DropdownMenuItem
                     onClick={() => router.push("/admin")}
@@ -83,7 +115,6 @@ export function DashboardHeader() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <DarkModeToggle />
           </div>
         </div>
 

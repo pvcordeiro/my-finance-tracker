@@ -36,6 +36,8 @@ import {
   ChevronDown,
   Home,
   User,
+  Moon,
+  Sun,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
@@ -46,6 +48,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { DarkModeToggle } from "@/components/ui/dark-mode-toggle";
+import { useTheme } from "next-themes";
 
 interface User {
   id: number;
@@ -62,6 +65,8 @@ interface AdminSettings {
 export function AdminDashboard() {
   const { user, logout } = useAuth();
   const router = useRouter();
+  const { setTheme, resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
   const [settings, setSettings] = useState<AdminSettings>({
     allow_registration: true,
@@ -71,6 +76,10 @@ export function AdminDashboard() {
   const [error, setError] = useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<number | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const loadUsers = async () => {
     try {
@@ -211,6 +220,21 @@ export function AdminDashboard() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem
+                    onClick={() =>
+                      setTheme(resolvedTheme === "dark" ? "light" : "dark")
+                    }
+                    className="cursor-pointer"
+                  >
+                    {mounted && resolvedTheme === "dark" ? (
+                      <Sun className="w-4 h-4 mr-2" />
+                    ) : (
+                      <Moon className="w-4 h-4 mr-2" />
+                    )}
+                    {mounted && resolvedTheme === "dark"
+                      ? "Light Mode"
+                      : "Dark Mode"}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
                     onClick={() => router.push("/")}
                     className="cursor-pointer"
                   >
@@ -223,7 +247,6 @@ export function AdminDashboard() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              <DarkModeToggle />
             </div>
           </div>
         </div>
