@@ -211,7 +211,7 @@ export function EntryForm({
     >
       <Collapsible open={isOpen} onOpenChange={handleSectionToggle}>
         <CollapsibleTrigger asChild>
-          <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors active:bg-muted/70 touch-manipulation">
+          <CardHeader className="cursor-pointer touch-manipulation">
             <CardTitle
               className={cn(
                 "flex items-center justify-between text-lg sm:text-xl",
@@ -245,7 +245,7 @@ export function EntryForm({
             </CardTitle>
           </CardHeader>
         </CollapsibleTrigger>
-        <CollapsibleContent>
+        <CollapsibleContent className="space-y-4 data-[state=open]:animate-in data-[state=open]:slide-in-from-top-5 data-[state=open]:fade-in-5 data-[state=closed]:animate-out data-[state=closed]:slide-out-to-top-5 data-[state=closed]:fade-out-5">
           <CardContent className="space-y-4">
             {entries.map((entry) => (
               <Card
@@ -262,7 +262,7 @@ export function EntryForm({
                   onOpenChange={() => toggleEntry(entry.id)}
                 >
                   <CollapsibleTrigger asChild>
-                    <CardHeader className="cursor-pointer hover:bg-muted/30 transition-colors py-3 active:bg-muted/50 touch-manipulation">
+                    <CardHeader className="cursor-pointer py-3 touch-manipulation">
                       <div className="flex items-center justify-between">
                         <div className="flex flex-col pr-2 max-w-[60%] sm:max-w-[70%]">
                           {editingDescriptionId === entry.id ? (
@@ -371,8 +371,8 @@ export function EntryForm({
                       </div>
                     </CardHeader>
                   </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <CardContent className="pt-0 space-y-4">
+                  <CollapsibleContent className="pt-0 space-y-4 data-[state=open]:animate-in data-[state=open]:slide-in-from-top-5 data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:slide-out-to-top-5 data-[state=closed]:fade-out-0">
+                    <CardContent>
                       <div className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 sm:gap-4">
                         {rollingMonths.map((month, index) => (
                           <div key={month} className="space-y-2">
