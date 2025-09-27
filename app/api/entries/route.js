@@ -12,7 +12,7 @@ export const GET = withAuth(async (request) => {
     const groupId = user.current_group_id;
 
     if (!groupId) {
-      return NextResponse.json({ entries: [] });
+      return NextResponse.json({ entries: [], code: "no_group" });
     }
 
     const currentYear = new Date().getFullYear();
@@ -92,7 +92,7 @@ export const POST = withAuth(async (request) => {
 
     if (!groupId) {
       return NextResponse.json(
-        { error: "No active group selected" },
+        { error: "No active group selected", code: "no_group" },
         { status: 403 }
       );
     }
@@ -319,7 +319,7 @@ export const PATCH = withAuth(async (request) => {
     const groupId = user.current_group_id;
     if (!groupId) {
       return NextResponse.json(
-        { error: "No active group selected" },
+        { error: "No active group selected", code: "no_group" },
         { status: 403 }
       );
     }

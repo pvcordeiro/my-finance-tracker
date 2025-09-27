@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { toast } from "sonner";
 import { useAuth } from "./use-auth";
 import type { FinanceEntry } from "@/components/finance/entry-form";
 
@@ -312,7 +313,20 @@ export function useFinanceData() {
         credentials: "include",
       });
       if (!bankResponse.ok) {
-        console.error("Bank amount save failed:", await bankResponse.text());
+        let errJson: any = null;
+        try {
+          errJson = await bankResponse.json();
+        } catch {}
+        if (bankResponse.status === 403 && errJson?.code === "no_group") {
+          toast.warning(
+            "You are not in any group. Please contact an administrator."
+          );
+          return { success: false } as const;
+        }
+        console.error(
+          "Bank amount save failed:",
+          errJson?.error || (await bankResponse.text())
+        );
         if (bankResponse.status === 401 && onSessionExpired) {
           onSessionExpired();
           return;
@@ -408,7 +422,17 @@ export function useFinanceData() {
         credentials: "include",
       });
       if (!res.ok) {
-        throw new Error(await res.text());
+        let errJson: any = null;
+        try {
+          errJson = await res.json();
+        } catch {}
+        if (res.status === 403 && errJson?.code === "no_group") {
+          toast.warning(
+            "You are not in any group. Please contact an administrator."
+          );
+          return { success: false } as const;
+        }
+        throw new Error(errJson?.error || (await res.text()));
       }
 
       setOriginalData((prev) => ({
@@ -509,7 +533,17 @@ export function useFinanceData() {
         credentials: "include",
       });
       if (!res.ok) {
-        throw new Error(await res.text());
+        let errJson: any = null;
+        try {
+          errJson = await res.json();
+        } catch {}
+        if (res.status === 403 && errJson?.code === "no_group") {
+          toast.warning(
+            "You are not in any group. Please contact an administrator."
+          );
+          return { success: false } as const;
+        }
+        throw new Error(errJson?.error || (await res.text()));
       }
       setOriginalData((prev) => ({
         ...prev,
@@ -553,7 +587,20 @@ export function useFinanceData() {
           credentials: "include",
         });
         if (!res.ok) {
-          console.error("Failed to create entry", await res.text());
+          let errJson: any = null;
+          try {
+            errJson = await res.json();
+          } catch {}
+          if (res.status === 403 && errJson?.code === "no_group") {
+            toast.warning(
+              "You are not in any group. Please contact an administrator."
+            );
+            return;
+          }
+          console.error(
+            "Failed to create entry",
+            errJson?.error || (await res.text())
+          );
           return;
         }
         const json = await res.json();
@@ -676,11 +723,24 @@ export function useFinanceData() {
       });
 
       if (!bankResponse.ok) {
-        console.error("Bank amount save failed:", await bankResponse.text());
+        let errJson: any = null;
+        try {
+          errJson = await bankResponse.json();
+        } catch {}
+        if (bankResponse.status === 403 && errJson?.code === "no_group") {
+          toast.warning(
+            "You are not in any group. Please contact an administrator."
+          );
+          return { success: false } as const;
+        }
         if (bankResponse.status === 401) {
           if (onSessionExpired) onSessionExpired();
           return;
         }
+        console.error(
+          "Bank amount save failed:",
+          errJson?.error || (await bankResponse.text())
+        );
       }
 
       const allEntries = [
@@ -712,7 +772,17 @@ export function useFinanceData() {
       });
 
       if (!entriesResponse.ok) {
-        const errorText = await entriesResponse.text();
+        let errJson: any = null;
+        try {
+          errJson = await entriesResponse.json();
+        } catch {}
+        if (entriesResponse.status === 403 && errJson?.code === "no_group") {
+          toast.warning(
+            "You are not in any group. Please contact an administrator."
+          );
+          return { success: false } as const;
+        }
+        const errorText = errJson?.error || (await entriesResponse.text());
         console.error("Entries save failed:", errorText);
         throw new Error(`Failed to save entries: ${errorText}`);
       }

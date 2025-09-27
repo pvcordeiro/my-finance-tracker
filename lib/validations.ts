@@ -49,3 +49,17 @@ export const deleteUserSchema = z.object({
 export const settingsSchema = z.object({
   allow_registration: z.boolean(),
 });
+
+export const changePasswordSchema = z.object({
+  current_password: z
+    .string()
+    .min(6, "Current password must be at least 6 characters"),
+  new_password: z.string().min(6, "New password must be at least 6 characters"),
+});
+
+export const changeUsernameSchema = z.object({
+  new_username: z
+    .string()
+    .min(1, "Username is required")
+    .max(50, "Username must be at most 50 characters"),
+});

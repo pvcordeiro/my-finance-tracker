@@ -61,11 +61,29 @@ export async function POST(request) {
 
     const sessionToken = await createSession(user.id);
 
+    const groups = await new Promise((resolve, reject) => {
+      db.all(
+        `SELECT ug.group_id, g.name
+         FROM user_groups ug
+         JOIN groups g ON ug.group_id = g.id
+         WHERE ug.user_id = ?
+         ORDER BY ug.joined_at ASC`,
+        [user.id],
+        (err, rows) => {
+          if (err) reject(err);
+          else resolve(rows || []);
+        }
+      );
+    });
+    const current_group_id = groups.length > 0 ? groups[0].group_id : null;
+
     const response = NextResponse.json({
       user: {
         id: user.id,
         username: user.username,
         is_admin: user.is_admin || false,
+        groups,
+        current_group_id,
       },
       message: "Login successful",
     });

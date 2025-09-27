@@ -11,7 +11,7 @@ export const POST = withAuth(async (request) => {
     const groupId = user.current_group_id;
     if (!groupId) {
       return NextResponse.json(
-        { error: "No active group selected" },
+        { error: "No active group selected", code: "no_group" },
         { status: 403 }
       );
     }

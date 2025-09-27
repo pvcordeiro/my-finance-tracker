@@ -109,8 +109,25 @@ export async function POST(request) {
 
     const sessionToken = await createSession(userId);
 
+    const groups = await new Promise((resolve, reject) => {
+      db.all(
+        `SELECT ug.group_id, g.name
+         FROM user_groups ug
+         JOIN groups g ON ug.group_id = g.id
+         WHERE ug.user_id = ?
+         ORDER BY ug.joined_at ASC`,
+        [userId],
+        (err, rows) => {
+          if (err) reject(err);
+          else resolve(rows || []);
+        }
+      );
+    });
+
+    const current_group_id = groups.length > 0 ? groups[0].group_id : null;
+
     const response = NextResponse.json({
-      user: { id: userId, username },
+      user: { id: userId, username, groups, current_group_id },
       message: "User created successfully",
     });
 

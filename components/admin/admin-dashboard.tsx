@@ -433,6 +433,13 @@ export function AdminDashboard() {
                       : "Dark Mode"}
                   </DropdownMenuItem>
                   <DropdownMenuItem
+                    onClick={() => router.push("/user")}
+                    className="cursor-pointer"
+                  >
+                    <User className="w-4 h-4 mr-2" />
+                    Account Settings
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
                     onClick={() => router.push("/")}
                     className="cursor-pointer"
                   >

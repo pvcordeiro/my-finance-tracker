@@ -8,6 +8,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { MobileBottomNav } from "@/components/ui/mobile-bottom-nav";
 import { Toaster } from "@/components/ui/sonner";
 import { Suspense } from "react";
+import { NoGroupOverlay } from "@/components/finance/no-group-overlay";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -56,6 +57,7 @@ html {
           <ErrorBoundary>
             <AuthProvider>
               {children}
+              <NoGroupOverlay />
               <Suspense fallback={null}>
                 <MobileBottomNav />
               </Suspense>

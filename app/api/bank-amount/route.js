@@ -12,7 +12,7 @@ export const GET = withAuth(async (request) => {
     const groupId = user.current_group_id;
 
     if (!groupId) {
-      return NextResponse.json({ amount: 0 });
+      return NextResponse.json({ amount: 0, code: "no_group" });
     }
 
     const db = await getDatabase();
@@ -47,7 +47,7 @@ export const POST = withAuth(async (request) => {
 
   if (!groupId) {
     return NextResponse.json(
-      { error: "No active group selected" },
+      { error: "No active group selected", code: "no_group" },
       { status: 403 }
     );
   }
