@@ -179,7 +179,7 @@
 /* Inline field save success flash */
 .flash-success {
   position: relative;
-  animation: flashSuccess 1200ms ease-out;
+  animation: flashSuccess 650ms ease-out;
 }
 
 @keyframes flashSuccess {
@@ -190,7 +190,7 @@
 }
 
 .dark .flash-success {
-  animation: flashSuccessDark 1200ms ease-out;
+  animation: flashSuccessDark 650ms ease-out;
 }
 
 @keyframes flashSuccessDark {

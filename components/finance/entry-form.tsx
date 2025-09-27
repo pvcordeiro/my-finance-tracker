@@ -110,7 +110,7 @@ export function EntryForm({
         ns.delete(fieldKey);
         return ns;
       });
-    }, 1300);
+    }, 750);
   };
   const rollingMonths = getRollingMonths();
   const entryRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});

@@ -278,6 +278,10 @@ export function useFinanceData() {
   ) => {
     try {
       const currentData = dataToSave || data;
+      // Early return if value unchanged from original snapshot
+      if (currentData.bankAmount === originalData.bankAmount) {
+        return { success: false } as const; // signal no-op
+      }
       // Conflict check: re-fetch bank only and compare if last update user differs
       const bankResponseCheck = await fetch("/api/bank-amount", {
         credentials: "include",
@@ -286,6 +290,12 @@ export function useFinanceData() {
         const serverBank = await bankResponseCheck.json();
         const serverAmount = serverBank.amount || 0;
         const lastUser = serverBank.last_updated_user_id || null;
+        if (serverAmount === currentData.bankAmount) {
+          // Server already has this value; treat as no-op and sync local original
+          setOriginalData((prev) => ({ ...prev, bankAmount: serverAmount }));
+          setHasBankChanges(false);
+          return { success: false } as const;
+        }
         if (
           serverAmount !== originalData.bankAmount &&
           lastUser !== user?.id &&
@@ -335,6 +345,10 @@ export function useFinanceData() {
     newDescription: string
   ): Promise<CommitResult> => {
     // optimistic local update already happened via updateEntry
+    const originalEntry = originalData[entryType].find((e) => e.id === id);
+    if (originalEntry && originalEntry.description === newDescription) {
+      return { success: false }; // no change
+    }
     try {
       const latest = await fetchLatestEntriesNoCache();
       if (latest) {
@@ -427,6 +441,10 @@ export function useFinanceData() {
     monthIndex: number,
     amount: number
   ): Promise<CommitResult> => {
+    const originalEntry = originalData[entryType].find((e) => e.id === id);
+    if (originalEntry && originalEntry.amounts[monthIndex] === amount) {
+      return { success: false }; // no change
+    }
     try {
       const currentYear = new Date().getFullYear();
       // monthIndex is 0-based position within the ROLLING (shifted) array shown in the UI.
@@ -524,8 +542,13 @@ export function useFinanceData() {
   };
 
   const updateBankAmount = (amount: number) => {
-    setData((prev) => ({ ...prev, bankAmount: amount }));
-    setHasBankChanges(true);
+    setData((prev) => {
+      const next = { ...prev, bankAmount: amount };
+      // Determine if bank differs from original snapshot
+      const bankChanged = next.bankAmount !== originalData.bankAmount;
+      setHasBankChanges(bankChanged);
+      return next;
+    });
   };
 
   const addEntry = (type: "incomes" | "expenses") => {
@@ -571,9 +594,8 @@ export function useFinanceData() {
     value: string | number,
     monthIndex?: number
   ) => {
-    setData((prev) => ({
-      ...prev,
-      [type]: prev[type].map((entry) => {
+    setData((prev) => {
+      const updatedList = prev[type].map((entry) => {
         if (entry.id === id) {
           if (field === "description") {
             return { ...entry, description: value as string };
@@ -584,9 +606,36 @@ export function useFinanceData() {
           }
         }
         return entry;
-      }),
-    }));
-    setHasEntryChanges(true);
+      });
+      const next = { ...prev, [type]: updatedList } as FinanceData;
+      // Compare flattened entries vs original snapshot to set change flag accurately
+      const compareEntries = (
+        current: FinanceEntry[],
+        original: FinanceEntry[]
+      ) => {
+        if (current.length !== original.length) return true;
+        for (let i = 0; i < current.length; i++) {
+          const c = current[i];
+          const o = original[i];
+          if (!o || c.id !== o.id) return true; // structural change
+          if (c.description !== o.description) return true;
+          for (let m = 0; m < 12; m++) {
+            if ((c.amounts[m] || 0) !== (o.amounts[m] || 0)) return true;
+          }
+        }
+        return false;
+      };
+      const incomesChanged = compareEntries(
+        type === "incomes" ? updatedList : next.incomes,
+        originalData.incomes
+      );
+      const expensesChanged = compareEntries(
+        type === "expenses" ? updatedList : next.expenses,
+        originalData.expenses
+      );
+      setHasEntryChanges(incomesChanged || expensesChanged);
+      return next;
+    });
   };
 
   const removeEntry = async (type: "incomes" | "expenses", id: string) => {

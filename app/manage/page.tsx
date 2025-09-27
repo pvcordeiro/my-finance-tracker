@@ -115,7 +115,9 @@ function HomePage() {
     kind: "bank" | "entry-desc" | "entry-amount";
     id?: string;
     monthIndex?: number;
+    token: number; // incrementing token to force re-flash
   } | null>(null);
+  const flashCounterRef = useRef(0);
 
   const handleSaveBankAmount = async (
     dataToSave?: any,
@@ -127,7 +129,8 @@ function HomePage() {
         return; // Conflict dialog shown
       }
       if (result?.success) {
-        setLastSaved({ kind: "bank" });
+        flashCounterRef.current += 1;
+        setLastSaved({ kind: "bank", token: flashCounterRef.current });
       }
     } catch (error) {
       console.error("Failed to save bank amount:", error);
@@ -141,7 +144,8 @@ function HomePage() {
       if (result?.success) {
         // If conflict overwrite happened, we cannot granularly know which field user intended
         // For now just flash bank if that was the conflict; otherwise no toast.
-        setLastSaved({ kind: "bank" });
+        flashCounterRef.current += 1;
+        setLastSaved({ kind: "bank", token: flashCounterRef.current });
       }
     } catch (error) {
       console.error("Failed to force save data:", error);
@@ -181,7 +185,9 @@ function HomePage() {
                 onBlur={() =>
                   handleSaveBankAmount(undefined, handleSessionExpired)
                 }
-                flash={lastSaved?.kind === "bank"}
+                flashToken={
+                  lastSaved?.kind === "bank" ? lastSaved.token : undefined
+                }
               />
               <EntryForm
                 title="Income"
@@ -193,7 +199,12 @@ function HomePage() {
                 onRemoveEntry={async (id) => {
                   try {
                     await removeEntry("incomes", id);
-                    setLastSaved({ kind: "entry-desc", id });
+                    flashCounterRef.current += 1;
+                    setLastSaved({
+                      kind: "entry-desc",
+                      id,
+                      token: flashCounterRef.current,
+                    });
                   } catch (error) {
                     console.error("Failed to delete income entry:", error);
                   }
@@ -204,7 +215,14 @@ function HomePage() {
                 onCommitDescription={async (id, desc) => {
                   const res = await commitEntryDescription("incomes", id, desc);
                   if ((res as any).conflict) return false;
-                  if (res.success) setLastSaved({ kind: "entry-desc", id });
+                  if (res.success) {
+                    flashCounterRef.current += 1;
+                    setLastSaved({
+                      kind: "entry-desc",
+                      id,
+                      token: flashCounterRef.current,
+                    });
+                  }
                   return res.success;
                 }}
                 onCommitAmount={async (id, monthIndex, amount) => {
@@ -215,8 +233,15 @@ function HomePage() {
                     amount
                   );
                   if ((res as any).conflict) return false;
-                  if (res.success)
-                    setLastSaved({ kind: "entry-amount", id, monthIndex });
+                  if (res.success) {
+                    flashCounterRef.current += 1;
+                    setLastSaved({
+                      kind: "entry-amount",
+                      id,
+                      monthIndex,
+                      token: flashCounterRef.current,
+                    });
+                  }
                   return res.success;
                 }}
               />
@@ -231,7 +256,12 @@ function HomePage() {
                 onRemoveEntry={async (id) => {
                   try {
                     await removeEntry("expenses", id);
-                    setLastSaved({ kind: "entry-desc", id });
+                    flashCounterRef.current += 1;
+                    setLastSaved({
+                      kind: "entry-desc",
+                      id,
+                      token: flashCounterRef.current,
+                    });
                   } catch (error) {
                     console.error("Failed to delete expense entry:", error);
                   }
@@ -246,7 +276,14 @@ function HomePage() {
                     desc
                   );
                   if ((res as any).conflict) return false;
-                  if (res.success) setLastSaved({ kind: "entry-desc", id });
+                  if (res.success) {
+                    flashCounterRef.current += 1;
+                    setLastSaved({
+                      kind: "entry-desc",
+                      id,
+                      token: flashCounterRef.current,
+                    });
+                  }
                   return res.success;
                 }}
                 onCommitAmount={async (id, monthIndex, amount) => {
@@ -257,8 +294,15 @@ function HomePage() {
                     amount
                   );
                   if ((res as any).conflict) return false;
-                  if (res.success)
-                    setLastSaved({ kind: "entry-amount", id, monthIndex });
+                  if (res.success) {
+                    flashCounterRef.current += 1;
+                    setLastSaved({
+                      kind: "entry-amount",
+                      id,
+                      monthIndex,
+                      token: flashCounterRef.current,
+                    });
+                  }
                   return res.success;
                 }}
               />

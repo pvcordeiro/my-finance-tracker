@@ -9,27 +9,26 @@ interface BankAmountProps {
   amount: number;
   onChange: (amount: number) => void;
   onBlur: () => void;
-  flash?: boolean; // trigger success flash animation
+  flashToken?: number; // changing token retriggers flash animation
 }
 
 export function BankAmount({
   amount,
   onChange,
   onBlur,
-  flash,
+  flashToken,
 }: BankAmountProps) {
   const [hasChanged, setHasChanged] = useState(false);
   const [originalValue, setOriginalValue] = useState(amount);
   const [flashActive, setFlashActive] = useState(false);
 
   useEffect(() => {
-    if (flash) {
-      // retrigger animation by toggling class
+    if (flashToken !== undefined) {
       setFlashActive(false);
       const t = setTimeout(() => setFlashActive(true), 10);
       return () => clearTimeout(t);
     }
-  }, [flash]);
+  }, [flashToken]);
 
   const handleFocus = () => {
     setOriginalValue(amount);
