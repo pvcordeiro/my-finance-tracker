@@ -66,7 +66,11 @@ export async function POST(request) {
 
     // Create response with session cookie
     const response = NextResponse.json({
-      user: { id: user.id, username: user.username },
+      user: {
+        id: user.id,
+        username: user.username,
+        is_admin: user.is_admin || false,
+      },
       message: "Login successful",
     });
 

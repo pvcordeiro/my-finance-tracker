@@ -1,31 +1,28 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { AdminProvider, useAdmin } from "@/hooks/use-admin";
-import { AdminLogin } from "@/components/admin/admin-login";
+import { useAuth } from "@/hooks/use-auth";
 import { AdminDashboard } from "@/components/admin/admin-dashboard";
 import { FullPageLoader } from "@/components/ui/loading";
+import { useEffect } from "react";
 
-function AdminPageContent() {
-  const { adminUser, loginAdmin, isLoading } = useAdmin();
+export default function AdminPage() {
+  const { user, isLoading } = useAuth();
   const router = useRouter();
 
-  const handleLogin = async (username: string, password: string) => {
-    const success = await loginAdmin(username, password);
-    return success;
-  };
+  useEffect(() => {
+    if (!isLoading && (!user || !user.is_admin)) {
+      router.push("/");
+    }
+  }, [user, isLoading, router]);
 
-  if (!adminUser) {
-    return <AdminLogin onLogin={handleLogin} />;
+  if (isLoading) {
+    return <FullPageLoader />;
+  }
+
+  if (!user || !user.is_admin) {
+    return null;
   }
 
   return <AdminDashboard />;
-}
-
-export default function AdminPage() {
-  return (
-    <AdminProvider>
-      <AdminPageContent />
-    </AdminProvider>
-  );
 }

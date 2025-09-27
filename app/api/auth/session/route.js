@@ -24,7 +24,7 @@ export async function GET(request) {
     }
 
     return NextResponse.json({
-      user: { id: user.id, username: user.username },
+      user: { id: user.id, username: user.username, is_admin: user.is_admin },
     });
   } catch (error) {
     console.error("Session validation error:", error);

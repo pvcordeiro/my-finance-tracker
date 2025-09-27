@@ -65,13 +65,15 @@ export function DashboardHeader() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onClick={() => router.push("/admin")}
-                  className="cursor-pointer"
-                >
-                  <Shield className="w-4 h-4 mr-2" />
-                  Admin Panel
-                </DropdownMenuItem>
+                {user?.is_admin && (
+                  <DropdownMenuItem
+                    onClick={() => router.push("/admin")}
+                    className="cursor-pointer"
+                  >
+                    <Shield className="w-4 h-4 mr-2" />
+                    Admin Panel
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem
                   onClick={handleLogout}
                   className="cursor-pointer"

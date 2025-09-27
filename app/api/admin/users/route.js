@@ -2,14 +2,14 @@ import { NextResponse } from "next/server";
 import { getDatabase } from "../../../../lib/database.js";
 import { deleteUserSchema } from "../../../../lib/validations.ts";
 import {
-  validateAdminSession,
-  getAdminSessionFromRequest,
-} from "../../../../lib/admin-session.js";
+  validateSession,
+  getSessionFromRequest,
+} from "../../../../lib/session.js";
 
 async function verifyAdmin(request) {
-  const sessionToken = getAdminSessionFromRequest(request);
-  const adminSession = await validateAdminSession(sessionToken);
-  return adminSession !== null;
+  const sessionToken = getSessionFromRequest(request);
+  const userSession = await validateSession(sessionToken);
+  return userSession && userSession.is_admin == true;
 }
 
 export async function GET(request) {
