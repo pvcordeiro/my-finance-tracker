@@ -54,8 +54,7 @@ interface User {
   username: string;
   is_admin: boolean;
   created_at: string;
-  group_name: string | null;
-  group_id: number | null;
+  groups: Array<{ id: number; name: string }>;
 }
 
 interface AdminSettings {
@@ -67,6 +66,7 @@ interface Group {
   name: string;
   created_at: string;
   member_count: number;
+  created_by_admin?: boolean;
 }
 
 export function AdminDashboard() {
@@ -269,6 +269,55 @@ export function AdminDashboard() {
     }
   };
 
+  const removeUserFromGroup = async (userId: number, groupId: number) => {
+    try {
+      const response = await fetch(
+        `/api/admin/user-groups?userId=${userId}&groupId=${groupId}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        }
+      );
+
+      if (response.ok) {
+        toast.success("User removed from group successfully");
+        loadGroups();
+        loadUsers();
+      } else {
+        toast.error("Failed to remove user from group");
+      }
+    } catch (error) {
+      toast.error("Error removing user from group");
+    }
+  };
+
+  const deleteGroup = async (groupId: number) => {
+    if (
+      !confirm(
+        "Are you sure you want to delete this group? All associated data will be permanently deleted."
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/admin/groups?groupId=${groupId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        toast.success("Group deleted successfully");
+        loadGroups();
+        loadUsers();
+      } else {
+        toast.error("Failed to delete group");
+      }
+    } catch (error) {
+      toast.error("Error deleting group");
+    }
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString();
   };
@@ -441,9 +490,17 @@ export function AdminDashboard() {
                                 </div>
                               </td>
                               <td className="p-4">
-                                <Badge variant="outline">
-                                  {userItem.group_name || "No Group"}
-                                </Badge>
+                                <div className="flex flex-wrap gap-1">
+                                  {userItem.groups.length > 0 ? (
+                                    userItem.groups.map((group) => (
+                                      <Badge key={group.id} variant="outline">
+                                        {group.name}
+                                      </Badge>
+                                    ))
+                                  ) : (
+                                    <Badge variant="outline">No Groups</Badge>
+                                  )}
+                                </div>
                               </td>
                               <td className="p-4 text-right">
                                 <div className="flex items-center justify-end space-x-2">
@@ -536,7 +593,19 @@ export function AdminDashboard() {
                         <tbody>
                           {groups.map((group) => (
                             <tr key={group.id} className="border-b">
-                              <td className="p-4 font-medium">{group.name}</td>
+                              <td className="p-4 font-medium">
+                                <div className="flex items-center space-x-2">
+                                  <span>{group.name}</span>
+                                  {group.created_by_admin && (
+                                    <Badge
+                                      variant="secondary"
+                                      className="text-xs"
+                                    >
+                                      Admin
+                                    </Badge>
+                                  )}
+                                </div>
+                              </td>
                               <td className="p-4">
                                 <Badge variant="outline">
                                   {group.member_count}
@@ -546,30 +615,73 @@ export function AdminDashboard() {
                                 {formatDate(group.created_at)}
                               </td>
                               <td className="p-4 text-right">
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" size="sm">
-                                      Assign User
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent>
-                                    {users
-                                      .filter(
-                                        (u) =>
-                                          !u.group_id || u.group_id !== group.id
-                                      )
-                                      .map((user) => (
-                                        <DropdownMenuItem
-                                          key={user.id}
-                                          onClick={() =>
-                                            assignUserToGroup(user.id, group.id)
-                                          }
-                                        >
-                                          {user.username}
-                                        </DropdownMenuItem>
-                                      ))}
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
+                                <div className="flex items-center space-x-2">
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button variant="outline" size="sm">
+                                        Assign User
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent>
+                                      {users
+                                        .filter(
+                                          (u) =>
+                                            !u.groups.some(
+                                              (g) => g.id === group.id
+                                            )
+                                        )
+                                        .map((user) => (
+                                          <DropdownMenuItem
+                                            key={user.id}
+                                            onClick={() =>
+                                              assignUserToGroup(
+                                                user.id,
+                                                group.id
+                                              )
+                                            }
+                                          >
+                                            {user.username}
+                                          </DropdownMenuItem>
+                                        ))}
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button variant="outline" size="sm">
+                                        Remove User
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent>
+                                      {users
+                                        .filter((u) =>
+                                          u.groups.some(
+                                            (g) => g.id === group.id
+                                          )
+                                        )
+                                        .map((user) => (
+                                          <DropdownMenuItem
+                                            key={user.id}
+                                            onClick={() =>
+                                              removeUserFromGroup(
+                                                user.id,
+                                                group.id
+                                              )
+                                            }
+                                          >
+                                            {user.username}
+                                          </DropdownMenuItem>
+                                        ))}
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={() => deleteGroup(group.id)}
+                                    disabled={group.created_by_admin}
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </Button>
+                                </div>
                               </td>
                             </tr>
                           ))}

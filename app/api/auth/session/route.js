@@ -24,7 +24,13 @@ export async function GET(request) {
     }
 
     return NextResponse.json({
-      user: { id: user.id, username: user.username, is_admin: user.is_admin },
+      user: {
+        id: user.id,
+        username: user.username,
+        is_admin: user.is_admin,
+        groups: user.groups,
+        current_group_id: user.current_group_id,
+      },
     });
   } catch (error) {
     console.error("Session validation error:", error);

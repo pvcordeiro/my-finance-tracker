@@ -90,6 +90,31 @@ export async function POST(request) {
       );
     });
 
+    // Create a personal group for the user
+    const groupName = `${username}'s group`;
+    const groupId = await new Promise((resolve, reject) => {
+      db.run(
+        "INSERT INTO groups (name, created_by) VALUES (?, ?)",
+        [groupName, userId],
+        function (err) {
+          if (err) reject(err);
+          else resolve(this.lastID);
+        }
+      );
+    });
+
+    // Assign user to their personal group
+    await new Promise((resolve, reject) => {
+      db.run(
+        "INSERT INTO user_groups (user_id, group_id) VALUES (?, ?)",
+        [userId, groupId],
+        function (err) {
+          if (err) reject(err);
+          else resolve();
+        }
+      );
+    });
+
     // Create session
     const sessionToken = await createSession(userId);
 

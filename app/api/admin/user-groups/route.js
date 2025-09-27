@@ -112,15 +112,7 @@ export async function POST(request) {
       );
     }
 
-    // Remove from any existing groups (assuming one group per user)
-    await new Promise((resolve, reject) => {
-      db.run("DELETE FROM user_groups WHERE user_id = ?", [userId], (err) => {
-        if (err) reject(err);
-        else resolve();
-      });
-    });
-
-    // Add to new group
+    // Add to group (allow multiple groups per user)
     await new Promise((resolve, reject) => {
       db.run(
         `INSERT INTO user_groups (user_id, group_id, joined_at) VALUES (?, ?, CURRENT_TIMESTAMP)`,
@@ -131,7 +123,6 @@ export async function POST(request) {
         }
       );
     });
-
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Assign user to group error:", error);

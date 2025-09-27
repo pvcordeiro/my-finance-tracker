@@ -21,6 +21,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
+import { GroupSelector } from "@/components/ui/group-selector";
+import { toast } from "sonner";
+import { Users } from "lucide-react";
 
 export function DashboardHeader() {
   const { user, logout } = useAuth();
@@ -71,6 +74,51 @@ export function DashboardHeader() {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4">
+            {!isMobile && <GroupSelector />}
+            {isMobile && user && user.groups && user.groups.length > 1 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-1 p-2"
+                  >
+                    <Users className="w-4 h-4" />
+                    <ChevronDown className="w-3 h-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {user.groups.map((group) => (
+                    <DropdownMenuItem
+                      key={group.group_id}
+                      onClick={async () => {
+                        try {
+                          const response = await fetch("/api/switch-group", {
+                            method: "POST",
+                            headers: {
+                              "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({ groupId: group.group_id }),
+                            credentials: "include",
+                          });
+
+                          if (response.ok) {
+                            window.location.reload(); // Refresh to update the group
+                          } else {
+                            toast.error("Failed to switch group");
+                          }
+                        } catch (error) {
+                          toast.error("Error switching group");
+                        }
+                      }}
+                      className="cursor-pointer"
+                    >
+                      {group.name}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button

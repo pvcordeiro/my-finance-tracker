@@ -9,7 +9,7 @@ import {
 export const GET = withAuth(async (request) => {
   try {
     const user = getAuthenticatedUser(request);
-    const groupId = user.group_id;
+    const groupId = user.current_group_id;
 
     if (!groupId) {
       return NextResponse.json({ amount: 0 });
@@ -39,11 +39,11 @@ export const GET = withAuth(async (request) => {
 
 export const POST = withAuth(async (request) => {
   const user = getAuthenticatedUser(request);
-  const groupId = user.group_id;
+  const groupId = user.current_group_id;
 
   if (!groupId) {
     return NextResponse.json(
-      { error: "User is not assigned to a group" },
+      { error: "No active group selected" },
       { status: 403 }
     );
   }

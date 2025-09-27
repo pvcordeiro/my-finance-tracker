@@ -19,7 +19,7 @@ export async function GET(request) {
     }
 
     const db = await getDatabase();
-    const users = await new Promise((resolve, reject) => {
+    const userRows = await new Promise((resolve, reject) => {
       db.all(
         `
           SELECT 
@@ -32,7 +32,7 @@ export async function GET(request) {
           FROM users u 
           LEFT JOIN user_groups ug ON u.id = ug.user_id
           LEFT JOIN groups g ON ug.group_id = g.id
-          ORDER BY u.created_at DESC
+          ORDER BY u.created_at DESC, ug.joined_at ASC
         `,
         [],
         (err, rows) => {
@@ -41,6 +41,30 @@ export async function GET(request) {
         }
       );
     });
+
+    // Group users by id and collect their groups
+    const usersMap = new Map();
+    userRows.forEach((row) => {
+      if (!usersMap.has(row.id)) {
+        usersMap.set(row.id, {
+          id: row.id,
+          username: row.username,
+          is_admin: row.is_admin,
+          created_at: row.created_at,
+          groups: [],
+        });
+      }
+
+      const user = usersMap.get(row.id);
+      if (row.group_id) {
+        user.groups.push({
+          id: row.group_id,
+          name: row.group_name,
+        });
+      }
+    });
+
+    const users = Array.from(usersMap.values());
 
     return NextResponse.json({ users });
   } catch (error) {
