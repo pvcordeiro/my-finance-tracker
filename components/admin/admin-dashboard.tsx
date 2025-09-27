@@ -37,6 +37,7 @@ import {
   User,
   Moon,
   Sun,
+  Edit,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
@@ -83,6 +84,11 @@ export function AdminDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<number | null>(null);
+  const [deleteGroupDialogOpen, setDeleteGroupDialogOpen] = useState(false);
+  const [groupToDelete, setGroupToDelete] = useState<number | null>(null);
+  const [renameGroupDialogOpen, setRenameGroupDialogOpen] = useState(false);
+  const [groupToRename, setGroupToRename] = useState<Group | null>(null);
+  const [renameGroupName, setRenameGroupName] = useState("");
 
   useEffect(() => {
     setMounted(true);
@@ -292,19 +298,21 @@ export function AdminDashboard() {
   };
 
   const deleteGroup = async (groupId: number) => {
-    if (
-      !confirm(
-        "Are you sure you want to delete this group? All associated data will be permanently deleted."
-      )
-    ) {
-      return;
-    }
+    setGroupToDelete(groupId);
+    setDeleteGroupDialogOpen(true);
+  };
+
+  const confirmDeleteGroup = async () => {
+    if (!groupToDelete) return;
 
     try {
-      const response = await fetch(`/api/admin/groups?groupId=${groupId}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
+      const response = await fetch(
+        `/api/admin/groups?groupId=${groupToDelete}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        }
+      );
 
       if (response.ok) {
         toast.success("Group deleted successfully");
@@ -315,6 +323,46 @@ export function AdminDashboard() {
       }
     } catch (error) {
       toast.error("Error deleting group");
+    } finally {
+      setDeleteGroupDialogOpen(false);
+      setGroupToDelete(null);
+    }
+  };
+
+  const renameGroup = async (group: Group) => {
+    setGroupToRename(group);
+    setRenameGroupName(group.name);
+    setRenameGroupDialogOpen(true);
+  };
+
+  const confirmRenameGroup = async () => {
+    if (!groupToRename || !renameGroupName.trim()) return;
+
+    try {
+      const response = await fetch(
+        `/api/admin/groups?groupId=${groupToRename.id}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ name: renameGroupName.trim() }),
+          credentials: "include",
+        }
+      );
+
+      if (response.ok) {
+        toast.success("Group renamed successfully");
+        loadGroups();
+      } else {
+        toast.error("Failed to rename group");
+      }
+    } catch (error) {
+      toast.error("Error renaming group");
+    } finally {
+      setRenameGroupDialogOpen(false);
+      setGroupToRename(null);
+      setRenameGroupName("");
     }
   };
 
@@ -615,7 +663,7 @@ export function AdminDashboard() {
                                 {formatDate(group.created_at)}
                               </td>
                               <td className="p-4 text-right">
-                                <div className="flex items-center space-x-2">
+                                <div className="flex items-center justify-end space-x-2">
                                   <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                       <Button variant="outline" size="sm">
@@ -674,10 +722,17 @@ export function AdminDashboard() {
                                     </DropdownMenuContent>
                                   </DropdownMenu>
                                   <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => renameGroup(group)}
+                                  >
+                                    <Edit className="w-3 h-3" />
+                                  </Button>
+                                  <Button
                                     variant="destructive"
                                     size="sm"
                                     onClick={() => deleteGroup(group.id)}
-                                    disabled={group.created_by_admin}
+                                    disabled={group.id === 1}
                                   >
                                     <Trash2 className="w-3 h-3" />
                                   </Button>
@@ -755,6 +810,79 @@ export function AdminDashboard() {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Delete User
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={deleteGroupDialogOpen}
+        onOpenChange={setDeleteGroupDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Group</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this group? All associated data
+              will be permanently deleted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setGroupToDelete(null)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteGroup}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete Group
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={renameGroupDialogOpen}
+        onOpenChange={setRenameGroupDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Rename Group</AlertDialogTitle>
+            <AlertDialogDescription>
+              Enter a new name for this group.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-4">
+            <input
+              type="text"
+              placeholder="Group name"
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              value={renameGroupName}
+              onChange={(e) => setRenameGroupName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  confirmRenameGroup();
+                }
+              }}
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                setGroupToRename(null);
+                setRenameGroupName("");
+              }}
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmRenameGroup}
+              disabled={
+                !renameGroupName.trim() ||
+                renameGroupName.trim() === groupToRename?.name
+              }
+            >
+              Rename Group
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

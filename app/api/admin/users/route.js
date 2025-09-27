@@ -99,6 +99,47 @@ export async function DELETE(request) {
 
     const db = await getDatabase();
 
+    // First, delete groups created by this user that have no other members
+    await new Promise((resolve, reject) => {
+      db.run(
+        `
+        DELETE FROM groups
+        WHERE created_by = ? AND id NOT IN (
+          SELECT DISTINCT group_id FROM user_groups WHERE user_id != ?
+        )
+      `,
+        [validation.data.userId, validation.data.userId],
+        function (err) {
+          if (err) reject(err);
+          else resolve();
+        }
+      );
+    });
+
+    // For groups that still exist (have other members), set created_by to NULL
+    try {
+      await new Promise((resolve, reject) => {
+        db.run(
+          "UPDATE groups SET created_by = NULL WHERE created_by = ?",
+          [validation.data.userId],
+          function (err) {
+            if (err) reject(err);
+            else resolve();
+          }
+        );
+      });
+    } catch (error) {
+      // If UPDATE fails (column is NOT NULL), we can't proceed with deletion
+      // This would happen on existing databases
+      return NextResponse.json(
+        {
+          error:
+            "Cannot delete user who created groups with other members. Please reassign or delete those groups first.",
+        },
+        { status: 400 }
+      );
+    }
+
     const result = await new Promise((resolve, reject) => {
       db.run(
         "DELETE FROM users WHERE id = ?",

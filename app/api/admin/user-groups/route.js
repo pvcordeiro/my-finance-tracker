@@ -170,6 +170,18 @@ export async function DELETE(request) {
       );
     }
 
+    // If the user was removed from their last selected group, clear the preference
+    await new Promise((resolve, reject) => {
+      db.run(
+        "UPDATE users SET last_selected_group_id = NULL WHERE id = ? AND last_selected_group_id = ?",
+        [userId, groupId],
+        function (err) {
+          if (err) reject(err);
+          else resolve();
+        }
+      );
+    });
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Remove user from group error:", error);
