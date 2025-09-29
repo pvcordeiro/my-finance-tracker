@@ -65,23 +65,24 @@ export function DetailsTable({ data }: DetailsTableProps) {
     if (document.fullscreenElement) {
       try {
         await document.exitFullscreen();
-      } catch {
-        // ignore
-      }
+      } catch {}
     }
   }, []);
 
   const requestOrientationLock = async () => {
     try {
       const anyScreen = screen as Screen & {
-        orientation?: ScreenOrientation & { lock?: (orientation: string) => Promise<void> };
+        orientation?: ScreenOrientation & {
+          lock?: (orientation: string) => Promise<void>;
+        };
       };
-      if (anyScreen.orientation && typeof anyScreen.orientation.lock === "function") {
+      if (
+        anyScreen.orientation &&
+        typeof anyScreen.orientation.lock === "function"
+      ) {
         await anyScreen.orientation.lock("landscape");
       }
-    } catch {
-      // orientation lock not supported or rejected
-    }
+    } catch {}
   };
 
   const enterFullscreen = useCallback(
@@ -99,9 +100,7 @@ export function DetailsTable({ data }: DetailsTableProps) {
         try {
           await target.requestFullscreen();
           await requestOrientationLock();
-        } catch {
-          // ignore failures
-        }
+        } catch {}
       }
     },
     [exitFullscreen, fullscreen]

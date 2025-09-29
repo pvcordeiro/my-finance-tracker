@@ -28,7 +28,6 @@ function HomePageContent() {
   const {
     data,
     hasChanges,
-  // isLoading from hook omitted since unused
     conflictData,
     conflictType,
     saveBankAmount,

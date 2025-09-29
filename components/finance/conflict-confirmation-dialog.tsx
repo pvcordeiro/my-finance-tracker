@@ -39,7 +39,7 @@ export function ConflictConfirmationDialog({
       );
     }
 
-  currentData.incomes.forEach((income) => {
+    currentData.incomes.forEach((income) => {
       const serverIncome = conflictingData.incomes.find(
         (i) => i.id === income.id
       );
@@ -73,7 +73,7 @@ export function ConflictConfirmationDialog({
       }
     });
 
-  currentData.expenses.forEach((expense) => {
+    currentData.expenses.forEach((expense) => {
       const serverExpense = conflictingData.expenses.find(
         (e) => e.id === expense.id
       );

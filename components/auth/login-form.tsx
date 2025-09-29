@@ -81,7 +81,11 @@ export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
             setError("Registration failed. Please try again.");
           }
         } catch (registerError: unknown) {
-          if (registerError && typeof registerError === "object" && "message" in registerError) {
+          if (
+            registerError &&
+            typeof registerError === "object" &&
+            "message" in registerError
+          ) {
             setError(String((registerError as { message?: unknown }).message));
           } else {
             setError("Registration failed. Please try again.");

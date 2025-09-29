@@ -1,11 +1,7 @@
-// Central domain types to remove scattered `any` usage.
-// If you already have overlapping definitions (e.g., FinanceEntry in entry-form),
-// consider consolidating later; for now we re-export a compatible shape.
-
 export interface FinanceEntry {
   id: string;
   description: string;
-  amounts: number[]; // length 12
+  amounts: number[];
 }
 
 export interface FinanceDataShape {
@@ -14,18 +10,14 @@ export interface FinanceDataShape {
   expenses: FinanceEntry[];
 }
 
-// Result of committing a mutation to the server.
 export type CommitResult =
   | { success: true }
   | { success: false; conflict?: true; error?: string };
 
-// Shape expected when importing from a JSON file before validation.
 export type FinanceImportUnknown = unknown;
 
-// Narrowed valid import data (mirrors FinanceDataShape)
 export type FinanceImportData = FinanceDataShape;
 
-// Type guard to validate unknown JSON as FinanceImportData.
 export function isFinanceImportData(data: unknown): data is FinanceImportData {
   if (typeof data !== "object" || data === null) return false;
   const obj = data as Record<string, unknown>;

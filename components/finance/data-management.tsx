@@ -78,8 +78,6 @@ export function DataManagement({
     event.target.value = "";
   };
 
-  // validateFinanceData function replaced by shared isFinanceImportData guard.
-
   const handleClearData = () => {
     setClearDialogOpen(true);
   };

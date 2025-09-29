@@ -155,7 +155,7 @@ export function AdminDashboard() {
 
   useEffect(() => {
     const loadData = async () => {
-  await Promise.all([loadUsers(), loadGroups(), loadSettings()]);
+      await Promise.all([loadUsers(), loadGroups(), loadSettings()]);
     };
     loadData();
   }, []);
