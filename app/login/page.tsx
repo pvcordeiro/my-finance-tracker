@@ -4,7 +4,6 @@ import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { LoginForm } from "@/components/auth/login-form";
 import { useAuth } from "@/hooks/use-auth";
-import { LoadingState } from "@/components/ui/loading";
 
 function LoginPageInner() {
   const { user, isLoading, login, register } = useAuth();

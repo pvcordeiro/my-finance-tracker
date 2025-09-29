@@ -39,7 +39,7 @@ export function ConflictConfirmationDialog({
       );
     }
 
-    currentData.incomes.forEach((income, index) => {
+  currentData.incomes.forEach((income) => {
       const serverIncome = conflictingData.incomes.find(
         (i) => i.id === income.id
       );
@@ -73,7 +73,7 @@ export function ConflictConfirmationDialog({
       }
     });
 
-    currentData.expenses.forEach((expense, index) => {
+  currentData.expenses.forEach((expense) => {
       const serverExpense = conflictingData.expenses.find(
         (e) => e.id === expense.id
       );
@@ -141,9 +141,9 @@ export function ConflictConfirmationDialog({
             {introText} The following changes conflict with your modifications:
           </p>
           <div className="space-y-2 max-h-60 overflow-y-auto">
-            {conflicts.map((conflict, index) => (
+            {conflicts.map((conflict) => (
               <div
-                key={index}
+                key={conflict}
                 className="p-3 bg-yellow-50 border border-yellow-200 rounded-md text-sm text-black font-bold"
               >
                 {conflict}

@@ -37,7 +37,7 @@ export function ChangePasswordForm() {
         const data = await response.json().catch(() => ({}));
         toast.error(data.error || "Failed to update password");
       }
-    } catch (err) {
+    } catch {
       toast.error("Error updating password");
     } finally {
       setIsLoading(false);

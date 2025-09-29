@@ -47,7 +47,7 @@ function unshiftDataForStorage(amounts: number[]): number[] {
   return [...fromCurrentMonthBack, ...restOfArray];
 }
 
-type CommitResult =
+export type CommitResult =
   | { success: true }
   | { success: false; conflict?: true; error?: string };
 

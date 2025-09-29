@@ -16,8 +16,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Download, Trash2, AlertTriangle, CheckCircle } from "lucide-react";
+import { Download, Trash2 } from "lucide-react";
 import type { FinanceData } from "@/hooks/use-finance-data";
+import { isFinanceImportData } from "@/lib/types";
 import { toast } from "sonner";
 
 interface DataManagementProps {
@@ -57,7 +58,7 @@ export function DataManagement({
       try {
         const importedData = JSON.parse(e.target?.result as string);
 
-        if (!validateFinanceData(importedData)) {
+        if (!isFinanceImportData(importedData)) {
           toast.error(
             "Invalid file format. Please ensure the file contains valid finance data."
           );
@@ -68,7 +69,7 @@ export function DataManagement({
         toast.success(
           "Data imported successfully! Your financial data has been updated."
         );
-      } catch (error) {
+      } catch {
         toast.error("Failed to parse JSON file. Please check the file format.");
       }
     };
@@ -77,27 +78,7 @@ export function DataManagement({
     event.target.value = "";
   };
 
-  const validateFinanceData = (data: any): data is FinanceData => {
-    if (typeof data !== "object" || data === null) return false;
-
-    if (typeof data.bankAmount !== "number") return false;
-    if (!Array.isArray(data.incomes) || !Array.isArray(data.expenses))
-      return false;
-
-    const validateEntries = (entries: any[]) => {
-      return entries.every(
-        (entry) =>
-          typeof entry === "object" &&
-          typeof entry.id === "string" &&
-          typeof entry.description === "string" &&
-          Array.isArray(entry.amounts) &&
-          entry.amounts.length === 12 &&
-          entry.amounts.every((amount: any) => typeof amount === "number")
-      );
-    };
-
-    return validateEntries(data.incomes) && validateEntries(data.expenses);
-  };
+  // validateFinanceData function replaced by shared isFinanceImportData guard.
 
   const handleClearData = () => {
     setClearDialogOpen(true);

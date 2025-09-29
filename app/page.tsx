@@ -1,7 +1,6 @@
 "use client";
 
 import { Suspense, lazy } from "react";
-import { useAuth } from "@/hooks/use-auth";
 import { useFinanceData } from "@/hooks/use-finance-data";
 import { DashboardHeader } from "@/components/finance/dashboard-header";
 import { SummaryTable } from "@/components/finance/summary-table";
@@ -16,7 +15,6 @@ const FinancialChart = lazy(() =>
 );
 
 function SummaryPageContent() {
-  const { user } = useAuth();
   const { data } = useFinanceData();
 
   return (

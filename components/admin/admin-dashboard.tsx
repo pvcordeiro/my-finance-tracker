@@ -86,7 +86,6 @@ export function AdminDashboard() {
   const [settings, setSettings] = useState<AdminSettings>({
     allow_registration: true,
   });
-  const [isLoading, setIsLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<number | null>(null);
   const [deleteGroupDialogOpen, setDeleteGroupDialogOpen] = useState(false);
@@ -117,7 +116,7 @@ export function AdminDashboard() {
       } else {
         toast.error("Failed to load users");
       }
-    } catch (error) {
+    } catch {
       toast.error("Error loading users");
     }
   };
@@ -133,7 +132,7 @@ export function AdminDashboard() {
       } else {
         toast.error("Failed to load groups");
       }
-    } catch (error) {
+    } catch {
       toast.error("Error loading groups");
     }
   };
@@ -149,15 +148,14 @@ export function AdminDashboard() {
       } else {
         toast.error("Failed to load settings");
       }
-    } catch (error) {
+    } catch {
       toast.error("Error loading settings");
     }
   };
 
   useEffect(() => {
     const loadData = async () => {
-      await Promise.all([loadUsers(), loadGroups(), loadSettings()]);
-      setIsLoading(false);
+  await Promise.all([loadUsers(), loadGroups(), loadSettings()]);
     };
     loadData();
   }, []);
@@ -189,7 +187,7 @@ export function AdminDashboard() {
       } else {
         toast.error("Failed to delete user");
       }
-    } catch (error) {
+    } catch {
       toast.error("Error deleting user");
     } finally {
       setDeleteDialogOpen(false);
@@ -215,7 +213,7 @@ export function AdminDashboard() {
       } else {
         toast.error("Failed to update settings");
       }
-    } catch (error) {
+    } catch {
       toast.error("Error updating settings");
     }
   };
@@ -233,7 +231,7 @@ export function AdminDashboard() {
       } else {
         toast.error("Failed to update admin status");
       }
-    } catch (error) {
+    } catch {
       toast.error("Error updating admin status");
     }
   };
@@ -259,7 +257,7 @@ export function AdminDashboard() {
       } else {
         toast.error("Failed to create group");
       }
-    } catch (error) {
+    } catch {
       toast.error("Error creating group");
     }
   };
@@ -282,7 +280,7 @@ export function AdminDashboard() {
       } else {
         toast.error("Failed to assign user to group");
       }
-    } catch (error) {
+    } catch {
       toast.error("Error assigning user to group");
     }
   };
@@ -304,7 +302,7 @@ export function AdminDashboard() {
       } else {
         toast.error("Failed to remove user from group");
       }
-    } catch (error) {
+    } catch {
       toast.error("Error removing user from group");
     }
   };
@@ -333,7 +331,7 @@ export function AdminDashboard() {
       } else {
         toast.error("Failed to delete group");
       }
-    } catch (error) {
+    } catch {
       toast.error("Error deleting group");
     } finally {
       setDeleteGroupDialogOpen(false);
@@ -369,7 +367,7 @@ export function AdminDashboard() {
       } else {
         toast.error("Failed to rename group");
       }
-    } catch (error) {
+    } catch {
       toast.error("Error renaming group");
     } finally {
       setRenameGroupDialogOpen(false);

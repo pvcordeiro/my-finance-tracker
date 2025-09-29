@@ -234,7 +234,7 @@ export function SummaryTable({ data }: SummaryTableProps) {
                 </tr>
               </thead>
               <tbody>
-                {monthlyData.map((row, index) => (
+                {monthlyData.map((row) => (
                   <tr
                     key={row.month}
                     className={cn(

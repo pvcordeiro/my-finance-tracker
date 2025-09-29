@@ -1,14 +1,12 @@
 "use client";
 
 import { Suspense } from "react";
-import { useAuth } from "@/hooks/use-auth";
 import { useFinanceData } from "@/hooks/use-finance-data";
 import { DashboardHeader } from "@/components/finance/dashboard-header";
 import { DetailsTable } from "@/components/finance/details-table";
 import { AuthGate } from "@/components/auth/auth-gate";
 
 function DetailsPageContent() {
-  const { user } = useAuth();
   const { data } = useFinanceData();
 
   return (

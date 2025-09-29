@@ -109,7 +109,7 @@ export function DashboardHeader() {
                           } else {
                             toast.error("Failed to switch group");
                           }
-                        } catch (error) {
+                        } catch {
                           toast.error("Error switching group");
                         }
                       }}

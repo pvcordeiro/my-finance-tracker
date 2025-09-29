@@ -39,7 +39,6 @@ export function NoGroupOverlay({ className }: { className?: string }) {
       className="fixed inset-0 z-40 flex items-center justify-center pointer-events-auto"
       role="alert"
       aria-live="assertive"
-      aria-modal="true"
     >
       <div className="absolute inset-0 bg-black/30 dark:bg-background/60 backdrop-blur-sm cursor-not-allowed transition-colors" />
       <div

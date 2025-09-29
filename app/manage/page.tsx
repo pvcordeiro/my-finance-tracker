@@ -19,16 +19,16 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { ConflictConfirmationDialog } from "@/components/finance/conflict-confirmation-dialog";
-import { toast } from "sonner";
+import type { FinanceData, CommitResult } from "@/hooks/use-finance-data";
 
 function HomePageContent() {
-  const { user, isLoading, logout } = useAuth();
+  const { user, logout } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const {
     data,
     hasChanges,
-    isLoading: dataLoading,
+  // isLoading from hook omitted since unused
     conflictData,
     conflictType,
     saveBankAmount,
@@ -69,15 +69,6 @@ function HomePageContent() {
     };
   }, [hasChanges]);
 
-  const handleNav = (url: string) => {
-    if (hasChanges) {
-      setShowConfirm(true);
-      nextRouteRef.current = url;
-    } else {
-      router.push(url);
-    }
-  };
-
   const confirmNavigation = useCallback(() => {
     setShowConfirm(false);
     if (nextRouteRef.current) {
@@ -91,7 +82,7 @@ function HomePageContent() {
     nextRouteRef.current = null;
   }, []);
 
-  const handleImportData = async (importedData: any) => {
+  const handleImportData = async (importedData: FinanceData) => {
     await setData(importedData, true);
   };
 
@@ -113,12 +104,12 @@ function HomePageContent() {
   const flashCounterRef = useRef(0);
 
   const handleSaveBankAmount = async (
-    dataToSave?: any,
+    dataToSave?: FinanceData,
     onSessionExpired?: () => void
   ) => {
     try {
       const result = await saveBankAmount(dataToSave, onSessionExpired);
-      if ((result as any)?.conflict) {
+      if (result && "conflict" in result && result.conflict) {
         return;
       }
       if (result?.success) {
@@ -195,8 +186,12 @@ function HomePageContent() {
                 isOpen={incomeOpen}
                 onToggle={() => setIncomeOpen(!incomeOpen)}
                 onCommitDescription={async (id, desc) => {
-                  const res = await commitEntryDescription("incomes", id, desc);
-                  if ((res as any).conflict) return false;
+                  const res: CommitResult = await commitEntryDescription(
+                    "incomes",
+                    id,
+                    desc
+                  );
+                  if (res.success === false && res.conflict) return false;
                   if (res.success) {
                     flashCounterRef.current += 1;
                     setLastSaved({
@@ -208,13 +203,13 @@ function HomePageContent() {
                   return res.success;
                 }}
                 onCommitAmount={async (id, monthIndex, amount) => {
-                  const res = await commitEntryAmount(
+                  const res: CommitResult = await commitEntryAmount(
                     "incomes",
                     id,
                     monthIndex,
                     amount
                   );
-                  if ((res as any).conflict) return false;
+                  if (res.success === false && res.conflict) return false;
                   if (res.success) {
                     flashCounterRef.current += 1;
                     setLastSaved({
@@ -252,12 +247,12 @@ function HomePageContent() {
                 isOpen={expenseOpen}
                 onToggle={() => setExpenseOpen(!expenseOpen)}
                 onCommitDescription={async (id, desc) => {
-                  const res = await commitEntryDescription(
+                  const res: CommitResult = await commitEntryDescription(
                     "expenses",
                     id,
                     desc
                   );
-                  if ((res as any).conflict) return false;
+                  if (res.success === false && res.conflict) return false;
                   if (res.success) {
                     flashCounterRef.current += 1;
                     setLastSaved({
@@ -269,13 +264,13 @@ function HomePageContent() {
                   return res.success;
                 }}
                 onCommitAmount={async (id, monthIndex, amount) => {
-                  const res = await commitEntryAmount(
+                  const res: CommitResult = await commitEntryAmount(
                     "expenses",
                     id,
                     monthIndex,
                     amount
                   );
-                  if ((res as any).conflict) return false;
+                  if (res.success === false && res.conflict) return false;
                   if (res.success) {
                     flashCounterRef.current += 1;
                     setLastSaved({

@@ -35,16 +35,11 @@ const MONTHS = [
 function getRollingMonths(): Array<{ label: string; month: number }> {
   const now = new Date();
   const currentMonth = now.getMonth();
-  const months = [];
-
+  const months = [] as Array<{ label: string; month: number }>;
   for (let i = 0; i < 12; i++) {
     const monthIndex = (currentMonth + i) % 12;
-    months.push({
-      label: MONTHS[monthIndex],
-      month: monthIndex,
-    });
+    months.push({ label: MONTHS[monthIndex], month: monthIndex });
   }
-
   return months;
 }
 
@@ -77,9 +72,6 @@ export function FinancialChart({ data }: FinancialChartProps) {
   }
 
   const months = getRollingMonths();
-
-  const now = new Date();
-  const currentMonth = now.getMonth();
   let runningBalance = 0;
   const chartData = months.map((month, idx) => {
     let income = 0;

@@ -35,7 +35,7 @@ export function ChangeUsernameForm() {
         const data = await response.json().catch(() => ({}));
         toast.error(data.error || "Failed to update username");
       }
-    } catch (err) {
+    } catch {
       toast.error("Error updating username");
     } finally {
       setIsLoading(false);

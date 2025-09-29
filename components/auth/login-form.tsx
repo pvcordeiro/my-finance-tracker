@@ -80,10 +80,12 @@ export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
           if (!success) {
             setError("Registration failed. Please try again.");
           }
-        } catch (registerError: any) {
-          setError(
-            registerError.message || "Registration failed. Please try again."
-          );
+        } catch (registerError: unknown) {
+          if (registerError && typeof registerError === "object" && "message" in registerError) {
+            setError(String((registerError as { message?: unknown }).message));
+          } else {
+            setError("Registration failed. Please try again.");
+          }
         }
       } else {
         const success = await onLogin(username, password);
@@ -91,7 +93,7 @@ export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
           setError("Invalid credentials. Please try again.");
         }
       }
-    } catch (err) {
+    } catch {
       setError("An error occurred. Please try again.");
     } finally {
       setIsLoading(false);

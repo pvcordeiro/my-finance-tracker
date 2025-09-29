@@ -81,8 +81,8 @@ export async function GET(request) {
     const users = Array.from(usersMap.values());
 
     return NextResponse.json({ users });
-  } catch (error) {
-    console.error("Get users error:", error);
+  } catch {
+    console.error("Get users error");
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -140,7 +140,7 @@ export async function DELETE(request) {
           }
         );
       });
-    } catch (error) {
+    } catch {
       return NextResponse.json(
         {
           error:
@@ -169,8 +169,8 @@ export async function DELETE(request) {
       success: true,
       message: "User deleted successfully",
     });
-  } catch (error) {
-    console.error("Delete user error:", error);
+  } catch {
+    console.error("Delete user error");
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -234,8 +234,8 @@ export async function PATCH(request) {
       message: `User admin status ${newAdminStatus ? "granted" : "revoked"}`,
       is_admin: newAdminStatus == 1,
     });
-  } catch (error) {
-    console.error("Toggle admin error:", error);
+  } catch {
+    console.error("Toggle admin error");
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
