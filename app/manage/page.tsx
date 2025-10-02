@@ -30,7 +30,6 @@ function HomePageContent() {
     hasChanges,
     conflictData,
     conflictType,
-    saveBankAmount,
     commitEntryDescription,
     commitEntryAmount,
     forceSaveData,
@@ -163,24 +162,6 @@ function HomePageContent() {
       }
     };
   }, [data.bankAmount, updateBankAmount]);
-
-  const handleSaveBankAmount = async (
-    dataToSave?: FinanceData,
-    onSessionExpired?: () => void
-  ) => {
-    try {
-      const result = await saveBankAmount(dataToSave, onSessionExpired);
-      if (result && "conflict" in result && result.conflict) {
-        return;
-      }
-      if (result?.success) {
-        flashCounterRef.current += 1;
-        setLastSaved({ kind: "bank", token: flashCounterRef.current });
-      }
-    } catch (error) {
-      console.error("Failed to save bank amount:", error);
-    }
-  };
 
   const handleForceSave = async () => {
     try {

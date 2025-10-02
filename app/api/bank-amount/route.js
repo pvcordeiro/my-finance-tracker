@@ -5,7 +5,7 @@ import {
   withAuth,
   getAuthenticatedUser,
 } from "../../../lib/auth-middleware.js";
-import { notifyBankAmountChange } from "./stream/route.js";
+import { notifyBankAmountChange } from "../../../lib/sse-notifications.js";
 
 export const GET = withAuth(async (request) => {
   try {
