@@ -817,6 +817,84 @@ export function useFinanceData() {
     }
   };
 
+  /**
+   * Add an amount to the bank balance atomically
+   */
+  const addToBankAmount = async (delta: number) => {
+    if (delta <= 0) return;
+
+    try {
+      const response = await fetch("/api/bank-amount", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ operation: "adjust", delta }),
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        let errJson: any = null;
+        try {
+          errJson = await response.json();
+        } catch {}
+        if (response.status === 403 && errJson?.code === "no_group") {
+          toast.warning(
+            "You are not in any group. Please contact an administrator."
+          );
+          return;
+        }
+        throw new Error("Failed to add to bank amount");
+      }
+
+      const result = await response.json();
+      setData((prev) => ({ ...prev, bankAmount: result.amount }));
+      setOriginalData((prev) => ({ ...prev, bankAmount: result.amount }));
+      setHasBankChanges(false);
+      toast.success(`Added €${delta.toFixed(2)} to bank balance`);
+    } catch (error) {
+      console.error("Error adding to bank amount:", error);
+      toast.error("Failed to add to bank amount");
+    }
+  };
+
+  /**
+   * Subtract an amount from the bank balance atomically
+   */
+  const subtractFromBankAmount = async (delta: number) => {
+    if (delta <= 0) return;
+
+    try {
+      const response = await fetch("/api/bank-amount", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ operation: "adjust", delta: -delta }),
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        let errJson: any = null;
+        try {
+          errJson = await response.json();
+        } catch {}
+        if (response.status === 403 && errJson?.code === "no_group") {
+          toast.warning(
+            "You are not in any group. Please contact an administrator."
+          );
+          return;
+        }
+        throw new Error("Failed to subtract from bank amount");
+      }
+
+      const result = await response.json();
+      setData((prev) => ({ ...prev, bankAmount: result.amount }));
+      setOriginalData((prev) => ({ ...prev, bankAmount: result.amount }));
+      setHasBankChanges(false);
+      toast.success(`Subtracted €${delta.toFixed(2)} from bank balance`);
+    } catch (error) {
+      console.error("Error subtracting from bank amount:", error);
+      toast.error("Failed to subtract from bank amount");
+    }
+  };
+
   return {
     data,
     hasChanges,
@@ -837,5 +915,7 @@ export function useFinanceData() {
     removeEntry,
     setData: setDataForImport,
     refreshData: loadDataFromServer,
+    addToBankAmount,
+    subtractFromBankAmount,
   };
 }
