@@ -46,7 +46,7 @@ html {
         `}</style>
       </head>
       <body
-        className={`${dmSans.variable} font-sans antialiased pb-16 md:pb-0`}
+        className={`${dmSans.variable} font-sans antialiased pb-16 md:pb-0 bg-background text-foreground`}
       >
         <ThemeProvider
           attribute="class"

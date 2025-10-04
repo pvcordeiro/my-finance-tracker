@@ -5,11 +5,11 @@
 :root {
   /* Light Mode - Layered depth system (darker as you go deeper) */
   /* Using 210° hue for cool, neutral gray (no yellow tint) */
-  --background: 210 10% 94%;          /* Cool light gray - base layer (ground) */
+  --background: 210 10% 90%;          /* Cool medium gray - base layer (darker ground) */
   --foreground: 210 10% 5%;           /* Cool dark text for readability */
-  --card: 210 8% 97%;                 /* Cool white card - first layer up */
+  --card: 210 8% 95%;                 /* Cool light card - first layer up */
   --card-foreground: 210 10% 5%;      /* Cool dark text on cards */
-  --popover: 210 5% 100%;             /* Pure cool white popovers - highest layer */
+  --popover: 210 5% 98%;              /* Nearly white popovers - highest layer */
   --popover-foreground: 210 10% 5%;   /* Cool dark text on popovers */
   
   /* Primary = Blue Accent Color */
@@ -17,20 +17,20 @@
   --primary-foreground: 0 0% 100%;    /* White text on blue */
   
   /* Secondary = Cool medium gray for nested areas */
-  --secondary: 210 10% 90%;           /* Cool darker gray for nested sections */
+  --secondary: 210 10% 86%;           /* Cool darker gray for nested sections */
   --secondary-foreground: 210 10% 10%; /* Cool dark text */
   
   /* Muted = Cool darker gray for deepest nested areas */
-  --muted: 210 10% 88%;               /* Cool darker for deep nesting */
+  --muted: 210 10% 82%;               /* Cool darker for deep nesting */
   --muted-foreground: 210 10% 35%;    /* Cool medium gray text */
   
   /* Accent = Noticeable blue for hover states - MORE VISIBLE! */
-  --accent: 217 85% 92%;              /* Stronger blue tint for hover - very visible! */
+  --accent: 217 85% 88%;              /* Darker blue tint for hover on darker bg */
   --accent-foreground: 217 95% 25%;   /* Dark blue text for contrast */
   
   /* Input fields = Cool white to create contrast */
-  --input-bg: 210 5% 100%;            /* Cool pure white inputs stand out */
-  --input: 210 15% 80%;               /* Cool darker border for visibility */
+  --input-bg: 210 5% 98%;             /* Nearly white inputs stand out */
+  --input: 210 15% 78%;               /* Cool darker border for visibility */
   --ring: 217 91% 60%;                /* Blue focus rings */
   
   /* Destructive = Red for errors */
@@ -38,7 +38,7 @@
   --destructive-foreground: 0 0% 100%;
   
   /* Borders - cool gray, darker for better definition */
-  --border: 210 12% 82%;              /* Cool visible gray borders */
+  --border: 210 12% 78%;              /* Cool visible gray borders (darker) */
   --radius: 0.5rem;
   
   /* Financial colors - always green/red */
