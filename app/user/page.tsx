@@ -1,7 +1,7 @@
 "use client";
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ChangePasswordForm } from "@/components/auth/change-password-form";
 import { ChangeUsernameForm } from "@/components/auth/change-username-form";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,25 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, ChevronDown, Shield, Calculator } from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
+  LogOut,
+  ChevronDown,
+  Shield,
+  Calculator,
+  ChevronRight,
+  Sun,
+  Moon,
+  Monitor,
+  Palette,
+  UserCog,
+  Lock,
+  Key,
+} from "lucide-react";
 import {
   Card,
   CardContent,
@@ -23,16 +41,80 @@ import { FullPageLoader } from "@/components/ui/loading";
 import { User } from "lucide-react";
 import { AccentColorSwitcher } from "@/components/ui/accent-color-switcher";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useTheme } from "next-themes";
 
 export default function UserSettingsPage() {
   const { user, isLoading, logout } = useAuth();
   const router = useRouter();
+  const isMobile = useIsMobile();
+  const { theme } = useTheme();
+  const [themeOpen, setThemeOpen] = useState(false);
+  const [accentOpen, setAccentOpen] = useState(false);
+  const [usernameOpen, setUsernameOpen] = useState(false);
+  const [passwordOpen, setPasswordOpen] = useState(false);
+  const [currentAccent, setCurrentAccent] = useState<string>("blue");
+
+  useEffect(() => {
+    fetch("/api/user/accent-color", {
+      credentials: "include",
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.accentColor) {
+          setCurrentAccent(data.accentColor);
+        }
+      })
+      .catch((err) => console.error("Failed to fetch accent color:", err));
+
+    const handleAccentColorChange = (event: CustomEvent) => {
+      setCurrentAccent(event.detail);
+    };
+
+    window.addEventListener(
+      "accentColorChanged",
+      handleAccentColorChange as EventListener
+    );
+
+    return () => {
+      window.removeEventListener(
+        "accentColorChanged",
+        handleAccentColorChange as EventListener
+      );
+    };
+  }, []);
 
   useEffect(() => {
     if (!isLoading && !user) {
       router.push("/login");
     }
   }, [isLoading, user, router]);
+
+  const getThemeIcon = () => {
+    switch (theme) {
+      case "light":
+        return <Sun className="w-4 h-4" />;
+      case "dark":
+        return <Moon className="w-4 h-4" />;
+      default:
+        return <Monitor className="w-4 h-4" />;
+    }
+  };
+
+  const getAccentColor = () => {
+    const accentColors: Record<string, string> = {
+      blue: "hsl(217, 91%, 60%)",
+      purple: "hsl(270, 91%, 60%)",
+      yellow: "hsl(65, 100%, 50%)",
+      orange: "hsl(25, 95%, 53%)",
+      pink: "hsl(330, 85%, 60%)",
+      red: "hsl(0, 84%, 60%)",
+      teal: "hsl(180, 76%, 45%)",
+      indigo: "hsl(240, 76%, 60%)",
+      amber: "hsl(45, 93%, 53%)",
+    };
+    return accentColors[currentAccent] || accentColors.blue;
+  };
 
   if (isLoading) return <FullPageLoader />;
   if (!user) return null;
@@ -105,42 +187,163 @@ export default function UserSettingsPage() {
       <main className="container mx-auto p-4 space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>Appearance</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Palette className="w-5 h-5" />
+              Customize
+            </CardTitle>
             <CardDescription>
-              Customize the look and feel of the application.
+              Change the look and feel of the application.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div>
-              <h3 className="text-sm font-medium mb-3">Theme</h3>
-              <ThemeToggle />
-            </div>
-            <div>
-              <h3 className="text-sm font-medium mb-3">Accent Color</h3>
-              <AccentColorSwitcher />
-            </div>
+            {isMobile ? (
+              <>
+                <Collapsible open={themeOpen} onOpenChange={setThemeOpen}>
+                  <CollapsibleTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-between"
+                    >
+                      <span className="flex items-center gap-2">
+                        {getThemeIcon()}
+                        <span className="text-sm font-medium">Theme</span>
+                      </span>
+                      <ChevronRight
+                        className={`w-4 h-4 transition-transform ${
+                          themeOpen ? "rotate-90" : ""
+                        }`}
+                      />
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="pt-4">
+                    <ThemeToggle />
+                  </CollapsibleContent>
+                </Collapsible>
+                <Collapsible open={accentOpen} onOpenChange={setAccentOpen}>
+                  <CollapsibleTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-between"
+                    >
+                      <span className="flex items-center gap-2">
+                        <div
+                          className="w-4 h-4 rounded-full"
+                          style={{ backgroundColor: getAccentColor() }}
+                        />
+                        <span className="text-sm font-medium">
+                          Accent Color
+                        </span>
+                      </span>
+                      <ChevronRight
+                        className={`w-4 h-4 transition-transform ${
+                          accentOpen ? "rotate-90" : ""
+                        }`}
+                      />
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="pt-4">
+                    <AccentColorSwitcher />
+                  </CollapsibleContent>
+                </Collapsible>
+              </>
+            ) : (
+              <>
+                <div>
+                  <h3 className="text-sm font-medium mb-3">Theme</h3>
+                  <ThemeToggle />
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium mb-3">Accent Color</h3>
+                  <AccentColorSwitcher />
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Change Username</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Key className="w-5 h-5" />
+              Update Credentials
+            </CardTitle>
             <CardDescription>
-              Update your public username (used for login).
+              Change your username and password settings.
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <ChangeUsernameForm />
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Change Password</CardTitle>
-            <CardDescription>
-              Update your password (minimum 6 characters).
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ChangePasswordForm />
+          <CardContent className="space-y-6">
+            {isMobile ? (
+              <>
+                <Collapsible open={usernameOpen} onOpenChange={setUsernameOpen}>
+                  <CollapsibleTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-between"
+                    >
+                      <span className="flex items-center gap-2">
+                        <UserCog className="w-4 h-4" />
+                        <span className="text-sm font-medium">
+                          Change Username
+                        </span>
+                      </span>
+                      <ChevronRight
+                        className={`w-4 h-4 transition-transform ${
+                          usernameOpen ? "rotate-90" : ""
+                        }`}
+                      />
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="pt-4">
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Update your public username (used for login).
+                    </p>
+                    <ChangeUsernameForm />
+                  </CollapsibleContent>
+                </Collapsible>
+                <Collapsible open={passwordOpen} onOpenChange={setPasswordOpen}>
+                  <CollapsibleTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-between"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Lock className="w-4 h-4" />
+                        <span className="text-sm font-medium">
+                          Change Password
+                        </span>
+                      </span>
+                      <ChevronRight
+                        className={`w-4 h-4 transition-transform ${
+                          passwordOpen ? "rotate-90" : ""
+                        }`}
+                      />
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="pt-4">
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Update your password (minimum 6 characters).
+                    </p>
+                    <ChangePasswordForm />
+                  </CollapsibleContent>
+                </Collapsible>
+              </>
+            ) : (
+              <>
+                <div>
+                  <h3 className="text-sm font-medium mb-1">Change Username</h3>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Update your public username (used for login).
+                  </p>
+                  <ChangeUsernameForm />
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium mb-1">Change Password</h3>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Update your password (minimum 6 characters).
+                  </p>
+                  <ChangePasswordForm />
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
       </main>
