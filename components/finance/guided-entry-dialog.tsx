@@ -3,7 +3,6 @@ import { useState, useEffect, useRef } from "react";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -185,16 +184,6 @@ export function GuidedEntryDialog({
               of 3
             </Badge>
           </DialogTitle>
-          <DialogDescription>
-            {step === "description" &&
-              "Enter a description for this entry (e.g., Salary, Rent, Groceries)"}
-            {step === "type" &&
-              "Is this amount the same every month or does it vary?"}
-            {step === "amounts" &&
-              (isFixed
-                ? "Enter the fixed amount for all months"
-                : `Enter the amount for ${months[currentMonthIndex]}`)}
-          </DialogDescription>
         </DialogHeader>
 
         <div className="py-6">

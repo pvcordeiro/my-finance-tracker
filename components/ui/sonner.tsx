@@ -18,6 +18,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
       }
       position={isMobile ? "bottom-center" : "bottom-right"}
       toastOptions={{
+        duration: 1500,
         classNames: {
           toast:
             "group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg",

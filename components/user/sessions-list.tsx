@@ -2,6 +2,16 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import {
   Monitor,
@@ -9,7 +19,7 @@ import {
   Tablet,
   Laptop,
   Chrome,
-  X,
+  XCircleIcon,
   Clock,
   MapPin,
 } from "lucide-react";
@@ -31,6 +41,8 @@ export function SessionsList() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
   const [revoking, setRevoking] = useState<number | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [sessionToRevoke, setSessionToRevoke] = useState<Session | null>(null);
 
   const fetchSessions = async () => {
     try {
@@ -58,6 +70,7 @@ export function SessionsList() {
 
   const revokeSession = async (sessionId: number) => {
     setRevoking(sessionId);
+    setDeleteDialogOpen(false);
 
     try {
       const response = await fetch(`/api/user/sessions/${sessionId}`, {
@@ -77,7 +90,13 @@ export function SessionsList() {
       toast.error("Failed to revoke session");
     } finally {
       setRevoking(null);
+      setSessionToRevoke(null);
     }
+  };
+
+  const handleRevokeClick = (session: Session) => {
+    setSessionToRevoke(session);
+    setDeleteDialogOpen(true);
   };
 
   const getDeviceIcon = (deviceName: string) => {
@@ -175,15 +194,41 @@ export function SessionsList() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => revokeSession(session.id)}
+              onClick={() => handleRevokeClick(session)}
               disabled={revoking === session.id}
               className="text-muted-foreground hover:text-destructive"
             >
-              <X className="w-4 h-4" />
+              <XCircleIcon className="w-4 h-4" />
             </Button>
           )}
         </div>
       ))}
+
+      {/* Revoke Session Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Revoke Session</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to revoke this session? This will log out
+              the device and it will need to sign in again.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (sessionToRevoke) {
+                  revokeSession(sessionToRevoke.id);
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Revoke Session
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
