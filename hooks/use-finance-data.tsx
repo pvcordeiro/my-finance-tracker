@@ -814,14 +814,14 @@ export function useFinanceData() {
     }
   };
 
-  const addToBankAmount = async (delta: number) => {
+  const addToBankAmount = async (delta: number, note?: string) => {
     if (delta <= 0) return;
 
     try {
       const response = await fetch("/api/bank-amount", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ operation: "adjust", delta }),
+        body: JSON.stringify({ operation: "adjust", delta, note }),
         credentials: "include",
       });
 
@@ -850,14 +850,14 @@ export function useFinanceData() {
     }
   };
 
-  const subtractFromBankAmount = async (delta: number) => {
+  const subtractFromBankAmount = async (delta: number, note?: string) => {
     if (delta <= 0) return;
 
     try {
       const response = await fetch("/api/bank-amount", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ operation: "adjust", delta: -delta }),
+        body: JSON.stringify({ operation: "adjust", delta: -delta, note }),
         credentials: "include",
       });
 

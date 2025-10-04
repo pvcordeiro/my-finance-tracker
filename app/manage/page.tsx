@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useFinanceData } from "@/hooks/use-finance-data";
 import { DashboardHeader } from "@/components/finance/dashboard-header";
 import { BankAmount } from "@/components/finance/bank-amount";
+import { BalanceHistory } from "@/components/finance/balance-history";
 import { EntryForm } from "@/components/finance/entry-form";
 import { Button } from "@/components/ui/button";
 import { DataManagement } from "@/components/finance/data-management";
@@ -266,8 +267,8 @@ function HomePageContent() {
     router.push("/login?session=expired");
   };
 
-  const handleAddToBankAmount = async (delta: number) => {
-    await addToBankAmount(delta);
+  const handleAddToBankAmount = async (delta: number, note?: string) => {
+    await addToBankAmount(delta, note);
     flashCounterRef.current += 1;
     setLastSaved({
       kind: "bank",
@@ -276,8 +277,8 @@ function HomePageContent() {
     });
   };
 
-  const handleSubtractFromBankAmount = async (delta: number) => {
-    await subtractFromBankAmount(delta);
+  const handleSubtractFromBankAmount = async (delta: number, note?: string) => {
+    await subtractFromBankAmount(delta, note);
     flashCounterRef.current += 1;
     setLastSaved({
       kind: "bank",
@@ -350,7 +351,7 @@ function HomePageContent() {
           <TabsContent value="main">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Left Column - Bank Amount */}
-              <div className="lg:sticky lg:top-[155px] lg:self-start">
+              <div className="lg:sticky lg:top-[155px] lg:self-start space-y-4">
                 <BankAmount
                   amount={data.bankAmount}
                   onAdd={handleAddToBankAmount}
@@ -360,6 +361,12 @@ function HomePageContent() {
                   }
                   flashType={
                     lastSaved?.kind === "bank" ? lastSaved.flashType : undefined
+                  }
+                />
+                <BalanceHistory
+                  groupId={user?.current_group_id || null}
+                  refreshTrigger={
+                    lastSaved?.kind === "bank" ? lastSaved.token : undefined
                   }
                 />
               </div>

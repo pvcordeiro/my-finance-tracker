@@ -62,6 +62,7 @@ interface User {
 
 interface AdminSettings {
   allow_registration: boolean;
+  enable_balance_history: boolean;
 }
 
 interface Group {
@@ -81,6 +82,7 @@ export function AdminDashboard() {
   const [newGroupName, setNewGroupName] = useState("");
   const [settings, setSettings] = useState<AdminSettings>({
     allow_registration: true,
+    enable_balance_history: false,
   });
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<number | null>(null);
@@ -1057,6 +1059,29 @@ export function AdminDashboard() {
                       checked={settings.allow_registration}
                       onCheckedChange={(checked) =>
                         updateSettings({ allow_registration: checked })
+                      }
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between space-x-2">
+                    <div className="space-y-0.5">
+                      <Label
+                        htmlFor="enable-balance-history"
+                        className="text-base font-medium"
+                      >
+                        Show Balance History
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        When enabled, users can view the balance history card
+                        showing all balance adjustments with optional notes.
+                        History is always logged regardless of this setting.
+                      </p>
+                    </div>
+                    <Switch
+                      id="enable-balance-history"
+                      checked={settings.enable_balance_history}
+                      onCheckedChange={(checked) =>
+                        updateSettings({ enable_balance_history: checked })
                       }
                     />
                   </div>

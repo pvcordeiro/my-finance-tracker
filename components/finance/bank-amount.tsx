@@ -8,8 +8,8 @@ import { Banknote, Plus, Minus } from "lucide-react";
 
 interface BankAmountProps {
   amount: number;
-  onAdd: (delta: number) => void;
-  onSubtract: (delta: number) => void;
+  onAdd: (delta: number, note?: string) => void;
+  onSubtract: (delta: number, note?: string) => void;
   flashToken?: number;
   flashType?: "add" | "subtract";
 }
@@ -22,6 +22,7 @@ export function BankAmount({
   flashType,
 }: BankAmountProps) {
   const [inputValue, setInputValue] = useState<number>(0);
+  const [note, setNote] = useState<string>("");
   const [flashActive, setFlashActive] = useState(false);
   const [currentFlashType, setCurrentFlashType] = useState<"add" | "subtract">(
     "add"
@@ -46,14 +47,16 @@ export function BankAmount({
   };
   const handleAdd = () => {
     if (!isNaN(inputValue) && inputValue !== 0) {
-      onAdd(inputValue);
+      onAdd(inputValue, note || undefined);
       setInputValue(0);
+      setNote("");
     }
   };
   const handleSubtract = () => {
     if (!isNaN(inputValue) && inputValue !== 0) {
-      onSubtract(inputValue);
+      onSubtract(inputValue, note || undefined);
       setInputValue(0);
+      setNote("");
     }
   };
   return (
@@ -85,24 +88,34 @@ export function BankAmount({
               Adjust Balance
             </Label>
             <div className="flex flex-col gap-3">
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none z-10 select-none">
-                  €
-                </span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none z-10 select-none">
+                    €
+                  </span>
+                  <Input
+                    type="number"
+                    inputMode="decimal"
+                    step="0.01"
+                    placeholder="Enter amount"
+                    value={inputValue === 0 ? "" : inputValue}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      const regex = /^\d*\.?\d{0,2}$/;
+                      if (value === "" || regex.test(value)) {
+                        handleInputChange(Number.parseFloat(value) || 0);
+                      }
+                    }}
+                    className="pl-8 w-full text-sm sm:text-base"
+                  />
+                </div>
                 <Input
-                  type="number"
-                  inputMode="decimal"
-                  step="0.01"
-                  placeholder="Enter amount"
-                  value={inputValue === 0 ? "" : inputValue}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    const regex = /^\d*\.?\d{0,2}$/;
-                    if (value === "" || regex.test(value)) {
-                      handleInputChange(Number.parseFloat(value) || 0);
-                    }
-                  }}
-                  className="pl-8 w-full text-sm sm:text-base"
+                  type="text"
+                  placeholder="Add note (optional)"
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  className="w-full text-sm sm:text-base"
+                  maxLength={200}
                 />
               </div>
               <div className="grid grid-cols-2 gap-2">

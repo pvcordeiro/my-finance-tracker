@@ -67,6 +67,7 @@ export const POST = withAuth(async (request) => {
   const db = await getDatabase();
 
   const operation = body.operation || "set";
+  const note = body.note || null;
 
   if (operation === "adjust") {
     const delta = typeof body.delta === "number" ? body.delta : 0;
@@ -103,6 +104,17 @@ export const POST = withAuth(async (request) => {
       );
     });
 
+    await new Promise((resolve, reject) => {
+      db.run(
+        `INSERT INTO balance_history (group_id, user_id, old_amount, new_amount, delta, note, created_at) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+        [groupId, user.id, currentAmount, newAmount, delta, note],
+        function (err) {
+          if (err) reject(err);
+          else resolve();
+        }
+      );
+    });
+
     const operationType = delta > 0 ? "add" : "subtract";
     notifyBankAmountChange(groupId, newAmount, operationType);
 
@@ -118,10 +130,35 @@ export const POST = withAuth(async (request) => {
 
     const { amount } = validation.data;
 
+    const currentRow = await new Promise((resolve, reject) => {
+      db.get(
+        "SELECT amount FROM bank_amounts WHERE group_id = ? ORDER BY updated_at DESC LIMIT 1",
+        [groupId],
+        (err, row) => {
+          if (err) reject(err);
+          else resolve(row);
+        }
+      );
+    });
+
+    const currentAmount = currentRow?.amount || 0;
+    const delta = amount - currentAmount;
+
     await new Promise((resolve, reject) => {
       db.run(
         `INSERT INTO bank_amounts (group_id, user_id, amount, updated_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)`,
         [groupId, user.id, amount],
+        function (err) {
+          if (err) reject(err);
+          else resolve();
+        }
+      );
+    });
+
+    await new Promise((resolve, reject) => {
+      db.run(
+        `INSERT INTO balance_history (group_id, user_id, old_amount, new_amount, delta, note, created_at) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+        [groupId, user.id, currentAmount, amount, delta, note],
         function (err) {
           if (err) reject(err);
           else resolve();

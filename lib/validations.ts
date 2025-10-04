@@ -48,6 +48,7 @@ export const deleteUserSchema = z.object({
 
 export const settingsSchema = z.object({
   allow_registration: z.boolean(),
+  enable_balance_history: z.boolean().optional(),
 });
 
 export const changePasswordSchema = z.object({
