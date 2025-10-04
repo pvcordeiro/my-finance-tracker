@@ -39,6 +39,7 @@ import {
   Edit,
   MoreHorizontal,
   ShieldOff,
+  Save,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
@@ -419,6 +420,13 @@ export function AdminDashboard() {
                   >
                     <Calculator className="w-4 h-4 mr-2" />
                     Back to App
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => router.push("/manage?tab=management")}
+                    className="cursor-pointer"
+                  >
+                    <Save className="w-4 h-4 mr-2" />
+                    Backup
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={logout} className="cursor-pointer">
                     <LogOut className="w-4 h-4 mr-2" />

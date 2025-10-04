@@ -30,6 +30,7 @@ import {
   Lock,
   Key,
   Laptop,
+  Save,
 } from "lucide-react";
 import {
   Card,
@@ -170,6 +171,13 @@ export default function UserSettingsPage() {
                 >
                   <Calculator className="w-4 h-4 mr-2" />
                   Back to App
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => router.push("/manage?tab=management")}
+                  className="cursor-pointer"
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  Backup
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={async () => {
