@@ -3,38 +3,42 @@
 @tailwind utilities;
 
 :root {
-  /* Light Mode - White/Light Gray base with Blue accent */
-  --background: 0 0% 100%;           /* Pure white */
-  --foreground: 0 0% 10%;             /* Near black text */
-  --card: 0 0% 98%;                   /* Light gray cards */
-  --card-foreground: 0 0% 10%;        /* Near black text on cards */
-  --popover: 0 0% 100%;               /* White popovers */
-  --popover-foreground: 0 0% 10%;     /* Near black text on popovers */
+  /* Light Mode - Layered depth system (darker as you go deeper) */
+  /* Using 210° hue for cool, neutral gray (no yellow tint) */
+  --background: 210 10% 94%;          /* Cool light gray - base layer (ground) */
+  --foreground: 210 10% 5%;           /* Cool dark text for readability */
+  --card: 210 8% 97%;                 /* Cool white card - first layer up */
+  --card-foreground: 210 10% 5%;      /* Cool dark text on cards */
+  --popover: 210 5% 100%;             /* Pure cool white popovers - highest layer */
+  --popover-foreground: 210 10% 5%;   /* Cool dark text on popovers */
   
   /* Primary = Blue Accent Color */
   --primary: 217 91% 60%;             /* Vibrant blue accent */
   --primary-foreground: 0 0% 100%;    /* White text on blue */
   
-  /* Secondary = Light gray shade */
-  --secondary: 0 0% 96%;              /* Very light gray */
-  --secondary-foreground: 0 0% 10%;   /* Dark text */
+  /* Secondary = Cool medium gray for nested areas */
+  --secondary: 210 10% 90%;           /* Cool darker gray for nested sections */
+  --secondary-foreground: 210 10% 10%; /* Cool dark text */
   
-  /* Muted = Medium gray shade */
-  --muted: 0 0% 94%;                  /* Light gray for muted areas */
-  --muted-foreground: 0 0% 45%;       /* Medium gray text */
+  /* Muted = Cool darker gray for deepest nested areas */
+  --muted: 210 10% 88%;               /* Cool darker for deep nesting */
+  --muted-foreground: 210 10% 35%;    /* Cool medium gray text */
   
-  /* Accent = Same as primary (blue) */
-  --accent: 217 91% 60%;              /* Blue accent */
-  --accent-foreground: 0 0% 100%;     /* White text on accent */
+  /* Accent = Noticeable blue for hover states - MORE VISIBLE! */
+  --accent: 217 85% 92%;              /* Stronger blue tint for hover - very visible! */
+  --accent-foreground: 217 95% 25%;   /* Dark blue text for contrast */
   
-  /* Destructive = Red for errors/negative (not for finance) */
+  /* Input fields = Cool white to create contrast */
+  --input-bg: 210 5% 100%;            /* Cool pure white inputs stand out */
+  --input: 210 15% 80%;               /* Cool darker border for visibility */
+  --ring: 217 91% 60%;                /* Blue focus rings */
+  
+  /* Destructive = Red for errors */
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
   
-  /* Borders and inputs */
-  --border: 0 0% 90%;                 /* Light gray borders */
-  --input: 0 0% 96%;                  /* Light gray input backgrounds */
-  --ring: 217 91% 60%;                /* Blue focus rings */
+  /* Borders - cool gray, darker for better definition */
+  --border: 210 12% 82%;              /* Cool visible gray borders */
   --radius: 0.5rem;
   
   /* Financial colors - always green/red */
@@ -43,38 +47,42 @@
 }
 
 .dark {
-  /* Dark Mode - Black/Dark Gray base with Blue accent */
-  --background: 0 0% 8%;              /* Very dark gray, almost black */
-  --foreground: 0 0% 98%;             /* Near white text */
-  --card: 0 0% 12%;                   /* Dark gray cards */
-  --card-foreground: 0 0% 95%;        /* Light text on cards */
-  --popover: 0 0% 10%;                /* Very dark popovers */
-  --popover-foreground: 0 0% 95%;     /* Light text on popovers */
+  /* Dark Mode - Layered depth system (lighter as you go deeper) */
+  /* Using 210° hue for cool, neutral gray (consistent with light mode) */
+  --background: 210 8% 6%;            /* Cool very dark gray - base layer (ground) */
+  --foreground: 210 5% 98%;           /* Cool near white text */
+  --card: 210 8% 10%;                 /* Cool slightly lighter - first layer up */
+  --card-foreground: 210 5% 95%;      /* Cool light text on cards */
+  --popover: 210 8% 12%;              /* Cool even lighter for popovers */
+  --popover-foreground: 210 5% 95%;   /* Cool light text on popovers */
   
   /* Primary = Blue Accent Color */
   --primary: 217 91% 65%;             /* Brighter blue for dark mode */
-  --primary-foreground: 0 0% 10%;     /* Dark text on blue */
+  --primary-foreground: 210 8% 10%;   /* Cool dark text on blue */
   
-  /* Secondary = Dark gray shade */
-  --secondary: 0 0% 15%;              /* Dark gray */
-  --secondary-foreground: 0 0% 95%;   /* Light text */
+  /* Secondary = Cool lighter gray for nested areas */
+  --secondary: 210 8% 14%;            /* Cool lighter for nested sections */
+  --secondary-foreground: 210 5% 95%; /* Cool light text */
   
-  /* Muted = Medium dark gray shade */
-  --muted: 0 0% 18%;                  /* Medium dark gray for muted areas */
-  --muted-foreground: 0 0% 60%;       /* Medium light gray text */
+  /* Muted = Cool even lighter for deepest nested areas */
+  --muted: 210 8% 16%;                /* Cool lighter still for deep nesting */
+  --muted-foreground: 210 5% 65%;     /* Cool medium light gray text */
   
-  /* Accent = Same as primary (blue) */
-  --accent: 217 91% 65%;              /* Blue accent */
-  --accent-foreground: 0 0% 10%;      /* Dark text on accent */
+  /* Accent = Subtle cool blue on dark - more visible */
+  --accent: 217 70% 22%;              /* Cooler dark blue with more saturation */
+  --accent-foreground: 217 85% 88%;   /* Cool light blue text */
   
-  /* Destructive = Red for errors/negative (not for finance) */
+  /* Input fields = Cool darker to create contrast */
+  --input-bg: 210 8% 8%;              /* Cool darker inputs stand out */
+  --input: 210 8% 22%;                /* Cool lighter border */
+  --ring: 217 91% 65%;                /* Blue focus rings */
+  
+  /* Destructive = Red for errors */
   --destructive: 0 84% 65%;
   --destructive-foreground: 0 0% 100%;
   
-  /* Borders and inputs */
-  --border: 0 0% 22%;                 /* Dark gray borders */
-  --input: 0 0% 15%;                  /* Dark gray input backgrounds */
-  --ring: 217 91% 65%;                /* Blue focus rings */
+  /* Borders - cool lighter for definition */
+  --border: 210 8% 20%;               /* Cool visible borders in dark */
   
   /* Financial colors - always green/red */
   --finance-positive: 142 71% 45%;    /* Brighter green for dark mode */
@@ -87,6 +95,11 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  
+  /* Input fields - lighter/darker for contrast in layered design */
+  input, textarea, select {
+    background-color: hsl(var(--input-bg)) !important;
   }
   
   html {
@@ -129,22 +142,41 @@
   
   .income-card {
     /* Light mode: subtle background with green border */
-    @apply bg-card border-2 border-finance-positive/20;
+    @apply bg-card border-2 border-finance-positive/20 shadow-md;
   }
   
   .dark .income-card {
     /* Dark mode: subtle background with green border */
-    @apply bg-card border-2 border-finance-positive/30;
+    @apply bg-card border-2 border-finance-positive/30 shadow-sm;
   }
   
   .expense-card {
     /* Light mode: subtle background with red border */
-    @apply bg-card border-2 border-finance-negative/20;
+    @apply bg-card border-2 border-finance-negative/20 shadow-md;
   }
   
   .dark .expense-card {
     /* Dark mode: subtle background with red border */
-    @apply bg-card border-2 border-finance-negative/30;
+    @apply bg-card border-2 border-finance-negative/30 shadow-sm;
+  }
+
+  /* Enhanced depth for light mode */
+  table {
+    background-color: hsl(var(--card));
+  }
+  
+  th {
+    background-color: hsl(var(--muted));
+    color: hsl(var(--muted-foreground));
+    border-bottom: 1px solid hsl(var(--border));
+  }
+  
+  td {
+    border-bottom: 1px solid hsl(var(--border));
+  }
+  
+  tr:hover {
+    background-color: hsl(var(--muted) / 0.3);
   }
 
   .dark table {
