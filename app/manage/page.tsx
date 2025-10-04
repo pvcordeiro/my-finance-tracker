@@ -297,7 +297,7 @@ function HomePageContent() {
 
     setTimeout(() => {
       if (incomeSectionRef.current) {
-        const offset = 90;
+        const offset = 120;
         const elementTop =
           incomeSectionRef.current.getBoundingClientRect().top +
           window.pageYOffset;
@@ -322,7 +322,7 @@ function HomePageContent() {
 
     setTimeout(() => {
       if (expenseSectionRef.current) {
-        const offset = 90;
+        const offset = 120;
         const elementTop =
           expenseSectionRef.current.getBoundingClientRect().top +
           window.pageYOffset;
