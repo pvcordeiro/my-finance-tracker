@@ -108,8 +108,8 @@ export default function UserSettingsPage() {
       yellow: "hsl(65, 100%, 50%)",
       orange: "hsl(25, 95%, 53%)",
       pink: "hsl(330, 85%, 60%)",
-      red: "hsl(0, 84%, 60%)",
-      teal: "hsl(180, 76%, 45%)",
+      magenta: "hsl(300, 76%, 60%)",
+      cyan: "hsl(190, 76%, 50%)",
       indigo: "hsl(240, 76%, 60%)",
       amber: "hsl(45, 93%, 53%)",
     };

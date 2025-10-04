@@ -8,8 +8,8 @@ const ALLOWED_ACCENT_COLORS = [
   "yellow",
   "orange",
   "pink",
-  "red",
-  "teal",
+  "magenta",
+  "cyan",
   "indigo",
   "amber",
 ];

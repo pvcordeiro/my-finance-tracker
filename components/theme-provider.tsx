@@ -15,8 +15,8 @@ const ACCENT_COLORS: Record<
   yellow: { hue: "65", lightModeLightness: "42%" },
   orange: { hue: "25" },
   pink: { hue: "330" },
-  red: { hue: "0" },
-  teal: { hue: "180", lightModeLightness: "38%" },
+  magenta: { hue: "300" },
+  cyan: { hue: "190", lightModeLightness: "38%" },
   indigo: { hue: "240" },
   amber: { hue: "45", lightModeLightness: "42%" },
 };
