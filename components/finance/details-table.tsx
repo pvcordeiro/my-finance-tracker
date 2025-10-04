@@ -136,8 +136,8 @@ export function DetailsTable({ data }: DetailsTableProps) {
         )}
       >
         <CardHeader className="flex flex-row items-start justify-between gap-2">
-          <CardTitle className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-emerald-600/10 ring-1 ring-emerald-600/30 dark:bg-emerald-500/10 dark:ring-emerald-400/40">
+          <CardTitle className="flex items-center gap-2 text-finance-positive">
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-finance-positive/10 ring-1 ring-finance-positive/30">
               <TrendingUp className="w-4 h-4" />
             </span>
             <span className="tracking-tight">Income Details</span>
@@ -149,7 +149,7 @@ export function DetailsTable({ data }: DetailsTableProps) {
                 fullscreen === "income" ? "Exit fullscreen" : "Enter fullscreen"
               }
               onClick={() => enterFullscreen("income")}
-              className="inline-flex items-center justify-center rounded-md border border-emerald-300/60 dark:border-emerald-600/40 bg-white/60 dark:bg-emerald-900/40 backdrop-blur px-2 py-1 text-emerald-700 dark:text-emerald-200 shadow-sm hover:bg-emerald-50 dark:hover:bg-emerald-800/60 active:scale-[0.97] transition text-xs font-medium"
+              className="inline-flex items-center justify-center rounded-md border border-border bg-card backdrop-blur px-2 py-1 text-foreground shadow-sm hover:bg-accent active:scale-[0.97] transition text-xs font-medium"
             >
               {fullscreen === "income" ? (
                 <Minimize2 className="w-4 h-4" />
@@ -163,44 +163,44 @@ export function DetailsTable({ data }: DetailsTableProps) {
           <div
             ref={incomeWrapperRef}
             className={cn(
-              "overflow-x-auto rounded-lg border border-emerald-200/60 dark:border-emerald-500/20 shadow-sm transition-[width_height] bg-emerald-50/60 dark:bg-emerald-950/20",
+              "overflow-x-auto rounded-lg border border-border shadow-sm transition-[width_height] bg-card",
               fullscreen === "income" &&
-                "fixed inset-0 z-50 !m-0 w-screen h-screen rounded-none border-0 flex flex-col p-0 bg-emerald-50/60 dark:bg-emerald-950/20"
+                "fixed inset-0 z-50 !m-0 w-screen h-screen rounded-none border-0 flex flex-col p-0 bg-background"
             )}
             data-fullscreen={fullscreen === "income" || undefined}
           >
             {fullscreen === "income" && (
               <div className="flex items-center justify-between mb-2 md:hidden px-3 pt-3">
-                <h2 className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">
+                <h2 className="text-sm font-semibold text-finance-positive">
                   Income Details (Fullscreen)
                 </h2>
                 <button
                   type="button"
                   aria-label="Exit fullscreen"
                   onClick={exitFullscreen}
-                  className="inline-flex items-center justify-center rounded-md border border-emerald-300/60 dark:border-emerald-600/40 bg-white/60 dark:bg-emerald-900/40 backdrop-blur px-2 py-1 text-emerald-700 dark:text-emerald-200 shadow-sm hover:bg-emerald-50 dark:hover:bg-emerald-800/60 active:scale-[0.97] transition text-xs font-medium"
+                  className="inline-flex items-center justify-center rounded-md border border-border bg-card backdrop-blur px-2 py-1 text-foreground shadow-sm hover:bg-accent active:scale-[0.97] transition text-xs font-medium"
                 >
                   <Minimize2 className="w-4 h-4" />
                 </button>
               </div>
             )}
-            <table className="w-full border-collapse min-w-[700px] text-xs sm:text-sm leading-tight text-neutral-800 dark:text-neutral-200">
+            <table className="w-full border-collapse min-w-[700px] text-xs sm:text-sm leading-tight">
               <thead
                 className={cn(
-                  "text-[11px] uppercase tracking-wide text-emerald-900 dark:text-emerald-200",
+                  "text-[11px] uppercase tracking-wide",
                   fullscreen === "income" && "sticky top-0 z-30 shadow-sm"
                 )}
               >
                 <tr
                   className={cn(
-                    "bg-gradient-to-r from-emerald-50 to-emerald-100 dark:from-emerald-900/30 dark:to-emerald-800/20 border-b border-emerald-200/70 dark:border-emerald-700/40",
+                    "bg-muted border-b border-border",
                     fullscreen === "income" &&
-                      "backdrop-blur supports-[backdrop-filter]:bg-emerald-100/80 dark:supports-[backdrop-filter]:bg-emerald-900/70"
+                      "backdrop-blur supports-[backdrop-filter]:bg-muted/90"
                   )}
                 >
                   <th
                     className={cn(
-                      "sticky left-0 bg-emerald-100/90 dark:bg-emerald-900/60 backdrop-blur text-left px-2 py-2 font-semibold border-r border-emerald-200/60 dark:border-emerald-700/40 min-w-[120px] z-20 text-emerald-900 dark:text-emerald-200",
+                      "sticky left-0 bg-muted backdrop-blur text-left px-2 py-2 font-semibold border-r border-border min-w-[120px] z-20",
                       fullscreen === "income" && "pl-3 min-w-[110px]",
                       "text-soft-shadow-strong"
                     )}
@@ -216,7 +216,7 @@ export function DetailsTable({ data }: DetailsTableProps) {
                         key={month.label}
                         className={cn(
                           "text-center px-2 py-2 font-semibold min-w-[70px] relative text-soft-shadow",
-                          isCurrent && "text-emerald-900 dark:text-emerald-100"
+                          isCurrent && "text-primary"
                         )}
                       >
                         <div className="flex flex-col items-center gap-0.5">
@@ -235,11 +235,11 @@ export function DetailsTable({ data }: DetailsTableProps) {
                   })}
                 </tr>
               </thead>
-              <tbody className="[&_tr:nth-child(even)]:bg-emerald-50 dark:[&_tr:nth-child(even)]:bg-emerald-900/20">
+              <tbody className="[&_tr:nth-child(even)]:bg-muted/50">
                 {data.bankAmount > 0 && (
-                  <tr className="border-b border-emerald-200/60 dark:border-emerald-800/50 hover:bg-emerald-100/70 dark:hover:bg-emerald-800/40 transition-colors group">
-                    <td className="sticky left-0 bg-muted/80 backdrop-blur px-3 py-2 font-medium border-r border-emerald-200/60 dark:border-emerald-700/50 z-10">
-                      <span className="inline-flex items-center gap-1.5 text-emerald-800 dark:text-emerald-300">
+                  <tr className="border-b border-border hover:bg-muted/70 transition-colors group">
+                    <td className="sticky left-0 bg-muted/80 backdrop-blur px-3 py-2 font-medium border-r border-border z-10">
+                      <span className="inline-flex items-center gap-1.5 text-foreground">
                         Bank Balance
                       </span>
                     </td>
@@ -250,7 +250,7 @@ export function DetailsTable({ data }: DetailsTableProps) {
                       >
                         {month.year === currentYear &&
                         month.month === currentMonth ? (
-                          <span className="text-emerald-700 dark:text-emerald-400 font-semibold">
+                          <span className="text-finance-positive font-semibold">
                             €{data.bankAmount.toFixed(2)}
                           </span>
                         ) : (
@@ -263,10 +263,10 @@ export function DetailsTable({ data }: DetailsTableProps) {
                 {data.incomes.map((income) => (
                   <tr
                     key={income.id}
-                    className="border-b border-emerald-200/60 dark:border-emerald-800/50 hover:bg-emerald-100/70 dark:hover:bg-emerald-800/40 transition-colors group"
+                    className="border-b border-border hover:bg-muted/70 transition-colors group"
                   >
-                    <td className="sticky left-0 bg-muted/60 backdrop-blur px-2 py-2 font-medium border-r border-emerald-200/60 dark:border-emerald-700/50 z-10 text-soft-shadow-strong">
-                      <span className="text-emerald-950 dark:text-emerald-100">
+                    <td className="sticky left-0 bg-muted/60 backdrop-blur px-2 py-2 font-medium border-r border-border z-10 text-soft-shadow-strong">
+                      <span className="text-foreground">
                         {income.description || "(No description)"}
                       </span>
                     </td>
@@ -280,12 +280,11 @@ export function DetailsTable({ data }: DetailsTableProps) {
                           key={month.label}
                           className={cn(
                             "text-center px-2 py-2 tabular-nums",
-                            isCurrent &&
-                              "bg-emerald-600/5 dark:bg-emerald-500/10 font-semibold"
+                            isCurrent && "bg-primary/5 font-semibold"
                           )}
                         >
                           {amount > 0 ? (
-                            <span className="text-emerald-700 dark:text-emerald-400 text-soft-shadow">
+                            <span className="text-finance-positive text-soft-shadow">
                               €{amount.toFixed(2)}
                             </span>
                           ) : (
@@ -322,8 +321,8 @@ export function DetailsTable({ data }: DetailsTableProps) {
         )}
       >
         <CardHeader className="flex flex-row items-start justify-between gap-2">
-          <CardTitle className="flex items-center gap-2 text-red-700 dark:text-red-400">
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-red-600/10 ring-1 ring-red-600/30 dark:bg-red-500/10 dark:ring-red-400/40">
+          <CardTitle className="flex items-center gap-2 text-finance-negative">
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-finance-negative/10 ring-1 ring-finance-negative/30">
               <TrendingDown className="w-4 h-4" />
             </span>
             <span className="tracking-tight">Expense Details</span>
@@ -337,7 +336,7 @@ export function DetailsTable({ data }: DetailsTableProps) {
                   : "Enter fullscreen"
               }
               onClick={() => enterFullscreen("expense")}
-              className="inline-flex items-center justify-center rounded-md border border-red-300/60 dark:border-red-600/40 bg-white/60 dark:bg-red-900/40 backdrop-blur px-2 py-1 text-red-700 dark:text-red-200 shadow-sm hover:bg-red-50 dark:hover:bg-red-800/60 active:scale-[0.97] transition text-xs font-medium"
+              className="inline-flex items-center justify-center rounded-md border border-border bg-card backdrop-blur px-2 py-1 text-foreground shadow-sm hover:bg-accent active:scale-[0.97] transition text-xs font-medium"
             >
               {fullscreen === "expense" ? (
                 <Minimize2 className="w-4 h-4" />
@@ -351,44 +350,44 @@ export function DetailsTable({ data }: DetailsTableProps) {
           <div
             ref={expenseWrapperRef}
             className={cn(
-              "overflow-x-auto rounded-lg border border-red-200/60 dark:border-red-500/20 shadow-sm transition-[width_height] bg-red-50/60 dark:bg-red-950/20",
+              "overflow-x-auto rounded-lg border border-border shadow-sm transition-[width_height] bg-card",
               fullscreen === "expense" &&
-                "fixed inset-0 z-50 !m-0 w-screen h-screen rounded-none border-0 flex flex-col p-0 bg-red-50/60 dark:bg-red-950/20"
+                "fixed inset-0 z-50 !m-0 w-screen h-screen rounded-none border-0 flex flex-col p-0 bg-background"
             )}
             data-fullscreen={fullscreen === "expense" || undefined}
           >
             {fullscreen === "expense" && (
               <div className="flex items-center justify-between mb-2 md:hidden px-3 pt-3">
-                <h2 className="text-sm font-semibold text-red-700 dark:text-red-300">
+                <h2 className="text-sm font-semibold text-finance-negative">
                   Expense Details (Fullscreen)
                 </h2>
                 <button
                   type="button"
                   aria-label="Exit fullscreen"
                   onClick={exitFullscreen}
-                  className="inline-flex items-center justify-center rounded-md border border-red-300/60 dark:border-red-600/40 bg-white/60 dark:bg-red-900/40 backdrop-blur px-2 py-1 text-red-700 dark:text-red-200 shadow-sm hover:bg-red-50 dark:hover:bg-red-800/60 active:scale-[0.97] transition text-xs font-medium"
+                  className="inline-flex items-center justify-center rounded-md border border-border bg-card backdrop-blur px-2 py-1 text-foreground shadow-sm hover:bg-accent active:scale-[0.97] transition text-xs font-medium"
                 >
                   <Minimize2 className="w-4 h-4" />
                 </button>
               </div>
             )}
-            <table className="w-full border-collapse min-w-[700px] text-xs sm:text-sm leading-tight text-neutral-800 dark:text-neutral-200">
+            <table className="w-full border-collapse min-w-[700px] text-xs sm:text-sm leading-tight">
               <thead
                 className={cn(
-                  "text-[11px] uppercase tracking-wide text-red-900 dark:text-red-200",
+                  "text-[11px] uppercase tracking-wide",
                   fullscreen === "expense" && "sticky top-0 z-30 shadow-sm"
                 )}
               >
                 <tr
                   className={cn(
-                    "bg-gradient-to-r from-red-50 to-red-100 dark:from-red-900/30 dark:to-red-800/20 border-b border-red-200/70 dark:border-red-700/40",
+                    "bg-muted border-b border-border",
                     fullscreen === "expense" &&
-                      "backdrop-blur supports-[backdrop-filter]:bg-red-100/80 dark:supports-[backdrop-filter]:bg-red-900/70"
+                      "backdrop-blur supports-[backdrop-filter]:bg-muted/90"
                   )}
                 >
                   <th
                     className={cn(
-                      "sticky left-0 bg-red-100/90 dark:bg-red-900/60 backdrop-blur text-left px-2 py-2 font-semibold border-r border-red-200/60 dark:border-red-700/40 min-w-[120px] z-20 text-red-900 dark:text-red-200",
+                      "sticky left-0 bg-muted backdrop-blur text-left px-2 py-2 font-semibold border-r border-border min-w-[120px] z-20",
                       fullscreen === "expense" && "pl-3 min-w-[110px]",
                       "text-soft-shadow-strong"
                     )}
@@ -404,7 +403,7 @@ export function DetailsTable({ data }: DetailsTableProps) {
                         key={month.label}
                         className={cn(
                           "text-center px-2 py-2 font-semibold min-w-[70px] relative text-soft-shadow",
-                          isCurrent && "text-red-900 dark:text-red-100"
+                          isCurrent && "text-primary"
                         )}
                       >
                         <div className="flex flex-col items-center gap-0.5">
@@ -423,14 +422,14 @@ export function DetailsTable({ data }: DetailsTableProps) {
                   })}
                 </tr>
               </thead>
-              <tbody className="[&_tr:nth-child(even)]:bg-red-50 dark:[&_tr:nth-child(even)]:bg-red-900/20">
+              <tbody className="[&_tr:nth-child(even)]:bg-muted/30">
                 {data.expenses.map((expense) => (
                   <tr
                     key={expense.id}
-                    className="border-b border-red-200/60 dark:border-red-800/50 hover:bg-red-100/70 dark:hover:bg-red-800/40 transition-colors group"
+                    className="border-b border-border hover:bg-muted/50 transition-colors group"
                   >
-                    <td className="sticky left-0 bg-muted/60 backdrop-blur px-2 py-2 font-medium border-r border-red-200/60 dark:border-red-700/50 z-10 text-soft-shadow-strong">
-                      <span className="text-red-950 dark:text-red-100">
+                    <td className="sticky left-0 bg-muted/60 backdrop-blur px-2 py-2 font-medium border-r border-border z-10 text-soft-shadow-strong">
+                      <span className="text-foreground">
                         {expense.description || "(No description)"}
                       </span>
                     </td>
@@ -444,12 +443,11 @@ export function DetailsTable({ data }: DetailsTableProps) {
                           key={month.label}
                           className={cn(
                             "text-center px-2 py-2 tabular-nums",
-                            isCurrent &&
-                              "bg-red-600/5 dark:bg-red-500/10 font-semibold"
+                            isCurrent && "bg-primary/5 font-semibold"
                           )}
                         >
                           {amount > 0 ? (
-                            <span className="text-red-700 dark:text-red-400 text-soft-shadow">
+                            <span className="text-finance-negative text-soft-shadow">
                               €{amount.toFixed(2)}
                             </span>
                           ) : (

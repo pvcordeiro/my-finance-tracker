@@ -3,48 +3,82 @@
 @tailwind utilities;
 
 :root {
-  --background: 0 0% 100%;
-  --foreground: 222.2 84% 4.9%;
-  --card: 0 0% 100%;
-  --card-foreground: 222.2 84% 4.9%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 222.2 84% 4.9%;
-  --primary: 217.2 91.2% 52%;
-  --primary-foreground: 210 40% 98%;
-  --secondary: 210 40% 96%;
-  --secondary-foreground: 222.2 84% 4.9%;
-  --muted: 210 40% 96%;
-  --muted-foreground: 215.4 16.3% 46.9%;
-  --accent: 217.2 91.2% 52%;
-  --accent-foreground: 210 40% 98%;
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 210 40% 98%;
-  --border: 214.3 31.8% 91.4%;
-  --input: 214.3 31.8% 91.4%;
-  --ring: 217.2 91.2% 52%;
+  /* Light Mode - White/Light Gray base with Blue accent */
+  --background: 0 0% 100%;           /* Pure white */
+  --foreground: 0 0% 10%;             /* Near black text */
+  --card: 0 0% 98%;                   /* Light gray cards */
+  --card-foreground: 0 0% 10%;        /* Near black text on cards */
+  --popover: 0 0% 100%;               /* White popovers */
+  --popover-foreground: 0 0% 10%;     /* Near black text on popovers */
+  
+  /* Primary = Blue Accent Color */
+  --primary: 217 91% 60%;             /* Vibrant blue accent */
+  --primary-foreground: 0 0% 100%;    /* White text on blue */
+  
+  /* Secondary = Light gray shade */
+  --secondary: 0 0% 96%;              /* Very light gray */
+  --secondary-foreground: 0 0% 10%;   /* Dark text */
+  
+  /* Muted = Medium gray shade */
+  --muted: 0 0% 94%;                  /* Light gray for muted areas */
+  --muted-foreground: 0 0% 45%;       /* Medium gray text */
+  
+  /* Accent = Same as primary (blue) */
+  --accent: 217 91% 60%;              /* Blue accent */
+  --accent-foreground: 0 0% 100%;     /* White text on accent */
+  
+  /* Destructive = Red for errors/negative (not for finance) */
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  
+  /* Borders and inputs */
+  --border: 0 0% 90%;                 /* Light gray borders */
+  --input: 0 0% 96%;                  /* Light gray input backgrounds */
+  --ring: 217 91% 60%;                /* Blue focus rings */
   --radius: 0.5rem;
+  
+  /* Financial colors - always green/red */
+  --finance-positive: 142 76% 36%;    /* Green for income/positive */
+  --finance-negative: 0 84% 60%;      /* Red for expense/negative */
 }
 
 .dark {
-  --background: 240 10% 3.9%;
-  --foreground: 0 0% 98%;
-  --card: 240 10% 8%;
-  --card-foreground: 0 0% 95%;
-  --popover: 240 10% 8%;
-  --popover-foreground: 0 0% 95%;
-  --primary: 217.2 91.2% 40%;
-  --primary-foreground: 0 0% 98%;
-  --secondary: 222.2 47.4% 11.2%;
-  --secondary-foreground: 0 0% 98%;
-  --muted: 222.2 47.4% 11.2%;
-  --muted-foreground: 210 40% 98%;
-  --accent: 217.2 91.2% 40%;
-  --accent-foreground: 0 0% 98%;
-  --destructive: 0 84% 60%;
-  --destructive-foreground: 0 0% 98%;
-  --border: 222.2 47.4% 17.2%;
-  --input: 222.2 47.4% 11.2%;
-  --ring: 217.2 91.2% 40%;
+  /* Dark Mode - Black/Dark Gray base with Blue accent */
+  --background: 0 0% 8%;              /* Very dark gray, almost black */
+  --foreground: 0 0% 98%;             /* Near white text */
+  --card: 0 0% 12%;                   /* Dark gray cards */
+  --card-foreground: 0 0% 95%;        /* Light text on cards */
+  --popover: 0 0% 10%;                /* Very dark popovers */
+  --popover-foreground: 0 0% 95%;     /* Light text on popovers */
+  
+  /* Primary = Blue Accent Color */
+  --primary: 217 91% 65%;             /* Brighter blue for dark mode */
+  --primary-foreground: 0 0% 10%;     /* Dark text on blue */
+  
+  /* Secondary = Dark gray shade */
+  --secondary: 0 0% 15%;              /* Dark gray */
+  --secondary-foreground: 0 0% 95%;   /* Light text */
+  
+  /* Muted = Medium dark gray shade */
+  --muted: 0 0% 18%;                  /* Medium dark gray for muted areas */
+  --muted-foreground: 0 0% 60%;       /* Medium light gray text */
+  
+  /* Accent = Same as primary (blue) */
+  --accent: 217 91% 65%;              /* Blue accent */
+  --accent-foreground: 0 0% 10%;      /* Dark text on accent */
+  
+  /* Destructive = Red for errors/negative (not for finance) */
+  --destructive: 0 84% 65%;
+  --destructive-foreground: 0 0% 100%;
+  
+  /* Borders and inputs */
+  --border: 0 0% 22%;                 /* Dark gray borders */
+  --input: 0 0% 15%;                  /* Dark gray input backgrounds */
+  --ring: 217 91% 65%;                /* Blue focus rings */
+  
+  /* Financial colors - always green/red */
+  --finance-positive: 142 71% 45%;    /* Brighter green for dark mode */
+  --finance-negative: 0 84% 65%;      /* Brighter red for dark mode */
 }
 
 @layer base {
@@ -84,27 +118,33 @@
   }
 
   .finance-gradient {
-  background: linear-gradient(135deg, #e0f2fe 30%, #4b609a 100%);
+  /* Light mode: White to light gray with subtle blue tint */
+  background: linear-gradient(135deg, #ffffff 0%, #f5f5f5 50%, #e8f0fe 100%);
   }
   
   .dark .finance-gradient {
-  background: linear-gradient(135deg, #0c1a2b 0%, #304a93 100%);
+  /* Dark mode: Dark gray to darker gray with subtle blue tint */
+  background: linear-gradient(135deg, #1a1a1a 0%, #141414 50%, #0f1419 100%);
   }
   
   .income-card {
-    @apply bg-emerald-50 border-emerald-200;
+    /* Light mode: subtle background with green border */
+    @apply bg-card border-2 border-finance-positive/20;
   }
   
   .dark .income-card {
-    @apply bg-emerald-950/40 border-emerald-700/50;
+    /* Dark mode: subtle background with green border */
+    @apply bg-card border-2 border-finance-positive/30;
   }
   
   .expense-card {
-    @apply bg-red-50 border-red-200;
+    /* Light mode: subtle background with red border */
+    @apply bg-card border-2 border-finance-negative/20;
   }
   
   .dark .expense-card {
-    @apply bg-red-950/40 border-red-700/50;
+    /* Dark mode: subtle background with red border */
+    @apply bg-card border-2 border-finance-negative/30;
   }
 
   .dark table {

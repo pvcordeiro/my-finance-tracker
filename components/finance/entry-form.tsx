@@ -215,7 +215,9 @@ export function EntryForm({
             <CardTitle
               className={cn(
                 "flex items-center justify-between text-lg sm:text-xl",
-                type === "income" ? "text-emerald-700" : "text-red-700"
+                type === "income"
+                  ? "text-finance-positive"
+                  : "text-finance-negative"
               )}
             >
               <span>{title}</span>
@@ -224,8 +226,8 @@ export function EntryForm({
                   className={cn(
                     "font-semibold text-base sm:text-lg tracking-tight",
                     type === "income"
-                      ? "text-emerald-800 dark:text-emerald-400"
-                      : "text-red-800 dark:text-red-400"
+                      ? "text-finance-positive"
+                      : "text-finance-negative"
                   )}
                 >
                   €
@@ -339,8 +341,8 @@ export function EntryForm({
                             className={cn(
                               "mt-1 font-semibold text-sm sm:text-base transition-colors",
                               type === "income"
-                                ? "text-emerald-800 dark:text-emerald-400"
-                                : "text-red-600 dark:text-red-400"
+                                ? "text-finance-positive"
+                                : "text-finance-negative"
                             )}
                           >
                             €{calculateTotal(entry.amounts).toFixed(2)}
@@ -445,8 +447,8 @@ export function EntryForm({
               className={cn(
                 "w-full transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] touch-manipulation py-3 sm:py-2",
                 type === "income"
-                  ? "border-emerald-200 dark:border-emerald-700/50 hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
-                  : "border-red-200 dark:border-red-700/50 hover:bg-red-50 dark:hover:bg-red-950/20"
+                  ? "border-finance-positive/30 hover:bg-card"
+                  : "border-finance-negative/30 hover:bg-card"
               )}
               aria-label={`Add new ${
                 type === "income" ? "income" : "expense"

@@ -143,7 +143,9 @@ export function SummaryTable({ data }: SummaryTableProps) {
                 <p
                   className={cn(
                     "text-lg sm:text-2xl font-bold truncate text-shadow-sm",
-                    currentBalance >= 0 ? "text-emerald-600" : "text-red-600"
+                    currentBalance >= 0
+                      ? "text-finance-positive"
+                      : "text-finance-negative"
                   )}
                 >
                   €{currentBalance.toFixed(2)}
@@ -164,7 +166,9 @@ export function SummaryTable({ data }: SummaryTableProps) {
                 <p
                   className={cn(
                     "text-lg sm:text-2xl font-bold truncate text-shadow-sm",
-                    nextMonthBalance >= 0 ? "text-emerald-600" : "text-red-600"
+                    nextMonthBalance >= 0
+                      ? "text-finance-positive"
+                      : "text-finance-negative"
                   )}
                 >
                   €{nextMonthBalance.toFixed(2)}
@@ -177,12 +181,12 @@ export function SummaryTable({ data }: SummaryTableProps) {
         <Card className="income-card">
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600 flex-shrink-0" />
+              <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-finance-positive flex-shrink-0" />
               <div className="min-w-0">
-                <p className="text-xs sm:text-sm font-bold text-emerald-700 text-shadow-sm">
+                <p className="text-xs sm:text-sm font-bold text-finance-positive text-shadow-sm">
                   1 Year Income
                 </p>
-                <p className="text-lg sm:text-2xl font-bold text-emerald-800 truncate text-shadow-sm">
+                <p className="text-lg sm:text-2xl font-bold text-finance-positive truncate text-shadow-sm">
                   €{annualIncome.toFixed(2)}
                 </p>
               </div>
@@ -193,12 +197,12 @@ export function SummaryTable({ data }: SummaryTableProps) {
         <Card className="expense-card">
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2">
-              <TrendingDown className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 flex-shrink-0" />
+              <TrendingDown className="w-4 h-4 sm:w-5 sm:h-5 text-finance-negative flex-shrink-0" />
               <div className="min-w-0">
-                <p className="text-xs sm:text-sm font-bold text-red-700 text-shadow-sm">
+                <p className="text-xs sm:text-sm font-bold text-finance-negative text-shadow-sm">
                   1 Year Expense
                 </p>
-                <p className="text-lg sm:text-2xl font-bold text-red-800 truncate text-shadow-sm">
+                <p className="text-lg sm:text-2xl font-bold text-finance-negative truncate text-shadow-sm">
                   €{annualExpenses.toFixed(2)}
                 </p>
               </div>
@@ -222,10 +226,10 @@ export function SummaryTable({ data }: SummaryTableProps) {
                   <th className="text-left px-2 py-2 font-semibold min-w-0 whitespace-nowrap">
                     Month
                   </th>
-                  <th className="text-right px-2 py-2 font-semibold text-emerald-700 min-w-0 whitespace-nowrap">
+                  <th className="text-right px-2 py-2 font-semibold text-finance-positive min-w-0 whitespace-nowrap">
                     Income
                   </th>
-                  <th className="text-right px-2 py-2 font-semibold text-red-700 min-w-0 whitespace-nowrap">
+                  <th className="text-right px-2 py-2 font-semibold text-finance-negative min-w-0 whitespace-nowrap">
                     Expenses
                   </th>
                   <th className="text-right px-2 py-2 font-semibold min-w-0 whitespace-nowrap">
@@ -254,16 +258,18 @@ export function SummaryTable({ data }: SummaryTableProps) {
                         )}
                       </div>
                     </td>
-                    <td className="px-2 py-2 text-right text-emerald-600 font-medium min-w-0">
+                    <td className="px-2 py-2 text-right text-finance-positive font-medium min-w-0">
                       €{row.income.toFixed(2)}
                     </td>
-                    <td className="px-2 py-2 text-right text-red-600 font-medium min-w-0">
+                    <td className="px-2 py-2 text-right text-finance-negative font-medium min-w-0">
                       €{row.expenses.toFixed(2)}
                     </td>
                     <td
                       className={cn(
                         "px-2 py-2 text-right font-bold min-w-0",
-                        row.balance >= 0 ? "text-emerald-600" : "text-red-600"
+                        row.balance >= 0
+                          ? "text-finance-positive"
+                          : "text-finance-negative"
                       )}
                     >
                       €{row.balance.toFixed(2)}
@@ -274,16 +280,18 @@ export function SummaryTable({ data }: SummaryTableProps) {
               <tfoot>
                 <tr className="border-t-2 bg-muted/50 font-bold">
                   <td className="px-2 py-2">Total</td>
-                  <td className="px-2 py-2 text-right text-emerald-700">
+                  <td className="px-2 py-2 text-right text-finance-positive">
                     €{annualIncome.toFixed(2)}
                   </td>
-                  <td className="px-2 py-2 text-right text-red-700">
+                  <td className="px-2 py-2 text-right text-finance-negative">
                     €{annualExpenses.toFixed(2)}
                   </td>
                   <td
                     className={cn(
                       "px-2 py-2 text-right",
-                      finalBalance >= 0 ? "text-emerald-600" : "text-red-600"
+                      finalBalance >= 0
+                        ? "text-finance-positive"
+                        : "text-finance-negative"
                     )}
                   >
                     €{finalBalance.toFixed(2)}

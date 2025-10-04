@@ -42,6 +42,10 @@ module.exports = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        finance: {
+          positive: "hsl(var(--finance-positive))",
+          negative: "hsl(var(--finance-negative))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

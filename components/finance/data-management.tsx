@@ -120,7 +120,7 @@ export function DataManagement({
               <div className="text-sm text-muted-foreground">Total Entries</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-emerald-600">
+              <div className="text-2xl font-bold text-finance-positive">
                 {stats.totalIncomes}
               </div>
               <div className="text-sm text-muted-foreground">
@@ -128,7 +128,7 @@ export function DataManagement({
               </div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-red-600">
+              <div className="text-2xl font-bold text-finance-negative">
                 {stats.totalExpenses}
               </div>
               <div className="text-sm text-muted-foreground">
