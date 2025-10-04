@@ -364,6 +364,9 @@ function HomePageContent() {
                   }
                   onRemoveEntry={async (id) => {
                     try {
+                      const entry = data.incomes.find((e) => e.id === id);
+                      const description = entry?.description || "Entry";
+
                       await removeEntry("incomes", id);
                       flashCounterRef.current += 1;
                       setLastSaved({
@@ -371,8 +374,15 @@ function HomePageContent() {
                         id,
                         token: flashCounterRef.current,
                       });
+
+                      toast.success("Income deleted", {
+                        description: `${description} was removed successfully`,
+                      });
                     } catch (error) {
                       console.error("Failed to delete income entry:", error);
+                      toast.error("Failed to delete income", {
+                        description: "Please try again",
+                      });
                     }
                   }}
                   type="income"
@@ -439,6 +449,9 @@ function HomePageContent() {
                   }
                   onRemoveEntry={async (id) => {
                     try {
+                      const entry = data.expenses.find((e) => e.id === id);
+                      const description = entry?.description || "Entry";
+
                       await removeEntry("expenses", id);
                       flashCounterRef.current += 1;
                       setLastSaved({
@@ -446,8 +459,15 @@ function HomePageContent() {
                         id,
                         token: flashCounterRef.current,
                       });
+
+                      toast.success("Expense deleted", {
+                        description: `${description} was removed successfully`,
+                      });
                     } catch (error) {
                       console.error("Failed to delete expense entry:", error);
+                      toast.error("Failed to delete expense", {
+                        description: "Please try again",
+                      });
                     }
                   }}
                   type="expense"
