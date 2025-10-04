@@ -27,6 +27,7 @@ export async function GET(request) {
         username: user.username,
         is_admin: user.is_admin,
         accent_color: user.accent_color || "blue",
+        theme_preference: user.theme_preference || "system",
         groups: user.groups,
         current_group_id: user.current_group_id,
       },

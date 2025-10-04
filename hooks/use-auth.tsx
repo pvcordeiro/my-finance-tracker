@@ -80,6 +80,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (response.ok) {
         const { user: userData } = await response.json();
         setUser(userData);
+
+        window.dispatchEvent(new Event("userLoggedIn"));
+
         return true;
       }
       return false;
@@ -106,6 +109,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (response.ok) {
         const { user: userData } = await response.json();
         setUser(userData);
+
+        window.dispatchEvent(new Event("userLoggedIn"));
+
         return true;
       }
 
@@ -128,9 +134,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         method: "POST",
         credentials: "include",
       });
+
+      window.dispatchEvent(new Event("userLoggedOut"));
     } catch (error) {
       console.error("Logout error:", error);
       setUser(null);
+
+      window.dispatchEvent(new Event("userLoggedOut"));
     }
   };
 

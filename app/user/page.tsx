@@ -29,6 +29,7 @@ import {
   UserCog,
   Lock,
   Key,
+  Laptop,
 } from "lucide-react";
 import {
   Card,
@@ -43,6 +44,7 @@ import { AccentColorSwitcher } from "@/components/ui/accent-color-switcher";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTheme } from "next-themes";
+import { SessionsList } from "@/components/user/sessions-list";
 
 export default function UserSettingsPage() {
   const { user, isLoading, logout } = useAuth();
@@ -344,6 +346,20 @@ export default function UserSettingsPage() {
                 </div>
               </>
             )}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Laptop className="w-5 h-5" />
+              Active Sessions
+            </CardTitle>
+            <CardDescription>
+              Manage your active sessions across different devices.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <SessionsList />
           </CardContent>
         </Card>
       </main>

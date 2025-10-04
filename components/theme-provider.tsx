@@ -4,6 +4,7 @@ import * as React from "react";
 import {
   ThemeProvider as NextThemesProvider,
   type ThemeProviderProps,
+  useTheme,
 } from "next-themes";
 
 const ACCENT_COLORS: Record<
@@ -21,13 +22,20 @@ const ACCENT_COLORS: Record<
   amber: { hue: "45", lightModeLightness: "42%" },
 };
 
-export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
+function ThemeManager() {
+  const { setTheme } = useTheme();
   const [currentAccent, setCurrentAccent] = React.useState<string | null>(null);
+  const [isInitialLoad, setIsInitialLoad] = React.useState(true);
+  const setThemeRef = React.useRef(setTheme);
 
-  const applyAccentColor = React.useCallback((accentColor: string) => {
-    if (!ACCENT_COLORS[accentColor]) return;
+  React.useEffect(() => {
+    setThemeRef.current = setTheme;
+  }, [setTheme]);
 
-    const color = ACCENT_COLORS[accentColor];
+  const applyAccentColor = React.useCallback(() => {
+    if (!currentAccent || !ACCENT_COLORS[currentAccent]) return;
+
+    const color = ACCENT_COLORS[currentAccent];
     const root = document.documentElement;
 
     const isDark = root.classList.contains("dark");
@@ -41,37 +49,71 @@ export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
 
     root.style.setProperty("--primary", `${color.hue} 91% ${lightness}`);
     root.style.setProperty("--ring", `${color.hue} 91% ${lightness}`);
+  }, [currentAccent]);
+
+  const applyUserPreferences = React.useCallback(async (skipTheme = false) => {
+    try {
+      const sessionResponse = await fetch("/api/auth/session", {
+        credentials: "include",
+      });
+
+      if (sessionResponse.ok) {
+        const sessionData = await sessionResponse.json();
+
+        if (sessionData.user) {
+          if (!skipTheme && sessionData.user.theme_preference) {
+            setThemeRef.current(sessionData.user.theme_preference);
+          }
+
+          if (sessionData.user.accent_color) {
+            setCurrentAccent(sessionData.user.accent_color);
+          }
+        }
+      }
+    } catch (error) {
+      console.debug("User preferences not loaded:", error);
+    }
   }, []);
 
   React.useEffect(() => {
-    const applyUserAccentColor = async () => {
-      try {
-        const response = await fetch("/api/user/accent-color", {
-          credentials: "include",
-        });
+    if (currentAccent) {
+      const timer = setTimeout(() => {
+        applyAccentColor();
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [currentAccent, applyAccentColor]);
 
-        if (response.status === 401) {
-          return;
-        }
+  React.useEffect(() => {
+    if (isInitialLoad) {
+      applyUserPreferences(false);
+      setIsInitialLoad(false);
+    }
+  }, [isInitialLoad, applyUserPreferences]);
 
-        if (response.ok) {
-          const data = await response.json();
-          if (data.accentColor) {
-            setCurrentAccent(data.accentColor);
-            applyAccentColor(data.accentColor);
-          }
-        }
-      } catch (error) {
-        console.debug("Accent color not loaded:", error);
-      }
+  React.useEffect(() => {
+    const handleUserLogin = () => {
+      applyUserPreferences(false);
     };
 
-    applyUserAccentColor();
+    const handleUserLogout = () => {
+      setThemeRef.current("system");
+      setCurrentAccent("blue");
+    };
 
+    window.addEventListener("userLoggedIn", handleUserLogin);
+    window.addEventListener("userLoggedOut", handleUserLogout);
+
+    return () => {
+      window.removeEventListener("userLoggedIn", handleUserLogin);
+      window.removeEventListener("userLoggedOut", handleUserLogout);
+    };
+  }, [applyUserPreferences, applyAccentColor]);
+
+  React.useEffect(() => {
     const handleAccentColorChange = (event: CustomEvent) => {
       const newColor = event.detail;
       setCurrentAccent(newColor);
-      applyAccentColor(newColor);
     };
 
     window.addEventListener(
@@ -85,7 +127,7 @@ export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
         handleAccentColorChange as EventListener
       );
     };
-  }, [applyAccentColor]);
+  }, []);
 
   React.useEffect(() => {
     if (!currentAccent) return;
@@ -96,7 +138,7 @@ export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
           mutation.type === "attributes" &&
           mutation.attributeName === "class"
         ) {
-          applyAccentColor(currentAccent);
+          applyAccentColor();
         }
       });
     });
@@ -109,5 +151,14 @@ export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
     return () => observer.disconnect();
   }, [currentAccent, applyAccentColor]);
 
-  return <NextThemesProvider {...props}>{children}</NextThemesProvider>;
+  return null;
+}
+
+export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
+  return (
+    <NextThemesProvider {...props}>
+      <ThemeManager />
+      {children}
+    </NextThemesProvider>
+  );
 }

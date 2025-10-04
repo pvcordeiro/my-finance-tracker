@@ -13,6 +13,21 @@ export function ThemeToggle() {
     setMounted(true);
   }, []);
 
+  const handleThemeChange = async (newTheme: string) => {
+    setTheme(newTheme);
+
+    try {
+      await fetch("/api/user/theme", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ theme: newTheme }),
+      });
+    } catch (error) {
+      console.error("Failed to save theme preference:", error);
+    }
+  };
+
   if (!mounted) {
     return <div className="h-10 w-full" />;
   }
@@ -34,7 +49,7 @@ export function ThemeToggle() {
             key={themeOption.value}
             variant={isActive ? "default" : "outline"}
             size="sm"
-            onClick={() => setTheme(themeOption.value)}
+            onClick={() => handleThemeChange(themeOption.value)}
             className="flex-1 gap-2"
           >
             <Icon className="w-4 h-4" />

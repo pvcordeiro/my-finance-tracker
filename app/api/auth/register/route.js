@@ -6,6 +6,7 @@ import {
   createSession,
   getSessionCookieOptions,
   SESSION_COOKIE_NAME,
+  getDeviceInfo,
 } from "../../../../lib/session.js";
 
 export async function POST(request) {
@@ -107,7 +108,8 @@ export async function POST(request) {
       );
     });
 
-    const sessionToken = await createSession(userId);
+    const deviceInfo = getDeviceInfo(request);
+    const sessionToken = await createSession(userId, deviceInfo);
 
     const groups = await new Promise((resolve, reject) => {
       db.all(
