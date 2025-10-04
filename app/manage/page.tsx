@@ -349,9 +349,9 @@ function HomePageContent() {
           className="space-y-6"
         >
           <TabsContent value="main">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:h-[calc(100vh-200px)]">
               {/* Left Column - Bank Amount */}
-              <div className="lg:sticky lg:top-[155px] lg:self-start space-y-4">
+              <div className="space-y-4 lg:overflow-y-auto lg:pr-2">
                 <BankAmount
                   amount={data.bankAmount}
                   onAdd={handleAddToBankAmount}
@@ -372,7 +372,7 @@ function HomePageContent() {
               </div>
 
               {/* Right Column - Add Buttons + Income and Expenses */}
-              <div className="space-y-4">
+              <div className="space-y-4 lg:overflow-y-auto lg:pr-2">
                 {/* Add Entry Buttons */}
                 <div className="space-y-3 pt-3 border-t lg:border-t-0 lg:pt-0 lg:space-y-0">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
