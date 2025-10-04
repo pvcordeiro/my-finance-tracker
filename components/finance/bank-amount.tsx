@@ -27,6 +27,26 @@ export function BankAmount({
   const [currentFlashType, setCurrentFlashType] = useState<"add" | "subtract">(
     "add"
   );
+  const [noteFieldEnabled, setNoteFieldEnabled] = useState(false);
+
+  useEffect(() => {
+    const fetchSetting = async () => {
+      try {
+        const response = await fetch("/api/balance-history", {
+          credentials: "include",
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setNoteFieldEnabled(data.enabled || false);
+        }
+      } catch (error) {
+        console.error("Failed to fetch note field setting:", error);
+      }
+    };
+
+    fetchSetting();
+  }, []);
 
   useEffect(() => {
     if (flashToken !== undefined) {
@@ -88,7 +108,13 @@ export function BankAmount({
               Adjust Balance
             </Label>
             <div className="flex flex-col gap-3">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div
+                className={`grid gap-3 ${
+                  noteFieldEnabled
+                    ? "grid-cols-1 sm:grid-cols-2"
+                    : "grid-cols-1"
+                }`}
+              >
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none z-10 select-none">
                     €
@@ -109,14 +135,16 @@ export function BankAmount({
                     className="pl-8 w-full text-sm sm:text-base"
                   />
                 </div>
-                <Input
-                  type="text"
-                  placeholder="Add note (optional)"
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                  className="w-full text-sm sm:text-base"
-                  maxLength={200}
-                />
+                {noteFieldEnabled && (
+                  <Input
+                    type="text"
+                    placeholder="Add note (optional)"
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                    className="w-full text-sm sm:text-base"
+                    maxLength={200}
+                  />
+                )}
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <Button
