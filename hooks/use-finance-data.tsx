@@ -266,9 +266,6 @@ export function useFinanceData() {
     }
   };
 
-  /**
-   * Save ONLY the bank amount (no entries) -- used on blur of the bank amount input.
-   */
   const saveBankAmount = async (
     dataToSave?: FinanceData,
     onSessionExpired?: () => void
@@ -817,9 +814,6 @@ export function useFinanceData() {
     }
   };
 
-  /**
-   * Add an amount to the bank balance atomically
-   */
   const addToBankAmount = async (delta: number) => {
     if (delta <= 0) return;
 
@@ -856,9 +850,6 @@ export function useFinanceData() {
     }
   };
 
-  /**
-   * Subtract an amount from the bank balance atomically
-   */
   const subtractFromBankAmount = async (delta: number) => {
     if (delta <= 0) return;
 

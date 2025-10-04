@@ -5,11 +5,6 @@ import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
-/**
- * Renders a fixed, centered overlay when the authenticated user
- * has no group memberships. It sits above regular content but
- * below toasts / dialogs (z-index 40) and dims the background subtly.
- */
 export function NoGroupOverlay({ className }: { className?: string }) {
   const { user, isLoading } = useAuth();
   const pathname = usePathname();

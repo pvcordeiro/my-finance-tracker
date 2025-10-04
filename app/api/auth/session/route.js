@@ -26,6 +26,7 @@ export async function GET(request) {
         id: user.id,
         username: user.username,
         is_admin: user.is_admin,
+        accent_color: user.accent_color || "blue",
         groups: user.groups,
         current_group_id: user.current_group_id,
       },

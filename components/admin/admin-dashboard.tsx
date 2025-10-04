@@ -36,8 +36,6 @@ import {
   ChevronDown,
   Calculator,
   User,
-  Moon,
-  Sun,
   Edit,
   MoreHorizontal,
   ShieldOff,
@@ -51,7 +49,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useTheme } from "next-themes";
 import { toast } from "sonner";
 
 interface User {
@@ -77,9 +74,7 @@ interface Group {
 export function AdminDashboard() {
   const { user, logout } = useAuth();
   const router = useRouter();
-  const { setTheme, resolvedTheme } = useTheme();
   const isMobile = useIsMobile();
-  const [mounted, setMounted] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
   const [newGroupName, setNewGroupName] = useState("");
@@ -100,10 +95,6 @@ export function AdminDashboard() {
       window.scrollTo(0, 0);
     }
   }, [activeTab, isMobile]);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const loadUsers = async () => {
     try {
@@ -415,21 +406,6 @@ export function AdminDashboard() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem
-                    onClick={() =>
-                      setTheme(resolvedTheme === "dark" ? "light" : "dark")
-                    }
-                    className="cursor-pointer"
-                  >
-                    {mounted && resolvedTheme === "dark" ? (
-                      <Sun className="w-4 h-4 mr-2" />
-                    ) : (
-                      <Moon className="w-4 h-4 mr-2" />
-                    )}
-                    {mounted && resolvedTheme === "dark"
-                      ? "Light Mode"
-                      : "Dark Mode"}
-                  </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => router.push("/user")}
                     className="cursor-pointer"

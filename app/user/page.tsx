@@ -11,16 +11,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
-import {
-  LogOut,
-  ChevronDown,
-  Moon,
-  Sun,
-  Shield,
-  Calculator,
-} from "lucide-react";
-import { useTheme } from "next-themes";
-import { useState } from "react";
+import { LogOut, ChevronDown, Shield, Calculator } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -30,16 +21,12 @@ import {
 } from "@/components/ui/card";
 import { FullPageLoader } from "@/components/ui/loading";
 import { User } from "lucide-react";
+import { AccentColorSwitcher } from "@/components/ui/accent-color-switcher";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 export default function UserSettingsPage() {
   const { user, isLoading, logout } = useAuth();
   const router = useRouter();
-  const { setTheme, resolvedTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -84,21 +71,6 @@ export default function UserSettingsPage() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onClick={() =>
-                    setTheme(resolvedTheme === "dark" ? "light" : "dark")
-                  }
-                  className="cursor-pointer"
-                >
-                  {mounted && resolvedTheme === "dark" ? (
-                    <Sun className="w-4 h-4 mr-2" />
-                  ) : (
-                    <Moon className="w-4 h-4 mr-2" />
-                  )}
-                  {mounted && resolvedTheme === "dark"
-                    ? "Light Mode"
-                    : "Dark Mode"}
-                </DropdownMenuItem>
                 {user.is_admin && (
                   <DropdownMenuItem
                     onClick={() => router.push("/admin")}
@@ -131,6 +103,24 @@ export default function UserSettingsPage() {
         </div>
       </header>
       <main className="container mx-auto p-4 space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Appearance</CardTitle>
+            <CardDescription>
+              Customize the look and feel of the application.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div>
+              <h3 className="text-sm font-medium mb-3">Theme</h3>
+              <ThemeToggle />
+            </div>
+            <div>
+              <h3 className="text-sm font-medium mb-3">Accent Color</h3>
+              <AccentColorSwitcher />
+            </div>
+          </CardContent>
+        </Card>
         <Card>
           <CardHeader>
             <CardTitle>Change Username</CardTitle>
