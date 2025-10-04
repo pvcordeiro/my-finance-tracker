@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ChevronDown, ChevronUp, Trash2, Plus, Edit3 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { GuidedEntryDialog } from "./guided-entry-dialog";
 
 export interface FinanceEntry {
   id: string;
@@ -50,6 +51,12 @@ interface EntryFormProps {
     monthIndex: number,
     amount: number
   ) => Promise<boolean> | boolean;
+  onGuidedAddEntry: (description: string, amounts: number[]) => void;
+  flashEntryId?: string;
+  flashToken?: number;
+  hideAddButton?: boolean;
+  guidedDialogOpen?: boolean;
+  onGuidedDialogOpenChange?: (open: boolean) => void;
 }
 
 const MONTHS = [
@@ -91,6 +98,12 @@ export function EntryForm({
   onToggle,
   onCommitDescription,
   onCommitAmount,
+  onGuidedAddEntry,
+  flashEntryId,
+  flashToken,
+  hideAddButton = false,
+  guidedDialogOpen: externalGuidedDialogOpen,
+  onGuidedDialogOpenChange,
 }: EntryFormProps) {
   const [expandedEntries, setExpandedEntries] = useState<Set<string>>(
     new Set()
@@ -98,10 +111,22 @@ export function EntryForm({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [entryToDelete, setEntryToDelete] = useState<string | null>(null);
   const [changedFields, setChangedFields] = useState<Set<string>>(new Set());
+  const [internalGuidedDialogOpen, setInternalGuidedDialogOpen] =
+    useState(false);
   const [savedFields, setSavedFields] = useState<Set<string>>(new Set());
+  const [flashingEntries, setFlashingEntries] = useState<Set<string>>(
+    new Set()
+  );
   const [editingDescriptionId, setEditingDescriptionId] = useState<
     string | null
   >(null);
+
+  const guidedDialogOpen =
+    externalGuidedDialogOpen !== undefined
+      ? externalGuidedDialogOpen
+      : internalGuidedDialogOpen;
+  const setGuidedDialogOpen =
+    onGuidedDialogOpenChange || setInternalGuidedDialogOpen;
   const markSaved = (fieldKey: string) => {
     setSavedFields((prev) => new Set(prev).add(fieldKey));
     setTimeout(() => {
@@ -117,6 +142,19 @@ export function EntryForm({
   const sectionRef = useRef<HTMLDivElement | null>(null);
   const prevEntriesLengthRef = useRef(entries.length);
   const shouldExpandLastEntry = useRef(false);
+
+  useEffect(() => {
+    if (flashEntryId && flashToken) {
+      setFlashingEntries((prev) => new Set(prev).add(flashEntryId));
+      setTimeout(() => {
+        setFlashingEntries((prev) => {
+          const ns = new Set(prev);
+          ns.delete(flashEntryId);
+          return ns;
+        });
+      }, 650);
+    }
+  }, [flashEntryId, flashToken]);
 
   const toggleEntry = (entryId: string) => {
     const newExpanded = new Set(expandedEntries);
@@ -153,9 +191,11 @@ export function EntryForm({
     if (!isOpen) {
       onToggle();
     }
-    prevEntriesLengthRef.current = entries.length;
-    shouldExpandLastEntry.current = true;
-    onAddEntry();
+    setGuidedDialogOpen(true);
+  };
+
+  const handleGuidedSubmit = (description: string, amounts: number[]) => {
+    onGuidedAddEntry(description, amounts);
   };
 
   const handleSectionToggle = () => {
@@ -252,7 +292,11 @@ export function EntryForm({
             {entries.map((entry) => (
               <Card
                 key={entry.id}
-                className="border-muted"
+                className={cn(
+                  "border-muted",
+                  flashingEntries.has(entry.id) &&
+                    (type === "income" ? "flash-success" : "flash-error")
+                )}
                 ref={(el) => {
                   if (el) {
                     entryRefs.current[entry.id] = el;
@@ -375,7 +419,7 @@ export function EntryForm({
                   </CollapsibleTrigger>
                   <CollapsibleContent className="pt-0 space-y-4 data-[state=open]:animate-in data-[state=open]:slide-in-from-top-5 data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:slide-out-to-top-5 data-[state=closed]:fade-out-0">
                     <CardContent>
-                      <div className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 sm:gap-4">
+                      <div className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-3 sm:gap-4">
                         {rollingMonths.map((month, index) => (
                           <div key={month} className="space-y-2">
                             <label className="text-xs font-medium text-muted-foreground block">
@@ -388,20 +432,25 @@ export function EntryForm({
                               <Input
                                 type="number"
                                 inputMode="decimal"
+                                step="0.01"
                                 placeholder="0"
                                 value={entry.amounts[index] || ""}
                                 onChange={(e) => {
-                                  onUpdateEntry(
-                                    entry.id,
-                                    "amount",
-                                    Number.parseFloat(e.target.value) || 0,
-                                    index
-                                  );
-                                  setChangedFields((prev) =>
-                                    new Set(prev).add(
-                                      `${entry.id}-amount-${index}`
-                                    )
-                                  );
+                                  const value = e.target.value;
+                                  const regex = /^\d*\.?\d{0,2}$/;
+                                  if (value === "" || regex.test(value)) {
+                                    onUpdateEntry(
+                                      entry.id,
+                                      "amount",
+                                      Number.parseFloat(value) || 0,
+                                      index
+                                    );
+                                    setChangedFields((prev) =>
+                                      new Set(prev).add(
+                                        `${entry.id}-amount-${index}`
+                                      )
+                                    );
+                                  }
                                 }}
                                 onBlur={() => {
                                   const fieldKey = `${entry.id}-amount-${index}`;
@@ -441,22 +490,24 @@ export function EntryForm({
                 </Collapsible>
               </Card>
             ))}
-            <Button
-              onClick={handleAddEntry}
-              variant="outline"
-              className={cn(
-                "w-full transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] touch-manipulation py-3 sm:py-2",
-                type === "income"
-                  ? "border-finance-positive/30 hover:bg-card"
-                  : "border-finance-negative/30 hover:bg-card"
-              )}
-              aria-label={`Add new ${
-                type === "income" ? "income" : "expense"
-              } entry`}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add {type === "income" ? "Income" : "Expense"}
-            </Button>
+            {!hideAddButton && (
+              <Button
+                onClick={handleAddEntry}
+                variant="outline"
+                className={cn(
+                  "w-full transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] touch-manipulation py-3 sm:py-2",
+                  type === "income"
+                    ? "border-finance-positive/30 hover:bg-card"
+                    : "border-finance-negative/30 hover:bg-card"
+                )}
+                aria-label={`Add new ${
+                  type === "income" ? "income" : "expense"
+                } entry`}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add {type === "income" ? "Income" : "Expense"}
+              </Button>
+            )}
           </CardContent>
         </CollapsibleContent>
       </Collapsible>
@@ -492,6 +543,14 @@ export function EntryForm({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Guided Entry Dialog */}
+      <GuidedEntryDialog
+        open={guidedDialogOpen}
+        onOpenChange={setGuidedDialogOpen}
+        type={type}
+        onSubmit={handleGuidedSubmit}
+      />
     </Card>
   );
 }

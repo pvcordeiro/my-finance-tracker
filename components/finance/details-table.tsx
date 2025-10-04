@@ -238,26 +238,33 @@ export function DetailsTable({ data }: DetailsTableProps) {
               <tbody className="[&_tr:nth-child(even)]:bg-muted/50">
                 {data.bankAmount > 0 && (
                   <tr className="border-b border-border hover:bg-muted/70 transition-colors group">
-                    <td className="sticky left-0 bg-muted/80 backdrop-blur px-3 py-2 font-medium border-r border-border z-10">
-                      <span className="inline-flex items-center gap-1.5 text-foreground">
-                        Bank Balance
-                      </span>
+                    <td className="sticky left-0 bg-muted/60 backdrop-blur px-2 py-2 font-medium border-r border-border z-10 text-soft-shadow-strong">
+                      <span className="text-foreground">Current Balance</span>
                     </td>
-                    {months.map((month) => (
-                      <td
-                        key={month.label}
-                        className="text-center px-2 py-2 tabular-nums font-medium"
-                      >
-                        {month.year === currentYear &&
-                        month.month === currentMonth ? (
-                          <span className="text-finance-positive font-semibold">
-                            €{data.bankAmount.toFixed(2)}
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground/70">–</span>
-                        )}
-                      </td>
-                    ))}
+                    {months.map((month) => {
+                      const isCurrent =
+                        month.year === currentYear &&
+                        month.month === currentMonth;
+                      return (
+                        <td
+                          key={month.label}
+                          className={cn(
+                            "text-center px-2 py-2 tabular-nums",
+                            isCurrent && "bg-primary/5 font-semibold"
+                          )}
+                        >
+                          {isCurrent ? (
+                            <span className="text-finance-positive text-soft-shadow">
+                              €{data.bankAmount.toFixed(2)}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground/70 text-soft-shadow">
+                              –
+                            </span>
+                          )}
+                        </td>
+                      );
+                    })}
                   </tr>
                 )}
                 {data.incomes.map((income) => (

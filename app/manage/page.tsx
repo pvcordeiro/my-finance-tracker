@@ -10,6 +10,8 @@ import { EntryForm } from "@/components/finance/entry-form";
 import { Button } from "@/components/ui/button";
 import { DataManagement } from "@/components/finance/data-management";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { toast } from "sonner";
+import { Plus } from "lucide-react";
 
 import { Dialog } from "@/components/ui/dialog";
 import {
@@ -44,17 +46,90 @@ function HomePageContent() {
   } = useFinanceData();
   const [incomeOpen, setIncomeOpen] = useState(false);
   const [expenseOpen, setExpenseOpen] = useState(false);
+  const [incomeGuidedDialogOpen, setIncomeGuidedDialogOpen] = useState(false);
+  const [expenseGuidedDialogOpen, setExpenseGuidedDialogOpen] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const nextRouteRef = useRef<string | null>(null);
   const sessionExpiredRef = useRef(false);
   const [activeTab, setActiveTab] = useState(
     searchParams.get("tab") === "management" ? "management" : "main"
   );
+  const pendingGuidedEntryRef = useRef<{
+    type: "incomes" | "expenses";
+    description: string;
+    amounts: number[];
+  } | null>(null);
+  const prevIncomeCountRef = useRef(data.incomes.length);
+  const prevExpenseCountRef = useRef(data.expenses.length);
+  const [guidedEntryFlash, setGuidedEntryFlash] = useState<{
+    type: "incomes" | "expenses";
+    entryId: string;
+    token: number;
+  } | null>(null);
 
   useEffect(() => {
     const tab = searchParams.get("tab");
     setActiveTab(tab === "management" ? "management" : "main");
   }, [searchParams]);
+
+  useEffect(() => {
+    const applyGuidedData = async () => {
+      if (!pendingGuidedEntryRef.current) return;
+
+      const { type, description, amounts } = pendingGuidedEntryRef.current;
+
+      const currentCount =
+        type === "incomes" ? data.incomes.length : data.expenses.length;
+      const prevCount =
+        type === "incomes"
+          ? prevIncomeCountRef.current
+          : prevExpenseCountRef.current;
+
+      if (currentCount > prevCount) {
+        const entries = type === "incomes" ? data.incomes : data.expenses;
+        const newEntry = entries[entries.length - 1];
+
+        if (newEntry && newEntry.description === "") {
+          updateEntry(type, newEntry.id, "description", description);
+          await commitEntryDescription(type, newEntry.id, description);
+
+          for (let i = 0; i < 12; i++) {
+            if (amounts[i] !== 0) {
+              updateEntry(type, newEntry.id, "amount", amounts[i], i);
+              await commitEntryAmount(type, newEntry.id, i, amounts[i]);
+            }
+          }
+
+          flashCounterRef.current += 1;
+          setLastSaved({
+            kind: "entry-desc",
+            id: newEntry.id,
+            token: flashCounterRef.current,
+          });
+
+          setGuidedEntryFlash({
+            type,
+            entryId: newEntry.id,
+            token: flashCounterRef.current,
+          });
+
+          toast.success(
+            `${type === "incomes" ? "Income" : "Expense"} added successfully`,
+            {
+              description: description || "New entry created",
+            }
+          );
+
+          pendingGuidedEntryRef.current = null;
+        }
+      }
+
+      prevIncomeCountRef.current = data.incomes.length;
+      prevExpenseCountRef.current = data.expenses.length;
+    };
+
+    applyGuidedData();
+  }, [data.incomes.length, data.expenses.length]);
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -201,6 +276,26 @@ function HomePageContent() {
     });
   };
 
+  const handleGuidedAddIncome = (description: string, amounts: number[]) => {
+    pendingGuidedEntryRef.current = {
+      type: "incomes",
+      description,
+      amounts,
+    };
+
+    addEntry("incomes");
+  };
+
+  const handleGuidedAddExpense = (description: string, amounts: number[]) => {
+    pendingGuidedEntryRef.current = {
+      type: "expenses",
+      description,
+      amounts,
+    };
+
+    addEntry("expenses");
+  };
+
   if (!user) return null;
 
   return (
@@ -229,12 +324,41 @@ function HomePageContent() {
                 />
               </div>
 
-              {/* Right Column - Income and Expenses */}
+              {/* Right Column - Add Buttons + Income and Expenses */}
               <div className="space-y-4">
+                {/* Add Entry Buttons */}
+                <div className="space-y-3 pt-3 border-t lg:border-t-0 lg:pt-0 lg:space-y-0">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <Button
+                      onClick={() => {
+                        if (!incomeOpen) setIncomeOpen(true);
+                        setIncomeGuidedDialogOpen(true);
+                      }}
+                      variant="outline"
+                      className="w-full transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] touch-manipulation py-4 sm:py-3 border-finance-positive/30 hover:bg-card"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Income
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        if (!expenseOpen) setExpenseOpen(true);
+                        setExpenseGuidedDialogOpen(true);
+                      }}
+                      variant="outline"
+                      className="w-full transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] touch-manipulation py-4 sm:py-3 border-finance-negative/30 hover:bg-card"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Expense
+                    </Button>
+                  </div>
+                </div>
+
                 <EntryForm
                   title="Income"
                   entries={data.incomes}
                   onAddEntry={() => addEntry("incomes")}
+                  onGuidedAddEntry={handleGuidedAddIncome}
                   onUpdateEntry={(id, field, value, monthIndex) =>
                     updateEntry("incomes", id, field, value, monthIndex)
                   }
@@ -254,6 +378,19 @@ function HomePageContent() {
                   type="income"
                   isOpen={incomeOpen}
                   onToggle={() => setIncomeOpen(!incomeOpen)}
+                  hideAddButton={true}
+                  guidedDialogOpen={incomeGuidedDialogOpen}
+                  onGuidedDialogOpenChange={setIncomeGuidedDialogOpen}
+                  flashEntryId={
+                    guidedEntryFlash?.type === "incomes"
+                      ? guidedEntryFlash.entryId
+                      : undefined
+                  }
+                  flashToken={
+                    guidedEntryFlash?.type === "incomes"
+                      ? guidedEntryFlash.token
+                      : undefined
+                  }
                   onCommitDescription={async (id, desc) => {
                     const res: CommitResult = await commitEntryDescription(
                       "incomes",
@@ -296,6 +433,7 @@ function HomePageContent() {
                   title="Expenses"
                   entries={data.expenses}
                   onAddEntry={() => addEntry("expenses")}
+                  onGuidedAddEntry={handleGuidedAddExpense}
                   onUpdateEntry={(id, field, value, monthIndex) =>
                     updateEntry("expenses", id, field, value, monthIndex)
                   }
@@ -315,6 +453,19 @@ function HomePageContent() {
                   type="expense"
                   isOpen={expenseOpen}
                   onToggle={() => setExpenseOpen(!expenseOpen)}
+                  hideAddButton={true}
+                  guidedDialogOpen={expenseGuidedDialogOpen}
+                  onGuidedDialogOpenChange={setExpenseGuidedDialogOpen}
+                  flashEntryId={
+                    guidedEntryFlash?.type === "expenses"
+                      ? guidedEntryFlash.entryId
+                      : undefined
+                  }
+                  flashToken={
+                    guidedEntryFlash?.type === "expenses"
+                      ? guidedEntryFlash.token
+                      : undefined
+                  }
                   onCommitDescription={async (id, desc) => {
                     const res: CommitResult = await commitEntryDescription(
                       "expenses",

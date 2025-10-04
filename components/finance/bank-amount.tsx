@@ -64,7 +64,7 @@ export function BankAmount({
             <Banknote className="w-5 h-5 sm:w-6 sm:h-6 text-primary flex-shrink-0" />
             <div className="flex flex-col gap-1">
               <Label className="font-semibold text-primary text-sm sm:text-base">
-                Current Bank Balance
+                Current Balance
               </Label>
               <span
                 className={`text-2xl sm:text-3xl font-bold text-primary transition-all duration-300 ${
@@ -92,11 +92,16 @@ export function BankAmount({
                 <Input
                   type="number"
                   inputMode="decimal"
+                  step="0.01"
                   placeholder="Enter amount"
                   value={inputValue === 0 ? "" : inputValue}
-                  onChange={(e) =>
-                    handleInputChange(Number.parseFloat(e.target.value) || 0)
-                  }
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    const regex = /^\d*\.?\d{0,2}$/;
+                    if (value === "" || regex.test(value)) {
+                      handleInputChange(Number.parseFloat(value) || 0);
+                    }
+                  }}
                   className="pl-8 w-full text-sm sm:text-base"
                 />
               </div>
