@@ -129,7 +129,7 @@ function HomePageContent() {
     };
 
     applyGuidedData();
-  }, [data.incomes.length, data.expenses.length]);
+  }, [data.incomes.length, data.expenses.length, data.incomes, data.expenses, commitEntryAmount, commitEntryDescription, updateEntry]);
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {

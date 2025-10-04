@@ -90,7 +90,6 @@ function getRollingMonths(): string[] {
 export function EntryForm({
   title,
   entries,
-  onAddEntry,
   onUpdateEntry,
   onRemoveEntry,
   type,
