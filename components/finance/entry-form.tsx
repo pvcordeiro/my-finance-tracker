@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, forwardRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -87,147 +87,129 @@ function getRollingMonths(): string[] {
   return months;
 }
 
-export function EntryForm({
-  title,
-  entries,
-  onUpdateEntry,
-  onRemoveEntry,
-  type,
-  isOpen,
-  onToggle,
-  onCommitDescription,
-  onCommitAmount,
-  onGuidedAddEntry,
-  flashEntryId,
-  flashToken,
-  hideAddButton = false,
-  guidedDialogOpen: externalGuidedDialogOpen,
-  onGuidedDialogOpenChange,
-}: EntryFormProps) {
-  const [expandedEntries, setExpandedEntries] = useState<Set<string>>(
-    new Set()
-  );
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [entryToDelete, setEntryToDelete] = useState<string | null>(null);
-  const [changedFields, setChangedFields] = useState<Set<string>>(new Set());
-  const [internalGuidedDialogOpen, setInternalGuidedDialogOpen] =
-    useState(false);
-  const [savedFields, setSavedFields] = useState<Set<string>>(new Set());
-  const [flashingEntries, setFlashingEntries] = useState<Set<string>>(
-    new Set()
-  );
-  const [editingDescriptionId, setEditingDescriptionId] = useState<
-    string | null
-  >(null);
+export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
+  function EntryForm(
+    {
+      title,
+      entries,
+      onUpdateEntry,
+      onRemoveEntry,
+      type,
+      isOpen,
+      onToggle,
+      onCommitDescription,
+      onCommitAmount,
+      onGuidedAddEntry,
+      flashEntryId,
+      flashToken,
+      hideAddButton = false,
+      guidedDialogOpen: externalGuidedDialogOpen,
+      onGuidedDialogOpenChange,
+    },
+    ref
+  ) {
+    const [expandedEntries, setExpandedEntries] = useState<Set<string>>(
+      new Set()
+    );
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [entryToDelete, setEntryToDelete] = useState<string | null>(null);
+    const [changedFields, setChangedFields] = useState<Set<string>>(new Set());
+    const [internalGuidedDialogOpen, setInternalGuidedDialogOpen] =
+      useState(false);
+    const [savedFields, setSavedFields] = useState<Set<string>>(new Set());
+    const [flashingEntries, setFlashingEntries] = useState<Set<string>>(
+      new Set()
+    );
+    const [editingDescriptionId, setEditingDescriptionId] = useState<
+      string | null
+    >(null);
 
-  const guidedDialogOpen =
-    externalGuidedDialogOpen !== undefined
-      ? externalGuidedDialogOpen
-      : internalGuidedDialogOpen;
-  const setGuidedDialogOpen =
-    onGuidedDialogOpenChange || setInternalGuidedDialogOpen;
-  const markSaved = (fieldKey: string) => {
-    setSavedFields((prev) => new Set(prev).add(fieldKey));
-    setTimeout(() => {
-      setSavedFields((prev) => {
-        const ns = new Set(prev);
-        ns.delete(fieldKey);
-        return ns;
-      });
-    }, 750);
-  };
-  const rollingMonths = getRollingMonths();
-  const entryRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
-  const sectionRef = useRef<HTMLDivElement | null>(null);
-  const prevEntriesLengthRef = useRef(entries.length);
-  const shouldExpandLastEntry = useRef(false);
-
-  useEffect(() => {
-    if (flashEntryId && flashToken) {
-      setFlashingEntries((prev) => new Set(prev).add(flashEntryId));
+    const guidedDialogOpen =
+      externalGuidedDialogOpen !== undefined
+        ? externalGuidedDialogOpen
+        : internalGuidedDialogOpen;
+    const setGuidedDialogOpen =
+      onGuidedDialogOpenChange || setInternalGuidedDialogOpen;
+    const markSaved = (fieldKey: string) => {
+      setSavedFields((prev) => new Set(prev).add(fieldKey));
       setTimeout(() => {
-        setFlashingEntries((prev) => {
+        setSavedFields((prev) => {
           const ns = new Set(prev);
-          ns.delete(flashEntryId);
+          ns.delete(fieldKey);
           return ns;
         });
-      }, 650);
-    }
-  }, [flashEntryId, flashToken]);
+      }, 750);
+    };
+    const rollingMonths = getRollingMonths();
+    const entryRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+    const sectionRef = useRef<HTMLDivElement | null>(null);
+    const prevEntriesLengthRef = useRef(entries.length);
+    const shouldExpandLastEntry = useRef(false);
 
-  const toggleEntry = (entryId: string) => {
-    const newExpanded = new Set(expandedEntries);
-    if (newExpanded.has(entryId)) {
-      newExpanded.delete(entryId);
-    } else {
-      newExpanded.add(entryId);
-      setTimeout(() => {
-        const entryElement = entryRefs.current[entryId];
-        if (entryElement) {
-          const rect = entryElement.getBoundingClientRect();
-          const offset = 90;
-          const isVisible =
-            rect.top >= offset && rect.bottom <= window.innerHeight;
-          if (!isVisible) {
-            const elementTop =
-              entryElement.getBoundingClientRect().top + window.pageYOffset;
-            window.scrollTo({
-              top: elementTop - offset,
-              behavior: "smooth",
-            });
-          }
-        }
-      }, 200);
-    }
-    setExpandedEntries(newExpanded);
-  };
-
-  const calculateTotal = (amounts: number[]) => {
-    return amounts.reduce((sum, amount) => sum + (amount || 0), 0);
-  };
-
-  const handleAddEntry = () => {
-    if (!isOpen) {
-      onToggle();
-    }
-    setGuidedDialogOpen(true);
-  };
-
-  const handleGuidedSubmit = (description: string, amounts: number[]) => {
-    onGuidedAddEntry(description, amounts);
-  };
-
-  const handleSectionToggle = () => {
-    if (isOpen) {
-      setExpandedEntries(new Set());
-    } else {
-      setTimeout(() => {
-        if (sectionRef.current) {
-          const elementTop =
-            sectionRef.current.getBoundingClientRect().top + window.pageYOffset;
-          window.scrollTo({
-            top: elementTop - 90,
-            behavior: "smooth",
-          });
-        }
-      }, 200);
-    }
-    onToggle();
-  };
-
-  useEffect(() => {
-    if (
-      shouldExpandLastEntry.current &&
-      entries.length > prevEntriesLengthRef.current
-    ) {
-      const newestEntry = entries[entries.length - 1];
-      if (newestEntry) {
-        setExpandedEntries((prev) => new Set([...prev, newestEntry.id]));
+    useEffect(() => {
+      if (flashEntryId && flashToken) {
+        setFlashingEntries((prev) => new Set(prev).add(flashEntryId));
         setTimeout(() => {
-          const entryElement = entryRefs.current[newestEntry.id];
+          setFlashingEntries((prev) => {
+            const ns = new Set(prev);
+            ns.delete(flashEntryId);
+            return ns;
+          });
+        }, 650);
+      }
+    }, [flashEntryId, flashToken, isOpen]);
+
+    const toggleEntry = (entryId: string) => {
+      const newExpanded = new Set(expandedEntries);
+      if (newExpanded.has(entryId)) {
+        newExpanded.delete(entryId);
+      } else {
+        newExpanded.add(entryId);
+        setTimeout(() => {
+          const entryElement = entryRefs.current[entryId];
           if (entryElement) {
+            const rect = entryElement.getBoundingClientRect();
+            const offset = 90;
+            const isVisible =
+              rect.top >= offset && rect.bottom <= window.innerHeight;
+            if (!isVisible) {
+              const elementTop =
+                entryElement.getBoundingClientRect().top + window.pageYOffset;
+              window.scrollTo({
+                top: elementTop - offset,
+                behavior: "smooth",
+              });
+            }
+          }
+        }, 200);
+      }
+      setExpandedEntries(newExpanded);
+    };
+
+    const calculateTotal = (amounts: number[]) => {
+      return amounts.reduce((sum, amount) => sum + (amount || 0), 0);
+    };
+
+    const handleAddEntry = () => {
+      if (!isOpen) {
+        onToggle();
+      }
+      setGuidedDialogOpen(true);
+    };
+
+    const handleGuidedSubmit = (description: string, amounts: number[]) => {
+      onGuidedAddEntry(description, amounts);
+    };
+
+    const handleSectionToggle = () => {
+      if (isOpen) {
+        setExpandedEntries(new Set());
+      } else {
+        setTimeout(() => {
+          if (sectionRef.current) {
             const elementTop =
-              entryElement.getBoundingClientRect().top + window.pageYOffset;
+              sectionRef.current.getBoundingClientRect().top +
+              window.pageYOffset;
             window.scrollTo({
               top: elementTop - 90,
               behavior: "smooth",
@@ -235,230 +217,134 @@ export function EntryForm({
           }
         }, 200);
       }
-      shouldExpandLastEntry.current = false;
-    }
-    prevEntriesLengthRef.current = entries.length;
-  }, [entries]);
+      onToggle();
+    };
 
-  return (
-    <Card
-      ref={sectionRef}
-      className={cn(
-        "transition-all duration-200",
-        type === "income" ? "income-card" : "expense-card"
-      )}
-    >
-      <Collapsible open={isOpen} onOpenChange={handleSectionToggle}>
-        <CollapsibleTrigger asChild>
-          <CardHeader className="cursor-pointer touch-manipulation">
-            <CardTitle
-              className={cn(
-                "flex items-center justify-between text-lg sm:text-xl",
-                type === "income"
-                  ? "text-finance-positive"
-                  : "text-finance-negative"
-              )}
-            >
-              <span>{title}</span>
-              <div className="flex items-center gap-2">
-                <span
-                  className={cn(
-                    "font-semibold text-base sm:text-lg tracking-tight",
-                    type === "income"
-                      ? "text-finance-positive"
-                      : "text-finance-negative"
-                  )}
-                >
-                  €
-                  {entries
-                    .reduce(
-                      (sum, entry) => sum + calculateTotal(entry.amounts),
-                      0
-                    )
-                    .toFixed(2)}
-                </span>
-                {isOpen ? (
-                  <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5" />
-                ) : (
-                  <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5" />
-                )}
-              </div>
-            </CardTitle>
-          </CardHeader>
-        </CollapsibleTrigger>
-        <CollapsibleContent className="space-y-4 data-[state=open]:animate-in data-[state=open]:slide-in-from-top-5 data-[state=open]:fade-in-5 data-[state=closed]:animate-out data-[state=closed]:slide-out-to-top-5 data-[state=closed]:fade-out-5">
-          <CardContent className="space-y-4">
-            {entries.map((entry) => (
-              <Card
-                key={entry.id}
+    useEffect(() => {
+      if (
+        shouldExpandLastEntry.current &&
+        entries.length > prevEntriesLengthRef.current
+      ) {
+        const newestEntry = entries[entries.length - 1];
+        if (newestEntry) {
+          setExpandedEntries((prev) => new Set([...prev, newestEntry.id]));
+          setTimeout(() => {
+            const entryElement = entryRefs.current[newestEntry.id];
+            if (entryElement) {
+              const elementTop =
+                entryElement.getBoundingClientRect().top + window.pageYOffset;
+              window.scrollTo({
+                top: elementTop - 90,
+                behavior: "smooth",
+              });
+            }
+          }, 200);
+        }
+        shouldExpandLastEntry.current = false;
+      }
+      prevEntriesLengthRef.current = entries.length;
+    }, [entries]);
+
+    return (
+      <Card
+        ref={(node) => {
+          sectionRef.current = node;
+          if (typeof ref === "function") {
+            ref(node);
+          } else if (ref) {
+            ref.current = node;
+          }
+        }}
+        className={cn(
+          "transition-all duration-200",
+          type === "income" ? "income-card" : "expense-card"
+        )}
+      >
+        <Collapsible open={isOpen} onOpenChange={handleSectionToggle}>
+          <CollapsibleTrigger asChild>
+            <CardHeader className="cursor-pointer touch-manipulation">
+              <CardTitle
                 className={cn(
-                  "border-muted",
-                  flashingEntries.has(entry.id) &&
-                    (type === "income" ? "flash-success" : "flash-error")
+                  "flex items-center justify-between text-lg sm:text-xl",
+                  type === "income"
+                    ? "text-finance-positive"
+                    : "text-finance-negative"
                 )}
-                ref={(el) => {
-                  if (el) {
-                    entryRefs.current[entry.id] = el;
-                  }
-                }}
               >
-                <Collapsible
-                  open={expandedEntries.has(entry.id)}
-                  onOpenChange={() => toggleEntry(entry.id)}
+                <span>{title}</span>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={cn(
+                      "font-semibold text-base sm:text-lg tracking-tight",
+                      type === "income"
+                        ? "text-finance-positive"
+                        : "text-finance-negative"
+                    )}
+                  >
+                    €
+                    {entries
+                      .reduce(
+                        (sum, entry) => sum + calculateTotal(entry.amounts),
+                        0
+                      )
+                      .toFixed(2)}
+                  </span>
+                  {isOpen ? (
+                    <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5" />
+                  )}
+                </div>
+              </CardTitle>
+            </CardHeader>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="space-y-4 data-[state=open]:animate-in data-[state=open]:slide-in-from-top-5 data-[state=open]:fade-in-5 data-[state=closed]:animate-out data-[state=closed]:slide-out-to-top-5 data-[state=closed]:fade-out-5">
+            <CardContent className="space-y-4">
+              {entries.map((entry) => (
+                <Card
+                  key={entry.id}
+                  className={cn(
+                    "border-muted",
+                    flashingEntries.has(entry.id) &&
+                      (type === "income" ? "flash-success" : "flash-error")
+                  )}
+                  ref={(el) => {
+                    if (el) {
+                      entryRefs.current[entry.id] = el;
+                    }
+                  }}
                 >
-                  <CollapsibleTrigger asChild>
-                    <CardHeader className="cursor-pointer py-3 touch-manipulation">
-                      <div className="flex items-center justify-between">
-                        <div className="flex flex-col pr-2 max-w-[60%] sm:max-w-[70%]">
-                          {editingDescriptionId === entry.id ? (
-                            <Input
-                              autoFocus
-                              placeholder="Description"
-                              value={entry.description}
-                              onClick={(e) => e.stopPropagation()}
-                              onChange={(e) => {
-                                onUpdateEntry(
-                                  entry.id,
-                                  "description",
-                                  e.target.value
-                                );
-                                setChangedFields((prev) =>
-                                  new Set(prev).add(`${entry.id}-description`)
-                                );
-                              }}
-                              onBlur={() => {
-                                const fieldKey = `${entry.id}-description`;
-                                if (changedFields.has(fieldKey)) {
-                                  Promise.resolve(
-                                    onCommitDescription(
-                                      entry.id,
-                                      entry.description
-                                    )
-                                  ).then((ok) => {
-                                    if (ok) markSaved(fieldKey);
-                                  });
-                                  setChangedFields((prev) => {
-                                    const ns = new Set(prev);
-                                    ns.delete(fieldKey);
-                                    return ns;
-                                  });
-                                }
-                                setEditingDescriptionId(null);
-                              }}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                  (e.target as HTMLInputElement).blur();
-                                } else if (e.key === "Escape") {
-                                  e.preventDefault();
-                                  setEditingDescriptionId(null);
-                                }
-                              }}
-                              className={cn(
-                                "transition-all duration-200 focus:ring-2 focus:ring-primary/20 text-sm sm:text-base h-8 py-1",
-                                savedFields.has(`${entry.id}-description`) &&
-                                  "flash-success"
-                              )}
-                              aria-label={`Edit description for ${
-                                entry.description || "entry"
-                              }`}
-                            />
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setEditingDescriptionId(entry.id);
-                              }}
-                              className="group text-left flex items-center gap-2 font-medium text-sm sm:text-base truncate"
-                              aria-label={`Edit description for ${
-                                entry.description || "entry"
-                              }`}
-                            >
-                              <span className="truncate">
-                                {entry.description || "(No description)"}
-                              </span>
-                              <Edit3 className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100 transition-opacity" />
-                            </button>
-                          )}
-                          <span
-                            className={cn(
-                              "mt-1 font-semibold text-sm sm:text-base transition-colors",
-                              type === "income"
-                                ? "text-finance-positive"
-                                : "text-finance-negative"
-                            )}
-                          >
-                            €{calculateTotal(entry.amounts).toFixed(2)}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setEntryToDelete(entry.id);
-                              setDeleteDialogOpen(true);
-                            }}
-                            className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0 touch-manipulation"
-                            aria-label={`Delete entry: ${
-                              entry.description || "unnamed entry"
-                            }`}
-                          >
-                            <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
-                          </Button>
-                          {expandedEntries.has(entry.id) ? (
-                            <ChevronUp className="w-4 h-4" />
-                          ) : (
-                            <ChevronDown className="w-4 h-4" />
-                          )}
-                        </div>
-                      </div>
-                    </CardHeader>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="pt-0 space-y-4 data-[state=open]:animate-in data-[state=open]:slide-in-from-top-5 data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:slide-out-to-top-5 data-[state=closed]:fade-out-0">
-                    <CardContent>
-                      <div className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-3 sm:gap-4">
-                        {rollingMonths.map((month, index) => (
-                          <div key={month} className="space-y-2">
-                            <label className="text-xs font-medium text-muted-foreground block">
-                              {month}
-                            </label>
-                            <div className="relative">
-                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
-                                €
-                              </span>
+                  <Collapsible
+                    open={expandedEntries.has(entry.id)}
+                    onOpenChange={() => toggleEntry(entry.id)}
+                  >
+                    <CollapsibleTrigger asChild>
+                      <CardHeader className="cursor-pointer py-3 touch-manipulation">
+                        <div className="flex items-center justify-between">
+                          <div className="flex flex-col pr-2 max-w-[60%] sm:max-w-[70%]">
+                            {editingDescriptionId === entry.id ? (
                               <Input
-                                type="number"
-                                inputMode="decimal"
-                                step="0.01"
-                                placeholder="0"
-                                value={entry.amounts[index] || ""}
+                                autoFocus
+                                placeholder="Description"
+                                value={entry.description}
+                                onClick={(e) => e.stopPropagation()}
                                 onChange={(e) => {
-                                  const value = e.target.value;
-                                  const regex = /^\d*\.?\d{0,2}$/;
-                                  if (value === "" || regex.test(value)) {
-                                    onUpdateEntry(
-                                      entry.id,
-                                      "amount",
-                                      Number.parseFloat(value) || 0,
-                                      index
-                                    );
-                                    setChangedFields((prev) =>
-                                      new Set(prev).add(
-                                        `${entry.id}-amount-${index}`
-                                      )
-                                    );
-                                  }
+                                  onUpdateEntry(
+                                    entry.id,
+                                    "description",
+                                    e.target.value
+                                  );
+                                  setChangedFields((prev) =>
+                                    new Set(prev).add(`${entry.id}-description`)
+                                  );
                                 }}
                                 onBlur={() => {
-                                  const fieldKey = `${entry.id}-amount-${index}`;
+                                  const fieldKey = `${entry.id}-description`;
                                   if (changedFields.has(fieldKey)) {
                                     Promise.resolve(
-                                      onCommitAmount(
+                                      onCommitDescription(
                                         entry.id,
-                                        index,
-                                        entry.amounts[index] || 0
+                                        entry.description
                                       )
                                     ).then((ok) => {
                                       if (ok) markSaved(fieldKey);
@@ -469,87 +355,214 @@ export function EntryForm({
                                       return ns;
                                     });
                                   }
+                                  setEditingDescriptionId(null);
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    (e.target as HTMLInputElement).blur();
+                                  } else if (e.key === "Escape") {
+                                    e.preventDefault();
+                                    setEditingDescriptionId(null);
+                                  }
                                 }}
                                 className={cn(
-                                  "pl-8 transition-all duration-200 focus:ring-2 focus:ring-primary/20 text-sm sm:text-base touch-manipulation",
-                                  savedFields.has(
-                                    `${entry.id}-amount-${index}`
-                                  ) && "flash-success"
+                                  "transition-all duration-200 focus:ring-2 focus:ring-primary/20 text-sm sm:text-base h-8 py-1",
+                                  savedFields.has(`${entry.id}-description`) &&
+                                    "flash-success"
                                 )}
-                                aria-label={`Amount for ${month} in ${
+                                aria-label={`Edit description for ${
                                   entry.description || "entry"
                                 }`}
                               />
-                            </div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingDescriptionId(entry.id);
+                                }}
+                                className="group text-left flex items-center gap-2 font-medium text-sm sm:text-base truncate"
+                                aria-label={`Edit description for ${
+                                  entry.description || "entry"
+                                }`}
+                              >
+                                <span className="truncate">
+                                  {entry.description || "(No description)"}
+                                </span>
+                                <Edit3 className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100 transition-opacity" />
+                              </button>
+                            )}
+                            <span
+                              className={cn(
+                                "mt-1 font-semibold text-sm sm:text-base transition-colors",
+                                type === "income"
+                                  ? "text-finance-positive"
+                                  : "text-finance-negative"
+                              )}
+                            >
+                              €{calculateTotal(entry.amounts).toFixed(2)}
+                            </span>
                           </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </CollapsibleContent>
-                </Collapsible>
-              </Card>
-            ))}
-            {!hideAddButton && (
-              <Button
-                onClick={handleAddEntry}
-                variant="outline"
-                className={cn(
-                  "w-full transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] touch-manipulation py-3 sm:py-2",
-                  type === "income"
-                    ? "border-finance-positive/30 hover:bg-card"
-                    : "border-finance-negative/30 hover:bg-card"
-                )}
-                aria-label={`Add new ${
-                  type === "income" ? "income" : "expense"
-                } entry`}
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add {type === "income" ? "Income" : "Expense"}
-              </Button>
-            )}
-          </CardContent>
-        </CollapsibleContent>
-      </Collapsible>
-      {/* Delete Entry Confirmation Dialog */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Entry</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete this entry? This action cannot be
-              undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={async () => {
-                if (entryToDelete) {
-                  try {
-                    await onRemoveEntry(entryToDelete);
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEntryToDelete(entry.id);
+                                setDeleteDialogOpen(true);
+                              }}
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0 touch-manipulation"
+                              aria-label={`Delete entry: ${
+                                entry.description || "unnamed entry"
+                              }`}
+                            >
+                              <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                            </Button>
+                            {expandedEntries.has(entry.id) ? (
+                              <ChevronUp className="w-4 h-4" />
+                            ) : (
+                              <ChevronDown className="w-4 h-4" />
+                            )}
+                          </div>
+                        </div>
+                      </CardHeader>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="pt-0 space-y-4 data-[state=open]:animate-in data-[state=open]:slide-in-from-top-5 data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:slide-out-to-top-5 data-[state=closed]:fade-out-0">
+                      <CardContent>
+                        <div className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-3 sm:gap-4">
+                          {rollingMonths.map((month, index) => (
+                            <div key={month} className="space-y-2">
+                              <label className="text-xs font-medium text-muted-foreground block">
+                                {month}
+                              </label>
+                              <div className="relative">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
+                                  €
+                                </span>
+                                <Input
+                                  type="number"
+                                  inputMode="decimal"
+                                  step="0.01"
+                                  placeholder="0"
+                                  value={entry.amounts[index] || ""}
+                                  onChange={(e) => {
+                                    const value = e.target.value;
+                                    const regex = /^\d*\.?\d{0,2}$/;
+                                    if (value === "" || regex.test(value)) {
+                                      onUpdateEntry(
+                                        entry.id,
+                                        "amount",
+                                        Number.parseFloat(value) || 0,
+                                        index
+                                      );
+                                      setChangedFields((prev) =>
+                                        new Set(prev).add(
+                                          `${entry.id}-amount-${index}`
+                                        )
+                                      );
+                                    }
+                                  }}
+                                  onBlur={() => {
+                                    const fieldKey = `${entry.id}-amount-${index}`;
+                                    if (changedFields.has(fieldKey)) {
+                                      Promise.resolve(
+                                        onCommitAmount(
+                                          entry.id,
+                                          index,
+                                          entry.amounts[index] || 0
+                                        )
+                                      ).then((ok) => {
+                                        if (ok) markSaved(fieldKey);
+                                      });
+                                      setChangedFields((prev) => {
+                                        const ns = new Set(prev);
+                                        ns.delete(fieldKey);
+                                        return ns;
+                                      });
+                                    }
+                                  }}
+                                  className={cn(
+                                    "pl-8 transition-all duration-200 focus:ring-2 focus:ring-primary/20 text-sm sm:text-base touch-manipulation",
+                                    savedFields.has(
+                                      `${entry.id}-amount-${index}`
+                                    ) && "flash-success"
+                                  )}
+                                  aria-label={`Amount for ${month} in ${
+                                    entry.description || "entry"
+                                  }`}
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </CollapsibleContent>
+                  </Collapsible>
+                </Card>
+              ))}
+              {!hideAddButton && (
+                <Button
+                  onClick={handleAddEntry}
+                  variant="outline"
+                  className={cn(
+                    "w-full transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] touch-manipulation py-3 sm:py-2",
+                    type === "income"
+                      ? "border-finance-positive/30 hover:bg-card"
+                      : "border-finance-negative/30 hover:bg-card"
+                  )}
+                  aria-label={`Add new ${
+                    type === "income" ? "income" : "expense"
+                  } entry`}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add {type === "income" ? "Income" : "Expense"}
+                </Button>
+              )}
+            </CardContent>
+          </CollapsibleContent>
+        </Collapsible>
+        {/* Delete Entry Confirmation Dialog */}
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Entry</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete this entry? This action cannot
+                be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={async () => {
+                  if (entryToDelete) {
+                    try {
+                      await onRemoveEntry(entryToDelete);
 
-                    setEntryToDelete(null);
-                  } catch (error) {
-                    console.error("Failed to delete entry:", error);
+                      setEntryToDelete(null);
+                    } catch (error) {
+                      console.error("Failed to delete entry:", error);
+                    }
                   }
-                }
-                setDeleteDialogOpen(false);
-              }}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Delete Entry
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+                  setDeleteDialogOpen(false);
+                }}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Delete Entry
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
-      {/* Guided Entry Dialog */}
-      <GuidedEntryDialog
-        open={guidedDialogOpen}
-        onOpenChange={setGuidedDialogOpen}
-        type={type}
-        onSubmit={handleGuidedSubmit}
-      />
-    </Card>
-  );
-}
+        {/* Guided Entry Dialog */}
+        <GuidedEntryDialog
+          open={guidedDialogOpen}
+          onOpenChange={setGuidedDialogOpen}
+          type={type}
+          onSubmit={handleGuidedSubmit}
+        />
+      </Card>
+    );
+  }
+);

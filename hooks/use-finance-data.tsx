@@ -607,10 +607,10 @@ export function useFinanceData() {
           description: "",
           amounts: new Array(12).fill(0),
         };
-        setData((prev) => ({ ...prev, [type]: [...prev[type], newEntry] }));
+        setData((prev) => ({ ...prev, [type]: [newEntry, ...prev[type]] }));
         setOriginalData((prev) => ({
           ...prev,
-          [type]: [...prev[type], newEntry],
+          [type]: [newEntry, ...prev[type]],
         }));
         setHasEntryChanges(true);
       } catch (e) {

@@ -61,6 +61,8 @@ function HomePageContent() {
   } | null>(null);
   const prevIncomeCountRef = useRef(data.incomes.length);
   const prevExpenseCountRef = useRef(data.expenses.length);
+  const incomeSectionRef = useRef<HTMLDivElement | null>(null);
+  const expenseSectionRef = useRef<HTMLDivElement | null>(null);
   const [guidedEntryFlash, setGuidedEntryFlash] = useState<{
     type: "incomes" | "expenses";
     entryId: string;
@@ -87,7 +89,7 @@ function HomePageContent() {
 
       if (currentCount > prevCount) {
         const entries = type === "incomes" ? data.incomes : data.expenses;
-        const newEntry = entries[entries.length - 1];
+        const newEntry = entries[0];
 
         if (newEntry && newEntry.description === "") {
           updateEntry(type, newEntry.id, "description", description);
@@ -291,6 +293,21 @@ function HomePageContent() {
       amounts,
     };
 
+    setIncomeOpen(true);
+
+    setTimeout(() => {
+      if (incomeSectionRef.current) {
+        const offset = 90;
+        const elementTop =
+          incomeSectionRef.current.getBoundingClientRect().top +
+          window.pageYOffset;
+        window.scrollTo({
+          top: elementTop - offset,
+          behavior: "smooth",
+        });
+      }
+    }, 100);
+
     addEntry("incomes");
   };
 
@@ -300,6 +317,21 @@ function HomePageContent() {
       description,
       amounts,
     };
+
+    setExpenseOpen(true);
+
+    setTimeout(() => {
+      if (expenseSectionRef.current) {
+        const offset = 90;
+        const elementTop =
+          expenseSectionRef.current.getBoundingClientRect().top +
+          window.pageYOffset;
+        window.scrollTo({
+          top: elementTop - offset,
+          behavior: "smooth",
+        });
+      }
+    }, 100);
 
     addEntry("expenses");
   };
@@ -339,7 +371,6 @@ function HomePageContent() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <Button
                       onClick={() => {
-                        if (!incomeOpen) setIncomeOpen(true);
                         setIncomeGuidedDialogOpen(true);
                       }}
                       variant="outline"
@@ -350,7 +381,6 @@ function HomePageContent() {
                     </Button>
                     <Button
                       onClick={() => {
-                        if (!expenseOpen) setExpenseOpen(true);
                         setExpenseGuidedDialogOpen(true);
                       }}
                       variant="outline"
@@ -363,6 +393,7 @@ function HomePageContent() {
                 </div>
 
                 <EntryForm
+                  ref={incomeSectionRef}
                   title="Income"
                   entries={data.incomes}
                   onAddEntry={() => addEntry("incomes")}
@@ -448,6 +479,7 @@ function HomePageContent() {
                 />
 
                 <EntryForm
+                  ref={expenseSectionRef}
                   title="Expenses"
                   entries={data.expenses}
                   onAddEntry={() => addEntry("expenses")}
