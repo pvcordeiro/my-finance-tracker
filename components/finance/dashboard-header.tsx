@@ -7,8 +7,11 @@ import {
   Shield,
   User,
   Save,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { usePrivacy } from "@/hooks/use-privacy";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Edit, BarChart3, FileSpreadsheet } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -17,13 +20,13 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { GroupSelector } from "@/components/ui/group-selector";
 import { toast } from "sonner";
-import { Users } from "lucide-react";
 
 export function DashboardHeader() {
   const { user, logout } = useAuth();
+  const { privacyMode, isLoading: privacyLoading } = usePrivacy();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -32,6 +35,34 @@ export function DashboardHeader() {
   const handleLogout = async () => {
     await logout();
     window.location.href = "/login";
+  };
+
+  const handlePrivacyToggle = async () => {
+    try {
+      const newPrivacyMode = !privacyMode;
+      const response = await fetch("/api/user/privacy-mode", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ privacyMode: newPrivacyMode }),
+      });
+
+      if (response.ok) {
+        toast.success(
+          newPrivacyMode ? "Privacy mode enabled" : "Privacy mode disabled"
+        );
+        window.dispatchEvent(
+          new CustomEvent("privacyModeUpdated", {
+            detail: { privacyMode: newPrivacyMode },
+          })
+        );
+      } else {
+        toast.error("Failed to update privacy mode");
+      }
+    } catch (error) {
+      console.error("Failed to toggle privacy mode:", error);
+      toast.error("Error updating privacy mode");
+    }
   };
 
   const navItems = [
@@ -62,51 +93,27 @@ export function DashboardHeader() {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4">
-            {!isMobile && <GroupSelector />}
-            {isMobile && user && user.groups && user.groups.length > 1 && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex items-center gap-1 p-2"
-                  >
-                    <Users className="w-4 h-4" />
-                    <ChevronDown className="w-3 h-3" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  {user.groups.map((group) => (
-                    <DropdownMenuItem
-                      key={group.group_id}
-                      onClick={async () => {
-                        try {
-                          const response = await fetch("/api/switch-group", {
-                            method: "POST",
-                            headers: {
-                              "Content-Type": "application/json",
-                            },
-                            body: JSON.stringify({ groupId: group.group_id }),
-                            credentials: "include",
-                          });
-
-                          if (response.ok) {
-                            window.location.reload();
-                          } else {
-                            toast.error("Failed to switch group");
-                          }
-                        } catch {
-                          toast.error("Error switching group");
-                        }
-                      }}
-                      className="cursor-pointer"
-                    >
-                      {group.name}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handlePrivacyToggle}
+              disabled={privacyLoading}
+              className="flex items-center gap-2"
+              title={
+                privacyMode ? "Disable Privacy Mode" : "Enable Privacy Mode"
+              }
+            >
+              {privacyMode ? (
+                <EyeOff className="w-4 h-4" />
+              ) : (
+                <Eye className="w-4 h-4" />
+              )}
+              {!isMobile && (
+                <span className="text-sm">
+                  {privacyMode ? "Private" : "Visible"}
+                </span>
+              )}
+            </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -143,6 +150,7 @@ export function DashboardHeader() {
                   <Save className="w-4 h-4 mr-2" />
                   Backup
                 </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={handleLogout}
                   className="cursor-pointer"

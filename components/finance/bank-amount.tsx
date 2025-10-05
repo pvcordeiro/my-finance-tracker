@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Banknote, Plus, Minus } from "lucide-react";
+import { PrivacyNumber } from "@/components/ui/privacy-number";
 
 interface BankAmountProps {
   amount: number;
@@ -98,7 +99,12 @@ export function BankAmount({
                     : ""
                 }`}
               >
-                € {amount.toFixed(2)}
+                <PrivacyNumber
+                  value={amount}
+                  className="text-2xl sm:text-3xl font-bold"
+                  prefix="€ "
+                  format={(val) => val.toFixed(2)}
+                />
               </span>
             </div>
           </div>

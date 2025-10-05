@@ -28,6 +28,8 @@ import {
 import { cn } from "@/lib/utils";
 import { GuidedEntryDialog } from "./guided-entry-dialog";
 import { EntryEditDialog } from "./entry-edit-dialog";
+import { PrivacyNumber } from "@/components/ui/privacy-number";
+import { PrivacyText } from "@/components/ui/privacy-text";
 
 export interface FinanceEntry {
   id: string;
@@ -287,13 +289,13 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
                         : "text-finance-negative"
                     )}
                   >
-                    €
-                    {entries
-                      .reduce(
+                    <PrivacyNumber
+                      value={entries.reduce(
                         (sum, entry) => sum + calculateTotal(entry.amounts),
                         0
-                      )
-                      .toFixed(2)}
+                      )}
+                      prefix="€"
+                    />
                   </span>
                   {isOpen ? (
                     <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -335,7 +337,9 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
                     <div className="flex items-center justify-between">
                       <div className="flex flex-col pr-2 max-w-[60%] sm:max-w-[70%]">
                         <span className="font-medium text-sm sm:text-base truncate">
-                          {entry.description || "(No description)"}
+                          <PrivacyText
+                            value={entry.description || "(No description)"}
+                          />
                         </span>
                         <span
                           className={cn(
@@ -345,7 +349,10 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
                               : "text-finance-negative"
                           )}
                         >
-                          €{calculateTotal(entry.amounts).toFixed(2)}
+                          <PrivacyNumber
+                            value={calculateTotal(entry.amounts)}
+                            prefix="€"
+                          />
                         </span>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
@@ -439,7 +446,10 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
               <AlertDialogDescription>
                 {entryToResolve && (
                   <>
-                    Mark <strong>€{entryToResolve.amount.toFixed(2)}</strong>{" "}
+                    Mark{" "}
+                    <strong>
+                      <PrivacyNumber value={entryToResolve.amount} prefix="€" />
+                    </strong>{" "}
                     for{" "}
                     <strong>{rollingMonths[entryToResolve.monthIndex]}</strong>{" "}
                     as {type === "income" ? "received" : "paid"}?

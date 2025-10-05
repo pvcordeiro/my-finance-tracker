@@ -20,6 +20,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
+import { PrivacyNumber } from "@/components/ui/privacy-number";
 import { cn } from "@/lib/utils";
 
 interface FinanceEntry {
@@ -196,10 +197,13 @@ export function EntryEditDialog({
                       : "text-finance-negative"
                   )}
                 >
-                  €
-                  {localEntry.amounts
-                    .reduce((sum, amount) => sum + (amount || 0), 0)
-                    .toFixed(2)}
+                  <PrivacyNumber
+                    value={localEntry.amounts.reduce(
+                      (sum, amount) => sum + (amount || 0),
+                      0
+                    )}
+                    prefix="€"
+                  />
                 </span>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">

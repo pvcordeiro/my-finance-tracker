@@ -5,6 +5,8 @@ import { TrendingUp, TrendingDown, Maximize2, Minimize2 } from "lucide-react";
 import { useState, useRef, useCallback, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import type { FinanceData } from "@/hooks/use-finance-data";
+import { PrivacyNumber } from "@/components/ui/privacy-number";
+import { PrivacyText } from "@/components/ui/privacy-text";
 
 interface DetailsTableProps {
   data: FinanceData;
@@ -255,7 +257,10 @@ export function DetailsTable({ data }: DetailsTableProps) {
                         >
                           {isCurrent ? (
                             <span className="text-finance-positive text-soft-shadow">
-                              €{data.bankAmount.toFixed(2)}
+                              <PrivacyNumber
+                                value={data.bankAmount}
+                                prefix="€"
+                              />
                             </span>
                           ) : (
                             <span className="text-muted-foreground/70 text-soft-shadow">
@@ -274,7 +279,9 @@ export function DetailsTable({ data }: DetailsTableProps) {
                   >
                     <td className="sticky left-0 bg-muted/60 backdrop-blur px-2 py-2 font-medium border-r border-border z-10 text-soft-shadow-strong">
                       <span className="text-foreground">
-                        {income.description || "(No description)"}
+                        <PrivacyText
+                          value={income.description || "(No description)"}
+                        />
                       </span>
                     </td>
                     {months.map((month, idx) => {
@@ -292,7 +299,7 @@ export function DetailsTable({ data }: DetailsTableProps) {
                         >
                           {amount > 0 ? (
                             <span className="text-finance-positive text-soft-shadow">
-                              €{amount.toFixed(2)}
+                              <PrivacyNumber value={amount} prefix="€" />
                             </span>
                           ) : (
                             <span className="text-muted-foreground/70 text-soft-shadow">
@@ -437,7 +444,9 @@ export function DetailsTable({ data }: DetailsTableProps) {
                   >
                     <td className="sticky left-0 bg-muted/60 backdrop-blur px-2 py-2 font-medium border-r border-border z-10 text-soft-shadow-strong">
                       <span className="text-foreground">
-                        {expense.description || "(No description)"}
+                        <PrivacyText
+                          value={expense.description || "(No description)"}
+                        />
                       </span>
                     </td>
                     {months.map((month, idx) => {
@@ -455,7 +464,7 @@ export function DetailsTable({ data }: DetailsTableProps) {
                         >
                           {amount > 0 ? (
                             <span className="text-finance-negative text-soft-shadow">
-                              €{amount.toFixed(2)}
+                              <PrivacyNumber value={amount} prefix="€" />
                             </span>
                           ) : (
                             <span className="text-muted-foreground/70 text-soft-shadow">

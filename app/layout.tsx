@@ -5,6 +5,7 @@ import "./globals.css";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { ThemeProvider } from "@/components/theme-provider";
+import { PrivacyProvider } from "@/hooks/use-privacy";
 import { MobileBottomNav } from "@/components/ui/mobile-bottom-nav";
 import { Toaster } from "@/components/ui/sonner";
 import { Suspense } from "react";
@@ -56,12 +57,14 @@ html {
         >
           <ErrorBoundary>
             <AuthProvider>
-              {children}
-              <NoGroupOverlay />
-              <Suspense fallback={null}>
-                <MobileBottomNav />
-              </Suspense>
-              <Toaster />
+              <PrivacyProvider>
+                {children}
+                <NoGroupOverlay />
+                <Suspense fallback={null}>
+                  <MobileBottomNav />
+                </Suspense>
+                <Toaster />
+              </PrivacyProvider>
             </AuthProvider>
           </ErrorBoundary>
         </ThemeProvider>

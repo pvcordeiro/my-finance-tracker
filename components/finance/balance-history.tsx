@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ChevronDown, History, Plus, Minus, Edit3 } from "lucide-react";
 import { format } from "date-fns";
+import { PrivacyNumber } from "@/components/ui/privacy-number";
 
 interface BalanceHistoryEntry {
   id: number;
@@ -137,7 +138,11 @@ export function BalanceHistory({
                               : "text-foreground"
                           }`}
                         >
-                          {isPositive && "+"}€{Math.abs(entry.delta).toFixed(2)}
+                          {isPositive && "+"}
+                          <PrivacyNumber
+                            value={Math.abs(entry.delta)}
+                            prefix="€"
+                          />
                         </span>
                         <span className="text-xs text-muted-foreground whitespace-nowrap">
                           {format(new Date(entry.created_at), "MMM d, HH:mm")}
@@ -145,8 +150,8 @@ export function BalanceHistory({
                       </div>
 
                       <div className="text-xs text-muted-foreground mb-1">
-                        €{entry.old_amount.toFixed(2)} → €
-                        {entry.new_amount.toFixed(2)}
+                        <PrivacyNumber value={entry.old_amount} prefix="€" /> →{" "}
+                        <PrivacyNumber value={entry.new_amount} prefix="€" />
                       </div>
 
                       {entry.note && (

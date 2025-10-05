@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { TrendingUp, TrendingDown, EuroIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { FinanceData } from "@/hooks/use-finance-data";
+import { PrivacyNumber } from "@/components/ui/privacy-number";
 
 interface SummaryTableProps {
   data: FinanceData;
@@ -148,7 +149,11 @@ export function SummaryTable({ data }: SummaryTableProps) {
                       : "text-finance-negative"
                   )}
                 >
-                  €{currentBalance.toFixed(2)}
+                  <PrivacyNumber
+                    value={currentBalance}
+                    className="text-lg sm:text-2xl font-bold truncate text-shadow-sm"
+                    prefix="€"
+                  />
                 </p>
               </div>
             </div>
@@ -171,7 +176,11 @@ export function SummaryTable({ data }: SummaryTableProps) {
                       : "text-finance-negative"
                   )}
                 >
-                  €{nextMonthBalance.toFixed(2)}
+                  <PrivacyNumber
+                    value={nextMonthBalance}
+                    className="text-lg sm:text-2xl font-bold truncate text-shadow-sm"
+                    prefix="€"
+                  />
                 </p>
               </div>
             </div>
@@ -187,7 +196,11 @@ export function SummaryTable({ data }: SummaryTableProps) {
                   1 Year Income
                 </p>
                 <p className="text-lg sm:text-2xl font-bold text-finance-positive truncate text-shadow-sm">
-                  €{annualIncome.toFixed(2)}
+                  <PrivacyNumber
+                    value={annualIncome}
+                    className="text-lg sm:text-2xl font-bold text-shadow-sm"
+                    prefix="€"
+                  />
                 </p>
               </div>
             </div>
@@ -203,7 +216,11 @@ export function SummaryTable({ data }: SummaryTableProps) {
                   1 Year Expense
                 </p>
                 <p className="text-lg sm:text-2xl font-bold text-finance-negative truncate text-shadow-sm">
-                  €{annualExpenses.toFixed(2)}
+                  <PrivacyNumber
+                    value={annualExpenses}
+                    className="text-lg sm:text-2xl font-bold text-shadow-sm"
+                    prefix="€"
+                  />
                 </p>
               </div>
             </div>
@@ -259,10 +276,10 @@ export function SummaryTable({ data }: SummaryTableProps) {
                       </div>
                     </td>
                     <td className="px-2 py-2 text-right text-finance-positive font-medium min-w-0">
-                      €{row.income.toFixed(2)}
+                      <PrivacyNumber value={row.income} prefix="€" />
                     </td>
                     <td className="px-2 py-2 text-right text-finance-negative font-medium min-w-0">
-                      €{row.expenses.toFixed(2)}
+                      <PrivacyNumber value={row.expenses} prefix="€" />
                     </td>
                     <td
                       className={cn(
@@ -272,7 +289,7 @@ export function SummaryTable({ data }: SummaryTableProps) {
                           : "text-finance-negative"
                       )}
                     >
-                      €{row.balance.toFixed(2)}
+                      <PrivacyNumber value={row.balance} prefix="€" />
                     </td>
                   </tr>
                 ))}
@@ -281,10 +298,10 @@ export function SummaryTable({ data }: SummaryTableProps) {
                 <tr className="border-t-2 bg-muted/50 font-bold">
                   <td className="px-2 py-2">Total</td>
                   <td className="px-2 py-2 text-right text-finance-positive">
-                    €{annualIncome.toFixed(2)}
+                    <PrivacyNumber value={annualIncome} prefix="€" />
                   </td>
                   <td className="px-2 py-2 text-right text-finance-negative">
-                    €{annualExpenses.toFixed(2)}
+                    <PrivacyNumber value={annualExpenses} prefix="€" />
                   </td>
                   <td
                     className={cn(
@@ -294,7 +311,7 @@ export function SummaryTable({ data }: SummaryTableProps) {
                         : "text-finance-negative"
                     )}
                   >
-                    €{finalBalance.toFixed(2)}
+                    <PrivacyNumber value={finalBalance} prefix="€" />
                   </td>
                 </tr>
               </tfoot>

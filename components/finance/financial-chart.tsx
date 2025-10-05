@@ -12,6 +12,7 @@ import {
   Line,
 } from "recharts";
 import type { FinanceData } from "@/hooks/use-finance-data";
+import { usePrivacy } from "@/hooks/use-privacy";
 
 interface FinancialChartProps {
   data: FinanceData;
@@ -44,6 +45,9 @@ function getRollingMonths(): Array<{ label: string; month: number }> {
 }
 
 export function FinancialChart({ data }: FinancialChartProps) {
+  const { privacyMode, isRevealed } = usePrivacy();
+  const shouldHideChart = privacyMode && !isRevealed;
+
   if (!data || (!data.incomes && !data.expenses)) {
     return (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -65,6 +69,29 @@ export function FinancialChart({ data }: FinancialChartProps) {
             <div className="text-center py-8 text-muted-foreground">
               No data available
             </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (shouldHideChart) {
+    return (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Income vs Expenses</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px] w-full bg-muted/50 animate-pulse rounded-lg" />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Monthly Net Balance</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px] w-full bg-muted/50 animate-pulse rounded-lg" />
           </CardContent>
         </Card>
       </div>

@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import {
   Collapsible,
@@ -31,6 +32,8 @@ import {
   Key,
   Laptop,
   Save,
+  Users,
+  Check,
 } from "lucide-react";
 import {
   Card,
@@ -46,9 +49,10 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTheme } from "next-themes";
 import { SessionsList } from "@/components/user/sessions-list";
+import { toast } from "sonner";
 
 export default function UserSettingsPage() {
-  const { user, isLoading, logout } = useAuth();
+  const { user, isLoading, logout, refreshUser } = useAuth();
   const router = useRouter();
   const isMobile = useIsMobile();
   const { theme } = useTheme();
@@ -57,6 +61,37 @@ export default function UserSettingsPage() {
   const [usernameOpen, setUsernameOpen] = useState(false);
   const [passwordOpen, setPasswordOpen] = useState(false);
   const [currentAccent, setCurrentAccent] = useState<string>("blue");
+  const [switchingGroup, setSwitchingGroup] = useState(false);
+
+  const handleGroupSwitch = async (groupId: number) => {
+    setSwitchingGroup(true);
+    try {
+      const response = await fetch("/api/switch-group", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ groupId }),
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        await refreshUser();
+        const groupName =
+          user?.groups?.find((g) => g.group_id === groupId)?.name ||
+          "selected group";
+        toast.success("Switched to " + groupName);
+        window.location.reload();
+      } else {
+        toast.error("Failed to switch group");
+      }
+    } catch (error) {
+      console.error("Failed to switch group:", error);
+      toast.error("Error switching group");
+    } finally {
+      setSwitchingGroup(false);
+    }
+  };
 
   useEffect(() => {
     fetch("/api/user/accent-color", {
@@ -179,6 +214,7 @@ export default function UserSettingsPage() {
                   <Save className="w-4 h-4 mr-2" />
                   Backup
                 </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={async () => {
                     await logout();
@@ -270,6 +306,42 @@ export default function UserSettingsPage() {
             )}
           </CardContent>
         </Card>
+        {user && user.groups && user.groups.length > 1 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="w-5 h-5" />
+                Group Selection
+              </CardTitle>
+              <CardDescription>
+                Switch between your groups to view different financial data
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {user.groups.map((group) => {
+                  const isCurrentGroup =
+                    group.group_id === user.current_group_id;
+                  return (
+                    <Button
+                      key={group.group_id}
+                      variant={isCurrentGroup ? "default" : "outline"}
+                      className="w-full justify-between"
+                      onClick={() => handleGroupSwitch(group.group_id)}
+                      disabled={switchingGroup || isCurrentGroup}
+                    >
+                      <span className="flex items-center gap-2">
+                        <Users className="w-4 h-4" />
+                        {group.name}
+                      </span>
+                      {isCurrentGroup && <Check className="w-4 h-4" />}
+                    </Button>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

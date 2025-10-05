@@ -49,6 +49,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 
@@ -430,6 +431,7 @@ export function AdminDashboard() {
                     <Save className="w-4 h-4 mr-2" />
                     Backup
                   </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={logout} className="cursor-pointer">
                     <LogOut className="w-4 h-4 mr-2" />
                     Sign Out
