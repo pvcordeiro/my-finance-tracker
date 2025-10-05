@@ -157,7 +157,7 @@ export function BankAmount({
                   type="button"
                   variant="outline"
                   size="default"
-                  className="w-full border-finance-positive text-finance-positive hover:bg-card"
+                  className="w-full border-finance-positive text-finance-positive hover:bg-card active:scale-[0.98] transition-transform"
                   onClick={handleAdd}
                   disabled={!inputValue || inputValue <= 0}
                 >
@@ -168,7 +168,7 @@ export function BankAmount({
                   type="button"
                   variant="outline"
                   size="default"
-                  className="w-full border-finance-negative text-finance-negative hover:bg-card"
+                  className="w-full border-finance-negative text-finance-negative hover:bg-card active:scale-[0.98] transition-transform"
                   onClick={handleSubtract}
                   disabled={!inputValue || inputValue <= 0}
                 >

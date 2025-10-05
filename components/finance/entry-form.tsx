@@ -466,7 +466,7 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
               </AlertDialogCancel>
               <AlertDialogAction
                 onClick={confirmResolveCurrentMonth}
-                className="bg-accent text-accent-foreground hover:bg-accent/90"
+                className="bg-finance-positive text-primary-foreground hover:bg-finance-positive/70"
               >
                 Confirm
               </AlertDialogAction>

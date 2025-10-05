@@ -411,7 +411,7 @@ function HomePageContent() {
                         setIncomeGuidedDialogOpen(true);
                       }}
                       variant="outline"
-                      className="w-full transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] touch-manipulation py-4 sm:py-3 border-finance-positive/30 hover:bg-card"
+                      className="w-full transition-all duration-200 active:scale-[0.98] touch-manipulation py-4 sm:py-3 border-finance-positive/30 hover:bg-card"
                     >
                       <Plus className="w-4 h-4 mr-2" />
                       Add Income
@@ -421,7 +421,7 @@ function HomePageContent() {
                         setExpenseGuidedDialogOpen(true);
                       }}
                       variant="outline"
-                      className="w-full transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] touch-manipulation py-4 sm:py-3 border-finance-negative/30 hover:bg-card"
+                      className="w-full transition-all duration-200 active:scale-[0.98] touch-manipulation py-4 sm:py-3 border-finance-negative/30 hover:bg-card"
                     >
                       <Plus className="w-4 h-4 mr-2" />
                       Add Expense

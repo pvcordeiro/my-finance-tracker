@@ -1,6 +1,6 @@
 services:
   app:
-    image: finance-tracker:arm64
+    image: finance-tracker
     ports:
       - "80:3000"
     volumes:
@@ -9,7 +9,4 @@ services:
       - NODE_ENV=${NODE_ENV}
       - ADMIN_USERNAME=${ADMIN_USERNAME}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
-      - SESSION_SECRET=${SESSION_SECRET}
-      - DATABASE_URL=${DATABASE_URL}
-      - DOMAIN=${DOMAIN}
     restart: unless-stopped
