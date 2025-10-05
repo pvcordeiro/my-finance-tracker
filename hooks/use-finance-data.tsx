@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { toast } from "sonner";
 import { useAuth } from "./use-auth";
 import type { FinanceEntry } from "@/components/finance/entry-form";
@@ -51,31 +51,6 @@ export type CommitResult =
   | { success: true }
   | { success: false; conflict?: true; error?: string };
 
-async function fetchLatestEntriesNoCache(): Promise<{
-  entries: any[];
-  last_updated_user_id: number | null;
-} | null> {
-  try {
-    const res = await fetch(`/api/entries?ts=${Date.now()}`, {
-      credentials: "include",
-      cache: "no-store",
-      headers: {
-        "Cache-Control": "no-cache, no-store, max-age=0, must-revalidate",
-        Pragma: "no-cache",
-        Expires: "0",
-      },
-    });
-    if (!res.ok) return null;
-    const json = await res.json();
-    return {
-      entries: json.entries || [],
-      last_updated_user_id: json.last_updated_user_id || null,
-    };
-  } catch (_e) {
-    return null;
-  }
-}
-
 export function useFinanceData() {
   const [data, setData] = useState<FinanceData>(defaultData);
   const [originalData, setOriginalData] = useState<FinanceData>(defaultData);
@@ -95,11 +70,18 @@ export function useFinanceData() {
     [hasBankChanges, hasEntryChanges]
   );
   const [isLoading, setIsLoading] = useState(true);
-  const [conflictData, setConflictData] = useState<FinanceData | null>(null);
 
-  const [conflictType, setConflictType] = useState<
-    null | "bank" | "entries" | "all"
-  >(null);
+  const [entryFlashState, setEntryFlashState] = useState<{
+    incomes: { token: number; flashType: "increase" | "decrease" } | null;
+    expenses: { token: number; flashType: "increase" | "decrease" } | null;
+  }>({
+    incomes: null,
+    expenses: null,
+  });
+
+  const prevIncomeTotalRef = useRef<number>(0);
+  const prevExpenseTotalRef = useRef<number>(0);
+
   const { user } = useAuth();
 
   useEffect(() => {
@@ -111,6 +93,123 @@ export function useFinanceData() {
       setHasEntryChanges(false);
       setIsLoading(false);
     }
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const eventSource = new EventSource("/api/entries/stream", {
+      withCredentials: true,
+    });
+
+    eventSource.onopen = () => {
+      console.log("Entries SSE connection established");
+    };
+
+    eventSource.onmessage = async (event) => {
+      try {
+        const eventData = JSON.parse(event.data);
+        const { changeType } = eventData;
+
+        if (
+          changeType === "create" ||
+          changeType === "update" ||
+          changeType === "delete" ||
+          changeType === "bulk-update"
+        ) {
+          const entriesResponse = await fetch("/api/entries", {
+            credentials: "include",
+            cache: "no-store",
+          });
+
+          if (entriesResponse.ok) {
+            const entriesData = await entriesResponse.json();
+            const entries = entriesData?.entries || [];
+
+            const incomes = entries
+              .filter((entry: any) => entry.type === "income")
+              .map((entry: any) => ({
+                id: entry.id.toString(),
+                description: entry.name,
+                amounts: shiftDataForRollingMonths(entry.amounts),
+              }));
+
+            const expenses = entries
+              .filter((entry: any) => entry.type === "expense")
+              .map((entry: any) => ({
+                id: entry.id.toString(),
+                description: entry.name,
+                amounts: shiftDataForRollingMonths(entry.amounts),
+              }));
+
+            const newIncomeTotal = incomes.reduce(
+              (sum: number, entry: FinanceEntry) =>
+                sum + entry.amounts.reduce((a: number, b: number) => a + b, 0),
+              0
+            );
+            const newExpenseTotal = expenses.reduce(
+              (sum: number, entry: FinanceEntry) =>
+                sum + entry.amounts.reduce((a: number, b: number) => a + b, 0),
+              0
+            );
+
+            if (newIncomeTotal !== prevIncomeTotalRef.current) {
+              setEntryFlashState((prev) => ({
+                ...prev,
+                incomes: {
+                  token: Date.now(),
+                  flashType:
+                    newIncomeTotal > prevIncomeTotalRef.current
+                      ? "increase"
+                      : "decrease",
+                },
+              }));
+              prevIncomeTotalRef.current = newIncomeTotal;
+            }
+
+            if (newExpenseTotal !== prevExpenseTotalRef.current) {
+              setEntryFlashState((prev) => ({
+                ...prev,
+                expenses: {
+                  token: Date.now(),
+                  flashType:
+                    newExpenseTotal > prevExpenseTotalRef.current
+                      ? "increase"
+                      : "decrease",
+                },
+              }));
+              prevExpenseTotalRef.current = newExpenseTotal;
+            }
+
+            setData((prev) => {
+              return {
+                ...prev,
+                incomes,
+                expenses,
+              };
+            });
+
+            setOriginalData((prev) => ({
+              ...prev,
+              incomes,
+              expenses,
+            }));
+
+            setHasEntryChanges(false);
+          }
+        }
+      } catch (error) {
+        console.error("Error parsing entries SSE message:", error);
+      }
+    };
+
+    eventSource.onerror = (error) => {
+      console.error("Entries SSE error:", error);
+    };
+
+    return () => {
+      eventSource.close();
+    };
   }, [user]);
 
   const loadDataFromServer = async () => {
@@ -177,6 +276,17 @@ export function useFinanceData() {
       setData(loadedData);
       setOriginalData(loadedData);
 
+      prevIncomeTotalRef.current = incomes.reduce(
+        (sum: number, entry: FinanceEntry) =>
+          sum + entry.amounts.reduce((a: number, b: number) => a + b, 0),
+        0
+      );
+      prevExpenseTotalRef.current = expenses.reduce(
+        (sum: number, entry: FinanceEntry) =>
+          sum + entry.amounts.reduce((a: number, b: number) => a + b, 0),
+        0
+      );
+
       setHasBankChanges(false);
       setHasEntryChanges(false);
 
@@ -196,76 +306,6 @@ export function useFinanceData() {
     }
   };
 
-  const checkConflicts = async (): Promise<FinanceData | null> => {
-    try {
-      const bankResponse = await fetch("/api/bank-amount", {
-        credentials: "include",
-      });
-
-      if (!bankResponse.ok) {
-        if (bankResponse.status === 401) return null;
-        throw new Error(`Bank API error: ${bankResponse.status}`);
-      }
-
-      const bankData = await bankResponse.json();
-
-      const entriesResponse = await fetch("/api/entries", {
-        credentials: "include",
-      });
-
-      if (!entriesResponse.ok) {
-        if (entriesResponse.status === 401) return null;
-        throw new Error(`Entries API error: ${entriesResponse.status}`);
-      }
-
-      const entriesData = await entriesResponse.json();
-
-      const entries = entriesData?.entries || [];
-      const currentIncomes = entries
-        .filter((entry: any) => entry.type === "income")
-        .map((entry: any) => ({
-          id: entry.id.toString(),
-          description: entry.name,
-          amounts: shiftDataForRollingMonths(entry.amounts),
-        }));
-
-      const currentExpenses = entries
-        .filter((entry: any) => entry.type === "expense")
-        .map((entry: any) => ({
-          id: entry.id.toString(),
-          description: entry.name,
-          amounts: shiftDataForRollingMonths(entry.amounts),
-        }));
-
-      const currentData = {
-        bankAmount: bankData.amount || 0,
-        incomes: currentIncomes,
-        expenses: currentExpenses,
-      };
-
-      const hasBankConflict =
-        currentData.bankAmount !== originalData.bankAmount &&
-        bankData.last_updated_user_id !== user?.id;
-      const hasIncomeConflict =
-        JSON.stringify(currentData.incomes) !==
-          JSON.stringify(originalData.incomes) &&
-        entriesData.last_updated_user_id !== user?.id;
-      const hasExpenseConflict =
-        JSON.stringify(currentData.expenses) !==
-          JSON.stringify(originalData.expenses) &&
-        entriesData.last_updated_user_id !== user?.id;
-
-      if (hasBankConflict || hasIncomeConflict || hasExpenseConflict) {
-        return currentData;
-      }
-
-      return null;
-    } catch (error) {
-      console.error("Error checking conflicts:", error);
-      return null;
-    }
-  };
-
   const saveBankAmount = async (
     dataToSave?: FinanceData,
     onSessionExpired?: () => void
@@ -277,32 +317,6 @@ export function useFinanceData() {
         return { success: false } as const;
       }
 
-      const bankResponseCheck = await fetch("/api/bank-amount", {
-        credentials: "include",
-      });
-      if (bankResponseCheck.ok) {
-        const serverBank = await bankResponseCheck.json();
-        const serverAmount = serverBank.amount || 0;
-        const lastUser = serverBank.last_updated_user_id || null;
-        if (serverAmount === currentData.bankAmount) {
-          setOriginalData((prev) => ({ ...prev, bankAmount: serverAmount }));
-          setHasBankChanges(false);
-          return { success: false } as const;
-        }
-        if (
-          serverAmount !== originalData.bankAmount &&
-          lastUser !== user?.id &&
-          serverAmount !== currentData.bankAmount
-        ) {
-          setConflictData({
-            bankAmount: serverAmount,
-            incomes: originalData.incomes,
-            expenses: originalData.expenses,
-          });
-          setConflictType("bank");
-          return { conflict: true } as const;
-        }
-      }
       const bankResponse = await fetch("/api/bank-amount", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -353,65 +367,6 @@ export function useFinanceData() {
       return { success: false };
     }
     try {
-      const latest = await fetchLatestEntriesNoCache();
-      if (latest) {
-        const target = latest.entries.find((e: any) => e.id.toString() === id);
-        const originalEntry = originalData[entryType].find((e) => e.id === id);
-
-        if (!target && originalEntry) {
-          const incomesServer = latest.entries
-            .filter((e: any) => e.type === "income")
-            .map((e: any) => ({
-              id: e.id.toString(),
-              description: e.name,
-              amounts: shiftDataForRollingMonths(e.amounts),
-            }));
-          const expensesServer = latest.entries
-            .filter((e: any) => e.type === "expense")
-            .map((e: any) => ({
-              id: e.id.toString(),
-              description: e.name,
-              amounts: shiftDataForRollingMonths(e.amounts),
-            }));
-          setConflictData({
-            bankAmount: originalData.bankAmount,
-            incomes: incomesServer,
-            expenses: expensesServer,
-          });
-          setConflictType("entries");
-          return { success: false, conflict: true };
-        }
-        if (target && originalEntry) {
-          const serverName = target.name;
-
-          if (
-            serverName !== originalEntry.description &&
-            serverName !== newDescription
-          ) {
-            const incomesServer = latest.entries
-              .filter((e: any) => e.type === "income")
-              .map((e: any) => ({
-                id: e.id.toString(),
-                description: e.name,
-                amounts: shiftDataForRollingMonths(e.amounts),
-              }));
-            const expensesServer = latest.entries
-              .filter((e: any) => e.type === "expense")
-              .map((e: any) => ({
-                id: e.id.toString(),
-                description: e.name,
-                amounts: shiftDataForRollingMonths(e.amounts),
-              }));
-            setConflictData({
-              bankAmount: originalData.bankAmount,
-              incomes: incomesServer,
-              expenses: expensesServer,
-            });
-            setConflictType("entries");
-            return { success: false, conflict: true };
-          }
-        }
-      }
       const res = await fetch("/api/entries", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -462,62 +417,7 @@ export function useFinanceData() {
 
       const currentMonth = new Date().getMonth();
       const actualMonth = (currentMonth + monthIndex) % 12;
-      const latest = await fetchLatestEntriesNoCache();
-      if (latest) {
-        const target = latest.entries.find((e: any) => e.id.toString() === id);
-        const originalEntry = originalData[entryType].find((e) => e.id === id);
-        if (!target && originalEntry) {
-          const incomesServer = latest.entries
-            .filter((e: any) => e.type === "income")
-            .map((e: any) => ({
-              id: e.id.toString(),
-              description: e.name,
-              amounts: shiftDataForRollingMonths(e.amounts),
-            }));
-          const expensesServer = latest.entries
-            .filter((e: any) => e.type === "expense")
-            .map((e: any) => ({
-              id: e.id.toString(),
-              description: e.name,
-              amounts: shiftDataForRollingMonths(e.amounts),
-            }));
-          setConflictData({
-            bankAmount: originalData.bankAmount,
-            incomes: incomesServer,
-            expenses: expensesServer,
-          });
-          setConflictType("entries");
-          return { success: false, conflict: true };
-        }
-        if (target && originalEntry) {
-          const serverShifted = shiftDataForRollingMonths(target.amounts);
-          const serverValue = serverShifted[monthIndex];
-          const originalValue = originalEntry.amounts[monthIndex];
-          if (serverValue !== originalValue && serverValue !== amount) {
-            const incomesServer = latest.entries
-              .filter((e: any) => e.type === "income")
-              .map((e: any) => ({
-                id: e.id.toString(),
-                description: e.name,
-                amounts: shiftDataForRollingMonths(e.amounts),
-              }));
-            const expensesServer = latest.entries
-              .filter((e: any) => e.type === "expense")
-              .map((e: any) => ({
-                id: e.id.toString(),
-                description: e.name,
-                amounts: shiftDataForRollingMonths(e.amounts),
-              }));
-            setConflictData({
-              bankAmount: originalData.bankAmount,
-              incomes: incomesServer,
-              expenses: expensesServer,
-            });
-            setConflictType("entries");
-            return { success: false, conflict: true };
-          }
-        }
-      }
+
       const res = await fetch("/api/entries", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -786,19 +686,12 @@ export function useFinanceData() {
 
       setHasBankChanges(false);
       setHasEntryChanges(false);
-      setConflictData(null);
-      setConflictType(null);
       await loadDataFromServer();
       return { success: true };
     } catch (error) {
       console.error("Error force saving data to server:", error);
       throw error;
     }
-  };
-
-  const cancelConflict = () => {
-    setConflictData(null);
-    setConflictType(null);
   };
 
   const setDataForImport = async (
@@ -893,13 +786,10 @@ export function useFinanceData() {
     hasBankChanges,
     hasEntryChanges,
     isLoading,
-    conflictData,
-    conflictType,
     saveBankAmount,
     commitEntryDescription,
     commitEntryAmount,
     forceSaveData,
-    cancelConflict,
     updateBankAmount,
     addEntry,
     updateEntry,
@@ -908,5 +798,6 @@ export function useFinanceData() {
     refreshData: loadDataFromServer,
     addToBankAmount,
     subtractFromBankAmount,
+    entryFlashState,
   };
 }

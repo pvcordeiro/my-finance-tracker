@@ -21,22 +21,17 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { ConflictConfirmationDialog } from "@/components/finance/conflict-confirmation-dialog";
 import type { FinanceData, CommitResult } from "@/hooks/use-finance-data";
 
 function HomePageContent() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const {
     data,
     hasChanges,
-    conflictData,
-    conflictType,
     commitEntryDescription,
     commitEntryAmount,
-    forceSaveData,
-    cancelConflict,
     updateBankAmount,
     addEntry,
     updateEntry,
@@ -44,6 +39,7 @@ function HomePageContent() {
     setData,
     addToBankAmount,
     subtractFromBankAmount,
+    entryFlashState,
   } = useFinanceData();
   const [incomeOpen, setIncomeOpen] = useState(false);
   const [expenseOpen, setExpenseOpen] = useState(false);
@@ -51,7 +47,6 @@ function HomePageContent() {
   const [expenseGuidedDialogOpen, setExpenseGuidedDialogOpen] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const nextRouteRef = useRef<string | null>(null);
-  const sessionExpiredRef = useRef(false);
   const [activeTab, setActiveTab] = useState(
     searchParams.get("tab") === "management" ? "management" : "main"
   );
@@ -249,24 +244,6 @@ function HomePageContent() {
     };
   }, [data.bankAmount, updateBankAmount]);
 
-  const handleForceSave = async () => {
-    try {
-      const result = await forceSaveData(undefined, handleSessionExpired);
-      if (result?.success) {
-        flashCounterRef.current += 1;
-        setLastSaved({ kind: "bank", token: flashCounterRef.current });
-      }
-    } catch (error) {
-      console.error("Failed to force save data:", error);
-    }
-  };
-
-  const handleSessionExpired = async () => {
-    sessionExpiredRef.current = true;
-    await logout();
-    router.push("/login?session=expired");
-  };
-
   const handleAddToBankAmount = async (delta: number, note?: string) => {
     await addToBankAmount(delta, note);
     flashCounterRef.current += 1;
@@ -370,18 +347,18 @@ function HomePageContent() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen finance-gradient">
+    <div className="min-h-screen finance-gradient lg:h-screen lg:overflow-hidden">
       <DashboardHeader />
-      <main className="container mx-auto p-4 space-y-6">
+      <main className="container mx-auto p-4 space-y-6 lg:h-[calc(100vh-4rem)] lg:overflow-hidden">
         <Tabs
           value={activeTab}
           onValueChange={setActiveTab}
-          className="space-y-6"
+          className="space-y-6 lg:h-full"
         >
-          <TabsContent value="main">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:h-[calc(100vh-200px)]">
+          <TabsContent value="main" className="lg:h-full">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:h-full">
               {/* Left Column - Bank Amount */}
-              <div className="space-y-4 lg:overflow-y-auto lg:pr-1">
+              <div className="space-y-4 lg:overflow-y-auto lg:pr-1 lg:h-full">
                 <BankAmount
                   amount={data.bankAmount}
                   onAdd={handleAddToBankAmount}
@@ -400,9 +377,8 @@ function HomePageContent() {
                   }
                 />
               </div>
-
               {/* Right Column - Add Buttons + Income and Expenses */}
-              <div className="space-y-4 lg:overflow-y-auto lg:pl-1">
+              <div className="space-y-4 lg:overflow-y-auto lg:pl-1 lg:h-full">
                 {/* Add Entry Buttons */}
                 <div className="space-y-3 pt-3 border-t lg:border-t-0 lg:pt-0 lg:space-y-0">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -485,6 +461,8 @@ function HomePageContent() {
                       ? guidedEntryFlash.token
                       : undefined
                   }
+                  totalFlashToken={entryFlashState.incomes?.token}
+                  totalFlashType={entryFlashState.incomes?.flashType}
                   onCommitDescription={async (id, desc) => {
                     const res: CommitResult = await commitEntryDescription(
                       "incomes",
@@ -579,6 +557,8 @@ function HomePageContent() {
                       ? guidedEntryFlash.token
                       : undefined
                   }
+                  totalFlashToken={entryFlashState.expenses?.token}
+                  totalFlashType={entryFlashState.expenses?.flashType}
                   onCommitDescription={async (id, desc) => {
                     const res: CommitResult = await commitEntryDescription(
                       "expenses",
@@ -629,14 +609,6 @@ function HomePageContent() {
           </TabsContent>
         </Tabs>
       </main>
-      <ConflictConfirmationDialog
-        isOpen={!!conflictData}
-        conflictingData={conflictData}
-        currentData={data}
-        onConfirm={handleForceSave}
-        onCancel={cancelConflict}
-        conflictType={conflictType}
-      />
       {/* Confirmation Dialog */}
       <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
         <DialogContent>

@@ -4,6 +4,7 @@ import {
   withAuth,
   getAuthenticatedUser,
 } from "../../../../lib/auth-middleware.js";
+import { notifyEntryChange } from "../../../../lib/sse-notifications.js";
 
 export const POST = withAuth(async (request) => {
   try {
@@ -35,6 +36,13 @@ export const POST = withAuth(async (request) => {
         }
       );
     });
+
+    notifyEntryChange(groupId, "create", {
+      entryId,
+      type,
+      timestamp: Date.now(),
+    });
+
     return NextResponse.json({ success: true, id: entryId });
   } catch (e) {
     console.error("Create entry error:", e);

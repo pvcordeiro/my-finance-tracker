@@ -7,6 +7,9 @@ import {
   removeConnection,
 } from "../../../../lib/sse-notifications.js";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 export const GET = withAuth(async (request) => {
   const user = getAuthenticatedUser(request);
   const groupId = user.current_group_id;

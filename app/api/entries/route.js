@@ -5,6 +5,7 @@ import {
   withAuth,
   getAuthenticatedUser,
 } from "../../../lib/auth-middleware.js";
+import { notifyEntryChange } from "../../../lib/sse-notifications.js";
 
 export const GET = withAuth(async (request) => {
   try {
@@ -234,6 +235,8 @@ export const POST = withAuth(async (request) => {
         });
       });
 
+      notifyEntryChange(groupId, "bulk-update", { timestamp: Date.now() });
+
       return NextResponse.json({ success: true, count: insertedCount });
     } catch (error) {
       await new Promise((resolve) => {
@@ -299,6 +302,8 @@ export const DELETE = withAuth(async (request) => {
     if (result.changes === 0) {
       return NextResponse.json({ error: "Entry not found" }, { status: 404 });
     }
+
+    notifyEntryChange(groupId, "delete", { entryId, timestamp: Date.now() });
 
     return NextResponse.json({
       success: true,
@@ -393,6 +398,12 @@ export const PATCH = withAuth(async (request) => {
       updates.amount = numericAmount;
       updates.year = effectiveYear;
     }
+
+    notifyEntryChange(groupId, "update", {
+      entryId: id,
+      updates,
+      timestamp: Date.now(),
+    });
 
     return NextResponse.json({ success: true, updates });
   } catch (error) {

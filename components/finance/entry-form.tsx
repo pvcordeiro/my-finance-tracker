@@ -71,6 +71,8 @@ interface EntryFormProps {
   hideAddButton?: boolean;
   guidedDialogOpen?: boolean;
   onGuidedDialogOpenChange?: (open: boolean) => void;
+  totalFlashToken?: number;
+  totalFlashType?: "increase" | "decrease";
 }
 
 const MONTHS = [
@@ -120,6 +122,8 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
       hideAddButton = false,
       guidedDialogOpen: externalGuidedDialogOpen,
       onGuidedDialogOpenChange,
+      totalFlashToken,
+      totalFlashType,
     },
     ref
   ) {
@@ -141,6 +145,10 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
       null
     );
     const [searchQuery, setSearchQuery] = useState("");
+    const [totalFlashActive, setTotalFlashActive] = useState(false);
+    const [currentTotalFlashType, setCurrentTotalFlashType] = useState<
+      "increase" | "decrease"
+    >("increase");
 
     const guidedDialogOpen =
       externalGuidedDialogOpen !== undefined
@@ -168,6 +176,21 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
         }, 650);
       }
     }, [flashEntryId, flashToken, isOpen]);
+
+    useEffect(() => {
+      if (totalFlashToken !== undefined) {
+        setTotalFlashActive(false);
+        if (totalFlashType) {
+          setCurrentTotalFlashType(totalFlashType);
+        }
+        const t = setTimeout(() => setTotalFlashActive(true), 10);
+        const clearT = setTimeout(() => setTotalFlashActive(false), 660);
+        return () => {
+          clearTimeout(t);
+          clearTimeout(clearT);
+        };
+      }
+    }, [totalFlashToken, totalFlashType]);
 
     const calculateTotal = (amounts: number[]) => {
       return amounts.reduce((sum, amount) => sum + (amount || 0), 0);
@@ -283,10 +306,14 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
                 <div className="flex items-center gap-2">
                   <span
                     className={cn(
-                      "font-semibold text-base sm:text-lg tracking-tight",
+                      "font-semibold text-base sm:text-lg tracking-tight transition-all duration-300",
                       type === "income"
                         ? "text-finance-positive"
-                        : "text-finance-negative"
+                        : "text-finance-negative",
+                      totalFlashActive &&
+                        (currentTotalFlashType === "increase"
+                          ? "flash-success"
+                          : "flash-error")
                     )}
                   >
                     <PrivacyNumber
