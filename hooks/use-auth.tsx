@@ -33,12 +33,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let isMounted = true;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000); // 2 second timeout
 
     const checkSession = async () => {
       try {
         const response = await fetch("/api/auth/session", {
           credentials: "include",
+          signal: controller.signal,
         });
+
+        clearTimeout(timeoutId);
 
         if (isMounted) {
           if (response.ok) {
@@ -49,7 +54,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         }
       } catch (error) {
-        console.error("Session check error:", error);
+        clearTimeout(timeoutId);
+        if (error instanceof Error && error.name === "AbortError") {
+          console.warn("Session check timed out - API may still be starting");
+        } else {
+          console.error("Session check error:", error);
+        }
         if (isMounted) setUser(null);
       } finally {
         if (isMounted) setIsLoading(false);
@@ -60,6 +70,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => {
       isMounted = false;
+      controller.abort();
+      clearTimeout(timeoutId);
     };
   }, []);
 
