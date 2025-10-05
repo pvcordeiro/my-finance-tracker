@@ -1,17 +1,28 @@
 import { NextResponse } from "next/server";
 import { getDatabase } from "../../../../lib/database.js";
+import {
+  withAuth,
+  getAuthenticatedUser,
+} from "../../../../lib/auth-middleware.js";
 
-export async function GET(request) {
+export const GET = withAuth(async (request) => {
   try {
-    const { searchParams } = new URL(request.url);
-    const userId = searchParams.get("userId") || 1;
+    const user = getAuthenticatedUser(request);
+    const groupId = user.current_group_id;
+
+    if (!groupId) {
+      return NextResponse.json(
+        { error: "No active group selected", code: "no_group" },
+        { status: 403 }
+      );
+    }
 
     const db = await getDatabase();
 
     const bankAmount = await new Promise((resolve, reject) => {
       db.get(
-        "SELECT amount FROM bank_amounts WHERE user_id = ? ORDER BY updated_at DESC LIMIT 1",
-        [userId],
+        "SELECT amount FROM bank_amounts WHERE group_id = ? ORDER BY updated_at DESC LIMIT 1",
+        [groupId],
         (err, row) => {
           if (err) reject(err);
           else resolve(row);
@@ -29,10 +40,10 @@ export async function GET(request) {
           ea.month, ea.amount
         FROM entries e
         LEFT JOIN entry_amounts ea ON e.id = ea.entry_id AND ea.year = ?
-        WHERE e.user_id = ?
+        WHERE e.group_id = ?
         ORDER BY e.created_at DESC, ea.month ASC
       `,
-        [currentYear, userId],
+        [currentYear, groupId],
         (err, rows) => {
           if (err) reject(err);
           else resolve(rows);
@@ -66,6 +77,8 @@ export async function GET(request) {
       bankAmount: bankAmount?.amount || 0,
       entries: parsedEntries,
       exportDate: new Date().toISOString(),
+      groupId: groupId,
+      exportedBy: user.username,
     };
 
     return NextResponse.json(exportData);
@@ -76,4 +89,4 @@ export async function GET(request) {
       { status: 500 }
     );
   }
-}
+});

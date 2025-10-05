@@ -67,7 +67,7 @@ export async function POST(request) {
     });
     if (existingUser) {
       return NextResponse.json(
-        { error: "Username already exists" },
+        { error: "Invalid username or password" },
         { status: 409 }
       );
     }
