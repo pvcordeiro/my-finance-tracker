@@ -337,6 +337,36 @@ function HomePageContent() {
     addEntry("expenses");
   };
 
+  const handleResolveCurrentMonth = async (
+    type: "incomes" | "expenses",
+    id: string,
+    monthIndex: number,
+    amount: number
+  ) => {
+    try {
+      const entry =
+        type === "incomes"
+          ? data.incomes.find((e) => e.id === id)
+          : data.expenses.find((e) => e.id === id);
+
+      const description = entry?.description || "Entry";
+
+      updateEntry(type, id, "amount", 0, monthIndex);
+      await commitEntryAmount(type, id, monthIndex, 0);
+
+      toast.success(`${type === "incomes" ? "Income" : "Expense"} resolved`, {
+        description: `€${amount.toFixed(2)} from "${description}" marked as ${
+          type === "incomes" ? "received" : "paid"
+        }`,
+      });
+    } catch (error) {
+      console.error("Failed to resolve current month:", error);
+      toast.error("Failed to resolve entry", {
+        description: "Please try again",
+      });
+    }
+  };
+
   if (!user) return null;
 
   return (
@@ -431,6 +461,14 @@ function HomePageContent() {
                       });
                     }
                   }}
+                  onResolveCurrentMonth={async (id, monthIndex, amount) => {
+                    await handleResolveCurrentMonth(
+                      "incomes",
+                      id,
+                      monthIndex,
+                      amount
+                    );
+                  }}
                   type="income"
                   isOpen={incomeOpen}
                   onToggle={() => setIncomeOpen(!incomeOpen)}
@@ -516,6 +554,14 @@ function HomePageContent() {
                         description: "Please try again",
                       });
                     }
+                  }}
+                  onResolveCurrentMonth={async (id, monthIndex, amount) => {
+                    await handleResolveCurrentMonth(
+                      "expenses",
+                      id,
+                      monthIndex,
+                      amount
+                    );
                   }}
                   type="expense"
                   isOpen={expenseOpen}

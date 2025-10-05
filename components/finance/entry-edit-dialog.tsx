@@ -7,7 +7,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface FinanceEntry {
@@ -36,6 +48,7 @@ interface EntryEditDialogProps {
     monthIndex: number,
     amount: number
   ) => Promise<boolean> | boolean;
+  onDeleteEntry: (id: string) => Promise<void>;
   rollingMonths: string[];
 }
 
@@ -47,11 +60,13 @@ export function EntryEditDialog({
   onUpdateEntry,
   onCommitDescription,
   onCommitAmount,
+  onDeleteEntry,
   rollingMonths,
 }: EntryEditDialogProps) {
   const [changedFields, setChangedFields] = useState<Set<string>>(new Set());
   const [savedFields, setSavedFields] = useState<Set<string>>(new Set());
   const [localEntry, setLocalEntry] = useState<FinanceEntry | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const descriptionInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -104,156 +119,196 @@ export function EntryEditDialog({
   if (!localEntry) return null;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85dvh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>
-            Edit {type === "income" ? "Income" : "Expense"}
-          </DialogTitle>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-2xl max-h-[85dvh] overflow-y-auto">
+          <DialogHeader className="relative">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setDeleteDialogOpen(true)}
+              className="absolute left-0 top-0 text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8"
+              aria-label="Delete entry"
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+            <DialogTitle className="text-center">
+              Edit {type === "income" ? "Income" : "Expense"}
+            </DialogTitle>
+          </DialogHeader>
 
-        <div className="space-y-6 mt-4">
-          {/* Description */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Description</label>
-            <Input
-              ref={descriptionInputRef}
-              placeholder="Description"
-              value={localEntry.description}
-              onChange={(e) => {
-                const newDescription = e.target.value;
-                setLocalEntry({ ...localEntry, description: newDescription });
-                onUpdateEntry(localEntry.id, "description", newDescription);
-                setChangedFields((prev) =>
-                  new Set(prev).add(`${localEntry.id}-description`)
-                );
-              }}
-              onBlur={() => {
-                const fieldKey = `${localEntry.id}-description`;
-                if (changedFields.has(fieldKey)) {
-                  Promise.resolve(
-                    onCommitDescription(localEntry.id, localEntry.description)
-                  ).then((ok) => {
-                    if (ok) markSaved(fieldKey);
-                  });
-                  setChangedFields((prev) => {
-                    const ns = new Set(prev);
-                    ns.delete(fieldKey);
-                    return ns;
-                  });
-                }
-              }}
-              onFocus={(e) => {
-                setTimeout(() => {
-                  e.target.scrollIntoView({
-                    behavior: "smooth",
-                    block: "center",
-                  });
-                }, 300);
-              }}
-              className={cn(
-                "transition-all duration-200",
-                savedFields.has(`${localEntry.id}-description`) &&
-                  "flash-success"
-              )}
-            />
-          </div>
-
-          {/* Monthly Amounts */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium">Monthly Amounts</label>
-              <span
+          <div className="space-y-6 mt-4">
+            {/* Description */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Description</label>
+              <Input
+                ref={descriptionInputRef}
+                placeholder="Description"
+                value={localEntry.description}
+                onChange={(e) => {
+                  const newDescription = e.target.value;
+                  setLocalEntry({ ...localEntry, description: newDescription });
+                  onUpdateEntry(localEntry.id, "description", newDescription);
+                  setChangedFields((prev) =>
+                    new Set(prev).add(`${localEntry.id}-description`)
+                  );
+                }}
+                onBlur={() => {
+                  const fieldKey = `${localEntry.id}-description`;
+                  if (changedFields.has(fieldKey)) {
+                    Promise.resolve(
+                      onCommitDescription(localEntry.id, localEntry.description)
+                    ).then((ok) => {
+                      if (ok) markSaved(fieldKey);
+                    });
+                    setChangedFields((prev) => {
+                      const ns = new Set(prev);
+                      ns.delete(fieldKey);
+                      return ns;
+                    });
+                  }
+                }}
+                onFocus={(e) => {
+                  setTimeout(() => {
+                    e.target.scrollIntoView({
+                      behavior: "smooth",
+                      block: "center",
+                    });
+                  }, 300);
+                }}
                 className={cn(
-                  "font-semibold text-base",
-                  type === "income"
-                    ? "text-finance-positive"
-                    : "text-finance-negative"
+                  "transition-all duration-200",
+                  savedFields.has(`${localEntry.id}-description`) &&
+                    "flash-success"
                 )}
-              >
-                €
-                {localEntry.amounts
-                  .reduce((sum, amount) => sum + (amount || 0), 0)
-                  .toFixed(2)}
-              </span>
+              />
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-              {rollingMonths.map((month, index) => (
-                <div key={month} className="space-y-2">
-                  <label className="text-xs font-medium text-muted-foreground block">
-                    {month}
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
-                      €
-                    </span>
-                    <Input
-                      type="number"
-                      inputMode="decimal"
-                      step="0.01"
-                      placeholder="0"
-                      value={localEntry.amounts[index] || ""}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        const regex = /^\d*\.?\d{0,2}$/;
-                        if (value === "" || regex.test(value)) {
-                          const newAmount = Number.parseFloat(value) || 0;
-                          const newAmounts = [...localEntry.amounts];
-                          newAmounts[index] = newAmount;
-                          setLocalEntry({ ...localEntry, amounts: newAmounts });
-                          onUpdateEntry(
-                            localEntry.id,
-                            "amount",
-                            newAmount,
-                            index
-                          );
-                          setChangedFields((prev) =>
-                            new Set(prev).add(
-                              `${localEntry.id}-amount-${index}`
-                            )
-                          );
-                        }
-                      }}
-                      onBlur={() => {
-                        const fieldKey = `${localEntry.id}-amount-${index}`;
-                        if (changedFields.has(fieldKey)) {
-                          Promise.resolve(
-                            onCommitAmount(
+
+            {/* Monthly Amounts */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium">Monthly Amounts</label>
+                <span
+                  className={cn(
+                    "font-semibold text-base",
+                    type === "income"
+                      ? "text-finance-positive"
+                      : "text-finance-negative"
+                  )}
+                >
+                  €
+                  {localEntry.amounts
+                    .reduce((sum, amount) => sum + (amount || 0), 0)
+                    .toFixed(2)}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                {rollingMonths.map((month, index) => (
+                  <div key={month} className="space-y-2">
+                    <label className="text-xs font-medium text-muted-foreground block">
+                      {month}
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
+                        €
+                      </span>
+                      <Input
+                        type="number"
+                        inputMode="decimal"
+                        step="0.01"
+                        placeholder="0"
+                        value={localEntry.amounts[index] || ""}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          const regex = /^\d*\.?\d{0,2}$/;
+                          if (value === "" || regex.test(value)) {
+                            const newAmount = Number.parseFloat(value) || 0;
+                            const newAmounts = [...localEntry.amounts];
+                            newAmounts[index] = newAmount;
+                            setLocalEntry({
+                              ...localEntry,
+                              amounts: newAmounts,
+                            });
+                            onUpdateEntry(
                               localEntry.id,
-                              index,
-                              localEntry.amounts[index] || 0
-                            )
-                          ).then((ok) => {
-                            if (ok) markSaved(fieldKey);
-                          });
-                          setChangedFields((prev) => {
-                            const ns = new Set(prev);
-                            ns.delete(fieldKey);
-                            return ns;
-                          });
-                        }
-                      }}
-                      onFocus={(e) => {
-                        setTimeout(() => {
-                          e.target.scrollIntoView({
-                            behavior: "smooth",
-                            block: "center",
-                          });
-                        }, 300);
-                      }}
-                      className={cn(
-                        "pl-8 transition-all duration-200",
-                        savedFields.has(`${localEntry.id}-amount-${index}`) &&
-                          "flash-success"
-                      )}
-                    />
+                              "amount",
+                              newAmount,
+                              index
+                            );
+                            setChangedFields((prev) =>
+                              new Set(prev).add(
+                                `${localEntry.id}-amount-${index}`
+                              )
+                            );
+                          }
+                        }}
+                        onBlur={() => {
+                          const fieldKey = `${localEntry.id}-amount-${index}`;
+                          if (changedFields.has(fieldKey)) {
+                            Promise.resolve(
+                              onCommitAmount(
+                                localEntry.id,
+                                index,
+                                localEntry.amounts[index] || 0
+                              )
+                            ).then((ok) => {
+                              if (ok) markSaved(fieldKey);
+                            });
+                            setChangedFields((prev) => {
+                              const ns = new Set(prev);
+                              ns.delete(fieldKey);
+                              return ns;
+                            });
+                          }
+                        }}
+                        onFocus={(e) => {
+                          setTimeout(() => {
+                            e.target.scrollIntoView({
+                              behavior: "smooth",
+                              block: "center",
+                            });
+                          }, 300);
+                        }}
+                        className={cn(
+                          "pl-8 transition-all duration-200",
+                          savedFields.has(`${localEntry.id}-amount-${index}`) &&
+                            "flash-success"
+                        )}
+                      />
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Entry</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this entry? This action cannot be
+              undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                await onDeleteEntry(localEntry.id);
+                setDeleteDialogOpen(false);
+                onOpenChange(false);
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete Entry
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

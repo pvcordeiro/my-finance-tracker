@@ -18,7 +18,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ChevronDown, ChevronUp, Trash2, Plus, Search } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  Plus,
+  Search,
+  CheckCircle,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { GuidedEntryDialog } from "./guided-entry-dialog";
 import { EntryEditDialog } from "./entry-edit-dialog";
@@ -40,6 +46,11 @@ interface EntryFormProps {
     monthIndex?: number
   ) => void;
   onRemoveEntry: (id: string) => Promise<void>;
+  onResolveCurrentMonth: (
+    id: string,
+    monthIndex: number,
+    amount: number
+  ) => Promise<void>;
   type: "income" | "expense";
   isOpen: boolean;
   onToggle: () => void;
@@ -95,6 +106,7 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
       entries,
       onUpdateEntry,
       onRemoveEntry,
+      onResolveCurrentMonth,
       type,
       isOpen,
       onToggle,
@@ -111,6 +123,12 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
   ) {
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [entryToDelete, setEntryToDelete] = useState<string | null>(null);
+    const [resolveDialogOpen, setResolveDialogOpen] = useState(false);
+    const [entryToResolve, setEntryToResolve] = useState<{
+      entry: FinanceEntry;
+      monthIndex: number;
+      amount: number;
+    } | null>(null);
     const [internalGuidedDialogOpen, setInternalGuidedDialogOpen] =
       useState(false);
     const [flashingEntries, setFlashingEntries] = useState<Set<string>>(
@@ -189,6 +207,48 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
     const handleEntryClick = (entry: FinanceEntry) => {
       setSelectedEntry(entry);
       setEditDialogOpen(true);
+    };
+
+    const handleResolveCurrentMonth = async (
+      e: React.MouseEvent,
+      entry: FinanceEntry
+    ) => {
+      e.stopPropagation();
+      const currentMonthIndex = 0;
+      const currentAmount = entry.amounts[currentMonthIndex] || 0;
+
+      if (currentAmount === 0) {
+        return;
+      }
+
+      setEntryToResolve({
+        entry,
+        monthIndex: currentMonthIndex,
+        amount: currentAmount,
+      });
+      setResolveDialogOpen(true);
+    };
+
+    const confirmResolveCurrentMonth = async () => {
+      if (!entryToResolve) return;
+
+      await onResolveCurrentMonth(
+        entryToResolve.entry.id,
+        entryToResolve.monthIndex,
+        entryToResolve.amount
+      );
+
+      setFlashingEntries((prev) => new Set(prev).add(entryToResolve.entry.id));
+      setTimeout(() => {
+        setFlashingEntries((prev) => {
+          const ns = new Set(prev);
+          ns.delete(entryToResolve.entry.id);
+          return ns;
+        });
+      }, 650);
+
+      setResolveDialogOpen(false);
+      setEntryToResolve(null);
     };
 
     return (
@@ -292,17 +352,14 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setEntryToDelete(entry.id);
-                            setDeleteDialogOpen(true);
-                          }}
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0 touch-manipulation"
-                          aria-label={`Delete entry: ${
+                          onClick={(e) => handleResolveCurrentMonth(e, entry)}
+                          className="text-finance-positive hover:text-finance-positive hover:bg-finance-positive/10 h-8 w-8 p-0 touch-manipulation"
+                          aria-label={`Mark current month as resolved: ${
                             entry.description || "unnamed entry"
                           }`}
+                          disabled={!entry.amounts[0] || entry.amounts[0] === 0}
                         >
-                          <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                          <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
                         </Button>
                       </div>
                     </div>
@@ -369,6 +426,44 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
           </AlertDialogContent>
         </AlertDialog>
 
+        {/* Resolve Current Month Confirmation Dialog */}
+        <AlertDialog
+          open={resolveDialogOpen}
+          onOpenChange={setResolveDialogOpen}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                Mark as {type === "income" ? "Received" : "Paid"}?
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {entryToResolve && (
+                  <>
+                    Mark <strong>€{entryToResolve.amount.toFixed(2)}</strong>{" "}
+                    for{" "}
+                    <strong>{rollingMonths[entryToResolve.monthIndex]}</strong>{" "}
+                    as {type === "income" ? "received" : "paid"}?
+                    <br />
+                    This will clear the current month&apos;s value for &quot;
+                    {entryToResolve.entry.description || "this entry"}&quot;.
+                  </>
+                )}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setEntryToResolve(null)}>
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={confirmResolveCurrentMonth}
+                className="bg-accent text-accent-foreground hover:bg-accent/90"
+              >
+                Confirm
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
         {/* Guided Entry Dialog */}
         <GuidedEntryDialog
           open={guidedDialogOpen}
@@ -386,6 +481,9 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
           onUpdateEntry={onUpdateEntry}
           onCommitDescription={onCommitDescription}
           onCommitAmount={onCommitAmount}
+          onDeleteEntry={async (id) => {
+            await onRemoveEntry(id);
+          }}
           rollingMonths={rollingMonths}
         />
       </Card>
