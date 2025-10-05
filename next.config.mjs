@@ -3,10 +3,6 @@ const nextConfig = {
   //
   output: "standalone",
 
-  experimental: {
-    optimizeCss: true,
-  },
-
   async rewrites() {
     return [];
   },
