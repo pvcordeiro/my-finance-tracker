@@ -349,7 +349,7 @@ function HomePageContent() {
   return (
     <div className="min-h-screen finance-gradient lg:h-screen lg:overflow-hidden">
       <DashboardHeader />
-      <main className="container mx-auto p-4 space-y-6 lg:h-[calc(100vh-4rem)] lg:overflow-hidden">
+      <main className="container mx-auto p-4 pt-0 space-y-6 lg:h-full lg:overflow-hidden">
         <Tabs
           value={activeTab}
           onValueChange={setActiveTab}
@@ -358,7 +358,7 @@ function HomePageContent() {
           <TabsContent value="main" className="lg:h-full">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:h-full">
               {/* Left Column - Bank Amount */}
-              <div className="space-y-4 lg:overflow-y-auto lg:pr-1 lg:h-full">
+              <div className="space-y-4 pt-2 lg:overflow-y-auto lg:pr-1 lg:h-full lg:pb-36">
                 <BankAmount
                   amount={data.bankAmount}
                   onAdd={handleAddToBankAmount}
@@ -378,7 +378,7 @@ function HomePageContent() {
                 />
               </div>
               {/* Right Column - Add Buttons + Income and Expenses */}
-              <div className="space-y-4 lg:overflow-y-auto lg:pl-1 lg:h-full">
+              <div className="space-y-4 pt-2 lg:overflow-y-auto lg:pl-1 lg:h-full lg:pb-36">
                 {/* Add Entry Buttons */}
                 <div className="space-y-3 pt-3 border-t lg:border-t-0 lg:pt-0 lg:space-y-0">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

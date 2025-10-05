@@ -92,7 +92,22 @@
 @layer base {
   * {
     @apply border-border;
+    /* Disable text selection/highlighting across the entire site */
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
   }
+  
+  /* Re-enable selection for input fields and textareas for usability */
+  input,
+  textarea {
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+  }
+  
   body {
     @apply bg-background text-foreground;
   }
