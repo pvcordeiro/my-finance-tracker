@@ -83,6 +83,10 @@ export function GuidedEntryDialog({
     if (open && inputRef.current) {
       setTimeout(() => {
         inputRef.current?.focus();
+        inputRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
       }, 100);
     }
   }, [step, open, currentMonthIndex]);
@@ -167,7 +171,7 @@ export function GuidedEntryDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] max-h-[85dvh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[500px] max-h-[85dvh] overflow-y-auto flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 pr-8">
             <span
@@ -186,7 +190,7 @@ export function GuidedEntryDialog({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="py-6">
+        <div className="py-6 px-1 pb-1 flex-1 overflow-y-auto">
           {step === "description" && (
             <div className="space-y-4">
               <div className="space-y-2">
@@ -198,6 +202,14 @@ export function GuidedEntryDialog({
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   onKeyDown={handleKeyDown}
+                  onFocus={(e) => {
+                    setTimeout(() => {
+                      e.target.scrollIntoView({
+                        behavior: "smooth",
+                        block: "center",
+                      });
+                    }, 300);
+                  }}
                   className="text-base"
                 />
               </div>
@@ -252,6 +264,14 @@ export function GuidedEntryDialog({
                       }
                     }}
                     onKeyDown={handleKeyDown}
+                    onFocus={(e) => {
+                      setTimeout(() => {
+                        e.target.scrollIntoView({
+                          behavior: "smooth",
+                          block: "center",
+                        });
+                      }, 300);
+                    }}
                     className="text-2xl font-semibold text-center"
                   />
                   <p className="text-sm text-muted-foreground text-center">
@@ -298,6 +318,14 @@ export function GuidedEntryDialog({
                         }
                       }}
                       onKeyDown={handleKeyDown}
+                      onFocus={(e) => {
+                        setTimeout(() => {
+                          e.target.scrollIntoView({
+                            behavior: "smooth",
+                            block: "center",
+                          });
+                        }, 300);
+                      }}
                       className="text-2xl font-semibold text-center"
                     />
                   </div>

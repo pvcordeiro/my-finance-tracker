@@ -122,7 +122,7 @@ export function EntryEditDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-2xl max-h-[85dvh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[85dvh] overflow-y-auto flex flex-col">
           <DialogHeader className="relative">
             <Button
               variant="ghost"
@@ -138,7 +138,7 @@ export function EntryEditDialog({
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-6 mt-4">
+          <div className="space-y-6 mt-4 px-1 pb-1 flex-1 overflow-y-auto">
             {/* Description */}
             <div className="space-y-2">
               <label className="text-sm font-medium">Description</label>

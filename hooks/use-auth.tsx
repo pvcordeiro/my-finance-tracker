@@ -34,7 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let isMounted = true;
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2000); // 2 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
 
     const checkSession = async () => {
       try {

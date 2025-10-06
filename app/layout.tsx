@@ -10,6 +10,7 @@ import { MobileBottomNav } from "@/components/ui/mobile-bottom-nav";
 import { Toaster } from "@/components/ui/sonner";
 import { Suspense } from "react";
 import { NoGroupOverlay } from "@/components/finance/no-group-overlay";
+import { PWAInstallPrompt } from "@/components/pwa/pwa-install-prompt";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -22,10 +23,23 @@ export const metadata: Metadata = {
   description:
     "Track income, manage expenses, and budget smarter with this modern finance tracker.",
   generator: "v0.app",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Finance Tracker",
+  },
   icons: {
     icon: [
       {
         url: "data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💸</text></svg>",
+      },
+    ],
+    apple: [
+      {
+        url: "/icon-192.png",
+        sizes: "192x192",
+        type: "image/png",
       },
     ],
   },
@@ -58,6 +72,7 @@ html {
           <ErrorBoundary>
             <AuthProvider>
               <PrivacyProvider>
+                <PWAInstallPrompt />
                 {children}
                 <NoGroupOverlay />
                 <Suspense fallback={null}>
