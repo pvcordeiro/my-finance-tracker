@@ -37,11 +37,6 @@ export const userIdSchema = z.object({
     .pipe(z.number().positive()),
 });
 
-export const adminLoginSchema = z.object({
-  username: z.string().min(1, "Username is required"),
-  password: z.string().min(1, "Password is required"),
-});
-
 export const deleteUserSchema = z.object({
   userId: z.string().regex(/^\d+$/, "User ID must be a number"),
 });
