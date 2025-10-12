@@ -1,7 +1,6 @@
 services:
-  app:
-    build: .
-    container_name: finance-tracker
+  my-finance-tracker:
+    container_name: my-finance-tracker
     ports:
       - "${PORT:-4242}:3000"
     volumes:
@@ -12,10 +11,3 @@ services:
       - ALLOW_REGISTRATION=${ALLOW_REGISTRATION:-true}
       - NODE_ENV=${NODE_ENV:-production}
     restart: unless-stopped
-    networks:
-      - finance-network
-
-networks:
-  finance-network:
-    driver: bridge
-
