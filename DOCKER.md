@@ -22,7 +22,7 @@ Visit: http://localhost:4242
 
 ```yaml
 services:
-  finance-tracker:
+  my-finance-tracker:
     image: pvcordeiro/my-finance-tracker:latest
     ports:
       - "4242:3000"
@@ -31,7 +31,6 @@ services:
     environment:
       - ADMIN_USERNAME=admin
       - ADMIN_PASSWORD=changeme
-      - ALLOW_REGISTRATION=true
     restart: unless-stopped
 ```
 
@@ -56,13 +55,12 @@ docker-compose up -d
 
 ### Environment Variables
 
-| Variable             | Default      | Description                                  |
-| -------------------- | ------------ | -------------------------------------------- |
-| `ADMIN_USERNAME`     | `admin`      | Initial admin username                       |
-| `ADMIN_PASSWORD`     | `changeme`   | Initial admin password (change immediately!) |
-| `ALLOW_REGISTRATION` | `true`       | Allow new user registration                  |
-| `PORT`               | `3000`       | Application port (internal container port)   |
-| `NODE_ENV`           | `production` | Node environment                             |
+| Variable                 | Default    | Description                                  |
+| ------------------------ | ---------- | -------------------------------------------- |
+| `ADMIN_USERNAME`         | `admin`    | Initial admin username                       |
+| `ADMIN_PASSWORD`         | `changeme` | Initial admin password (change immediately!) |
+| `ALLOW_REGISTRATION`     | `true`     | Allow new user registration                  |
+| `ENABLE_BALANCE_HISTORY` | `true`     | Enable transaction history display           |
 
 ### Volumes
 
