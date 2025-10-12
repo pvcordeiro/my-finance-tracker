@@ -68,6 +68,7 @@ A modern, full-featured finance tracker built with Next.js 15 and React 19, desi
 ```bash
 docker run -d \
   --name my-finance-tracker \
+  --restart unless-stopped \
   -p 4242:3000 \
   -v ~/finance-data:/app/data \
   -e ADMIN_USERNAME=admin \

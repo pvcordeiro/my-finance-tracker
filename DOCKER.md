@@ -9,6 +9,7 @@ A modern, self-hosted personal finance tracker built with Next.js 15, React 19, 
 ```bash
 docker run -d \
   --name my-finance-tracker \
+  --restart unless-stopped \
   -p 4242:3000 \
   -v ~/finance-data:/app/data \
   -e ADMIN_USERNAME=admin \
