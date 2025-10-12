@@ -91,7 +91,8 @@ export async function POST(request) {
       message: "Login successful",
     });
 
-    const isSecure = request.nextUrl.protocol === 'https:' || !isPrivateIP(clientIp);
+    const isSecure =
+      request.nextUrl.protocol === "https:" || !isPrivateIP(clientIp);
     response.cookies.set(
       SESSION_COOKIE_NAME,
       sessionToken,

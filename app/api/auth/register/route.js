@@ -134,7 +134,8 @@ export async function POST(request) {
       message: "User created successfully",
     });
 
-    const isSecure = request.nextUrl.protocol === 'https:' || !isPrivateIP(clientIp);
+    const isSecure =
+      request.nextUrl.protocol === "https:" || !isPrivateIP(clientIp);
     response.cookies.set(
       SESSION_COOKIE_NAME,
       sessionToken,
