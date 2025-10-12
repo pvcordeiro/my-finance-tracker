@@ -38,9 +38,11 @@ else
   echo "✅ Existing database found"
 fi
 
+chown -R nextjs:nodejs /app/data
+
 echo ""
 echo "🚀 Starting application..."
 echo "==========================================="
 echo ""
 
-exec bun server.js
+exec su-exec nextjs bun server.js

@@ -15,7 +15,7 @@ FROM oven/bun:alpine
 
 WORKDIR /app
 
-RUN apk add --no-cache curl
+RUN apk add --no-cache curl su-exec
 
 RUN addgroup -g 1001 -S nodejs && \
 	adduser -S nextjs -u 1001
@@ -30,8 +30,6 @@ RUN chmod +x /entrypoint.sh
 
 RUN mkdir -p /app/data && \
 	chown -R nextjs:nodejs /app
-
-USER nextjs
 
 ENV NODE_ENV=production \
 	PORT=3000
