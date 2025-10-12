@@ -66,7 +66,7 @@ A modern, full-featured finance tracker built with Next.js 15 and React 19, desi
 ### Get Started in 30 Seconds
 
 ```bash
-docker run -d -p 3000:3000 \
+docker run -d -p 4242:3000 \
   -v ~/finance-data:/app/data \
   -e ADMIN_USERNAME=admin \
   -e ADMIN_PASSWORD=changeme \
@@ -74,7 +74,7 @@ docker run -d -p 3000:3000 \
   pvcordeiro/my-finance-tracker:latest
 ```
 
-Visit: http://localhost:3000
+Visit: http://localhost:4242
 
 ### Recommended Setup (Docker Compose)
 
@@ -88,7 +88,7 @@ services:
   finance-tracker:
     image: pvcordeiro/my-finance-tracker:latest
     ports:
-      - "3000:3000"
+      - "4242:3000"
     volumes:
       - ./finance-data:/app/data
     environment:
@@ -233,7 +233,7 @@ The admin panel provides comprehensive system management:
    - Ensure the server is running and accessible on your network
    - Check firewall settings on the host machine
    - Verify devices are on the same network (or use proper port forwarding)
-   - Docker exposes port 3000 by default (maps to internal port 3000)
+   - Docker exposes port 4242 by default (maps to internal port 3000)
 
 2. **Database errors:**
 
@@ -396,7 +396,7 @@ server {
     ssl_certificate_key /path/to/key.pem;
 
     location / {
-        proxy_pass http://localhost:3000;
+        proxy_pass http://localhost:4242;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
     }

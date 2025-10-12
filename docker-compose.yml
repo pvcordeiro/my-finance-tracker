@@ -3,7 +3,7 @@ services:
     build: .
     container_name: finance-tracker
     ports:
-      - "${PORT:-3000}:3000"
+      - "${PORT:-4242}:3000"
     volumes:
       - ./data:/app/data
     environment:

@@ -20,7 +20,8 @@ echo "   Admin Password: ${ADMIN_PASSWORD}"
 echo "   Allow Registration: ${ALLOW_REGISTRATION:-true}"
 echo "   Enable Balance History: ${ENABLE_BALANCE_HISTORY:-true}"
 echo "   Node Environment: ${NODE_ENV:-production}"
-echo "   Port: ${PORT:-3000}"
+echo "   Internal Port: 3000"
+echo "   External Port: ${PORT:-4242}"
 echo ""
 
 if [ ! -d "/app/data" ]; then
