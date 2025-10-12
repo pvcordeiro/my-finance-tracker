@@ -7,6 +7,7 @@ import {
   getSessionCookieOptions,
   SESSION_COOKIE_NAME,
   getDeviceInfo,
+  isPrivateIP,
 } from "../../../../lib/session.js";
 
 export async function POST(request) {
@@ -133,10 +134,11 @@ export async function POST(request) {
       message: "User created successfully",
     });
 
+    const isSecure = request.nextUrl.protocol === 'https:' || !isPrivateIP(clientIp);
     response.cookies.set(
       SESSION_COOKIE_NAME,
       sessionToken,
-      getSessionCookieOptions()
+      getSessionCookieOptions(isSecure)
     );
 
     return response;

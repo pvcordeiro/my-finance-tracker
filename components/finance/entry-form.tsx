@@ -123,7 +123,6 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
       guidedDialogOpen: externalGuidedDialogOpen,
       onGuidedDialogOpenChange,
       totalFlashToken,
-      totalFlashType,
     },
     ref
   ) {
