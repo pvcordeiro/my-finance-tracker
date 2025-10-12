@@ -11,7 +11,6 @@ docker run -d -p 4242:3000 \
   -v ~/finance-data:/app/data \
   -e ADMIN_USERNAME=admin \
   -e ADMIN_PASSWORD=changeme \
-  -e ALLOW_REGISTRATION=false \
   pvcordeiro/my-finance-tracker:latest
 ```
 
@@ -30,7 +29,7 @@ services:
     environment:
       - ADMIN_USERNAME=admin
       - ADMIN_PASSWORD=changeme
-      - ALLOW_REGISTRATION=false
+      - ALLOW_REGISTRATION=true
     restart: unless-stopped
 ```
 

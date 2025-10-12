@@ -1,4 +1,4 @@
-# Another Personal Finance Tracker
+# My Finance Tracker
 
 A modern, full-featured finance tracker built with Next.js 15 and React 19, designed for privacy, multi-device access, and easy self-hosting. Includes a comprehensive admin panel, group management, session-based authentication, and a beautiful, mobile-friendly UI powered by Bun runtime.
 
@@ -12,7 +12,7 @@ A modern, full-featured finance tracker built with Next.js 15 and React 19, desi
 - 📅 Monthly and yearly financial summaries
 - 🔄 Real-time data sync with Server-Sent Events (SSE)
 - 📤 Data import/export (JSON)
-- � Detailed transaction history and editing
+- 📝 Detailed transaction history
 
 ### User Experience
 
