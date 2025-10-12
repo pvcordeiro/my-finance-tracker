@@ -146,9 +146,6 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
     );
     const [searchQuery, setSearchQuery] = useState("");
     const [totalFlashActive, setTotalFlashActive] = useState(false);
-    const [currentTotalFlashType, setCurrentTotalFlashType] = useState<
-      "increase" | "decrease"
-    >("increase");
 
     const guidedDialogOpen =
       externalGuidedDialogOpen !== undefined
@@ -180,9 +177,6 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
     useEffect(() => {
       if (totalFlashToken !== undefined) {
         setTotalFlashActive(false);
-        if (totalFlashType) {
-          setCurrentTotalFlashType(totalFlashType);
-        }
         const t = setTimeout(() => setTotalFlashActive(true), 10);
         const clearT = setTimeout(() => setTotalFlashActive(false), 660);
         return () => {
@@ -190,7 +184,7 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
           clearTimeout(clearT);
         };
       }
-    }, [totalFlashToken, totalFlashType]);
+    }, [totalFlashToken]);
 
     const calculateTotal = (amounts: number[]) => {
       return amounts.reduce((sum, amount) => sum + (amount || 0), 0);
@@ -311,9 +305,7 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
                         ? "text-finance-positive"
                         : "text-finance-negative",
                       totalFlashActive &&
-                        (currentTotalFlashType === "increase"
-                          ? "flash-success"
-                          : "flash-error")
+                        (type === "income" ? "flash-success" : "flash-error")
                     )}
                   >
                     <PrivacyNumber

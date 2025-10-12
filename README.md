@@ -2,14 +2,6 @@
 
 A modern, full-featured finance tracker built with Next.js 15 and React 19, designed for privacy, multi-device access, and easy self-hosting. Includes a comprehensive admin panel, group management, session-based authentication, and a beautiful, mobile-friendly UI powered by Bun runtime.
 
-Desktop:
-
-https://github.com/user-attachments/assets/58fc4ffb-19ae-4f61-9a5f-354d4595db1f
-
-Mobile:
-
-https://github.com/user-attachments/assets/a30efb78-74b5-45bb-b922-e2aa8f7005f7
-
 ## Features
 
 ### Core Finance Features
@@ -69,52 +61,64 @@ https://github.com/user-attachments/assets/a30efb78-74b5-45bb-b922-e2aa8f7005f7
 - 🔄 Automatic session cleanup
 - 🛡️ Rate limiting for security
 
-## Quick Start (Docker)
+# 🚀 Quick Reference - Docker Hub Deployment
 
-### Prerequisites
-
-- [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/) installed
-- [Bun](https://bun.sh) (included in Docker image)
-
-### 1. Clone/download this repo
-
-### 2. Copy `.env.example` to `.env` and configure your settings:
+### Get Started in 30 Seconds
 
 ```bash
-# Admin Configuration (IMPORTANT: Change these!)
-ADMIN_USERNAME="admin"
-ADMIN_PASSWORD="yourpassword"
-
-# Features
-ALLOW_REGISTRATION="true"  # Set to "false" to disable user registration
-
-# Production Settings
-NODE_ENV="production"
+docker run -d -p 3000:3000 \
+  -v ~/finance-data:/app/data \
+  -e ADMIN_USERNAME=admin \
+  -e ADMIN_PASSWORD=changeme \
+  -e ALLOW_REGISTRATION=false \
+  pvcordeiro/my-finance-tracker:latest
 ```
 
-### 3. Start with Docker Compose:
+Visit: http://localhost:3000
+
+### Recommended Setup (Docker Compose)
 
 ```bash
-docker compose up --build -d
+# Create directory
+mkdir finance-tracker && cd finance-tracker
+
+# Create docker-compose.yml
+cat > docker-compose.yml << 'EOF'
+services:
+  finance-tracker:
+    image: pvcordeiro/my-finance-tracker:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./finance-data:/app/data
+    environment:
+      - ADMIN_USERNAME=admin
+      - ADMIN_PASSWORD=changeme
+      - ALLOW_REGISTRATION=false
+    restart: unless-stopped
+EOF
+
+# Start
+docker-compose up -d
 ```
 
-The app will be available at [http://localhost](http://localhost) (or your server's IP).
+### Common Commands
 
-The SQLite database will be created at `data/finance.db` on first run and persisted on your host.
+```bash
+# View logs
+docker-compose logs -f
 
-### 4. (Optional) Domain + HTTPS with Cloudflare
+# Update to latest
+docker-compose pull && docker-compose up -d
 
-For production deployment with a custom domain and HTTPS, use Cloudflare as your reverse proxy:
+# Backup data
+tar -czf backup.tar.gz data/
 
-1. Point your domain to your server's IP in Cloudflare DNS
-2. Enable Cloudflare proxying for automatic SSL
-3. The app will be accessible at `https://yourdomain.com`
+# Stop
+docker-compose down
+```
 
 ## Local Development
-
-### Prerequisites
-
-- [Bun](https://bun.sh) v1.0 or higher
 
 ### Setup
 
@@ -146,15 +150,12 @@ bun run start
 ### First Time Setup
 
 1. On first run, the admin account is automatically created using credentials from `.env`
-2. Log in to the admin panel at `/admin` with your admin credentials
-3. Create groups for organizing finances (e.g., "Personal", "Family", "Business")
-4. Create user accounts or enable registration for users to sign up
-5. Assign users to groups as needed
+2. Create groups for organizing finances (e.g., "Personal", "Family", "Business")
+3. Create user accounts or enable registration for users to sign up
+4. Assign users to groups as needed
 
 ### Authentication
 
-- **User login:** Register (if enabled) or sign in at `/login` with username and password
-- **Admin login:** Access the admin panel at `/admin` (separate from user login)
 - **Registration:** Can be enabled/disabled by admin in the settings panel
 - **Session management:** View and revoke active sessions in user settings
 - **Password changes:** Users can change their password and username in settings
@@ -177,31 +178,23 @@ bun run start
 ### Finance Tracking
 
 - **Add entries:** Record income and expenses with custom names and amounts
-- **Bank balance:** Track and update your current bank balance
+- **Current balance:** Track and update your current balance
 - **Balance history:** View historical balance changes over time
 - **Monthly summaries:** See monthly income, expenses, and net changes
 - **Visual charts:** Interactive charts showing financial trends
-- **Data export:** Download all your financial data as JSON
-- **Data import:** Bulk upload entries from JSON files
+- **Data export:** Backup all your financial data as JSON
+- **Data import:** Restore all your financial data from a JSON file
+- **Wipe data:** This will wipe all your financial data!!!
 
 ### Multi-Device
 
-- Access from any browser/device on your network or the internet
+- Access from any browser/device on your network or the internet(if exposed)
 - All preferences and settings sync automatically
 - Real-time updates when data changes
-- Session management to control device access
-
-### Data & Backups
-
-- **Database:** `data/finance.db` (SQLite, local persistence)
-- **Export:** Download your data as JSON from the app's data management section
-- **Import:** Upload JSON files to restore or bulk-add entries
-- **Backup:** Copy the `data/finance.db` file regularly for backups
-- **Docker volumes:** Database is automatically persisted in Docker setup
 
 ## Admin Panel
 
-The admin panel (`/admin`) provides comprehensive system management:
+The admin panel provides comprehensive system management:
 
 ### Users Management
 
@@ -221,20 +214,17 @@ The admin panel (`/admin`) provides comprehensive system management:
 
 - Assign users to specific groups
 - Remove users from groups
-- View all user-group relationships
 - Manage access control
 
 ### Settings
 
 - Toggle user registration on/off
-- Configure system-wide settings
-- View system statistics
+- Toggle transaction history on/off
 
 ### Security
 
 - Change admin password
 - View admin account details
-- Admin-only access with separate authentication
 
 ### Common Issues
 
@@ -243,17 +233,16 @@ The admin panel (`/admin`) provides comprehensive system management:
    - Ensure the server is running and accessible on your network
    - Check firewall settings on the host machine
    - Verify devices are on the same network (or use proper port forwarding)
-   - Docker exposes port 80 by default (maps to internal port 3000)
+   - Docker exposes port 3000 by default (maps to internal port 3000)
 
 2. **Database errors:**
 
    - Check file permissions in the `data/` directory
-   - Ensure SQLite is properly installed (included in Docker image)
    - Verify the database file isn't corrupted (restore from backup)
 
 3. **Performance on Raspberry Pi or low-spec devices:**
 
-   - Use Raspberry Pi 4 or newer for best performance
+   - Use Raspberry Pi 3 or newer for best performance
    - Use a fast SD card (Class 10 or better) or USB SSD
    - Monitor CPU and memory usage with `htop`
    - Consider limiting concurrent sessions
@@ -261,7 +250,6 @@ The admin panel (`/admin`) provides comprehensive system management:
 4. **Session issues:**
 
    - Clear browser cookies if experiencing login problems
-   - Check session expiration settings
    - Revoke old sessions from user settings if needed
 
 ### Performance Optimization
@@ -272,9 +260,6 @@ htop
 
 # Check Docker container logs
 docker logs <container_name>
-
-# View database size
-ls -lh data/finance.db
 ```
 
 ## Development
@@ -286,52 +271,11 @@ ls -lh data/finance.db
 - **UI Library:** React 19
 - **Styling:** Tailwind CSS + shadcn/ui components
 - **Database:** SQLite3
-- **Authentication:** Session-based with HTTP-only cookies
+- **Authentication:** Session-based with cookies
 - **Real-time:** Server-Sent Events (SSE)
 - **Form Validation:** React Hook Form + Zod
 - **Charts:** Recharts
 - **Icons:** Lucide React
-
-### Project Structure
-
-```
-app/              # Next.js 15 app directory
-  ├── api/        # API routes (auth, entries, admin, etc.)
-  ├── admin/      # Admin panel page
-  ├── details/    # Transaction details page
-  ├── login/      # Login page
-  ├── manage/     # Data management page
-  ├── user/       # User settings page
-  └── page.tsx    # Main dashboard
-
-components/       # React components
-  ├── admin/      # Admin panel components
-  ├── auth/       # Authentication components
-  ├── finance/    # Finance tracking components
-  ├── ui/         # Reusable UI components (shadcn/ui)
-  └── user/       # User settings components
-
-hooks/            # Custom React hooks
-  ├── use-auth.tsx          # Authentication hook
-  ├── use-finance-data.tsx  # Finance data fetching
-  ├── use-mobile.tsx        # Mobile detection
-  └── use-privacy.tsx       # Privacy mode hook
-
-lib/              # Utility functions and backend logic
-  ├── auth-middleware.js    # Authentication middleware
-  ├── database.js           # SQLite database setup
-  ├── session.js            # Session management
-  ├── sse-notifications.js  # Server-Sent Events
-  ├── rate-limit.ts         # API rate limiting
-  ├── types.ts              # TypeScript types
-  ├── utils.ts              # Utility functions
-  └── validations.ts        # Zod schemas
-
-data/             # SQLite database (created at runtime)
-  └── finance.db  # Main database file
-
-public/           # Static assets
-```
 
 ### API Endpoints
 
@@ -399,28 +343,13 @@ The SQLite database includes the following main tables:
 
 ## Security Notes
 
-- **Session-based authentication:** Secure, HTTP-only cookies
 - **Password hashing:** bcrypt for password storage
-- **Admin separation:** Admin panel uses separate authentication
 - **Registration control:** Can be disabled to prevent unauthorized signups
 - **Session management:** Users can view and revoke active sessions
 - **Rate limiting:** API endpoints protected against abuse
 - **HTTPS recommended:** Use reverse proxy (Cloudflare, nginx) for production
 - **Regular backups:** Database backups recommended for data safety
-- **Keep updated:** Regularly update dependencies for security patches
 - **Environment variables:** Sensitive data stored in `.env` file
-- **Multi-session support:** Track and control access from multiple devices
-
-### Security Best Practices
-
-1. **Change default credentials:** Always update `ADMIN_USERNAME` and `ADMIN_PASSWORD` in `.env`
-2. **Use HTTPS:** Deploy with SSL/TLS in production (Cloudflare proxy recommended)
-3. **Regular backups:** Automate database backups to prevent data loss
-4. **Update dependencies:** Keep Bun, Next.js, and packages up to date
-5. **Monitor sessions:** Regularly review and revoke suspicious sessions
-6. **Strong passwords:** Enforce strong password policies for users
-7. **Network security:** Use firewall rules to restrict access if needed
-8. **Disable registration:** Turn off registration when not needed
 
 ## Deployment Options
 
@@ -453,9 +382,7 @@ For secure external access:
 
 **Option 1: Cloudflare (Easiest)**
 
-- Point domain to server IP in Cloudflare DNS
-- Enable orange cloud proxy for automatic SSL
-- Configure firewall rules in Cloudflare dashboard
+- Create a cloudflare tunnel at server and point it to your domain at cloudflare
 
 **Option 2: Let's Encrypt + nginx**
 
@@ -495,7 +422,3 @@ This project is open source. Feel free to use, modify, and distribute as needed.
 ## Support
 
 For issues, questions, or feature requests, please open an issue on GitHub.
-
----
-
-Built with ❤️ using Next.js, React, Bun, and SQLite.
