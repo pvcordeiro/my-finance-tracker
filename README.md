@@ -1,4 +1,4 @@
-# My Finance Tracker
+# 💸 My Finance Tracker
 
 A modern, full-featured finance tracker built with Next.js 15 and React 19, designed for privacy, multi-device access, and easy self-hosting. Includes a comprehensive admin panel, group management, session-based authentication, and a beautiful, mobile-friendly UI powered by Bun runtime.
 
@@ -61,9 +61,9 @@ A modern, full-featured finance tracker built with Next.js 15 and React 19, desi
 - 🔄 Automatic session cleanup
 - 🛡️ Rate limiting for security
 
-# 🚀 Quick Reference - Docker Hub Deployment
+# 🚀 Quick Start
 
-### Get Started in 30 Seconds
+## Install docker and run this
 
 ```bash
 docker run -d \
@@ -77,16 +77,17 @@ docker run -d \
 
 Visit: http://localhost:4242
 
-### Recommended Setup (Docker Compose)
+## Or run in docker compose (recomended)
 
 ```bash
 # Create directory
-mkdir finance-tracker && cd finance-tracker
+mkdir ~/finance-tracker && cd ~/finance-tracker
+```
 
+```bash
 # Create docker-compose.yml
-cat > docker-compose.yml << 'EOF'
 services:
-  finance-tracker:
+  my-finance-tracker:
     image: pvcordeiro/my-finance-tracker:latest
     ports:
       - "4242:3000"
@@ -95,15 +96,15 @@ services:
     environment:
       - ADMIN_USERNAME=admin
       - ADMIN_PASSWORD=changeme
-      - ALLOW_REGISTRATION=false
     restart: unless-stopped
-EOF
+```
 
+```bash
 # Start
 docker-compose up -d
 ```
 
-### Common Commands
+## Common Commands
 
 ```bash
 # View logs
@@ -112,14 +113,11 @@ docker-compose logs -f
 # Update to latest
 docker-compose pull && docker-compose up -d
 
-# Backup data
-tar -czf backup.tar.gz data/
-
 # Stop
 docker-compose down
 ```
 
-## Local Development
+# 🖥️ Local Development
 
 ### Setup
 
@@ -134,7 +132,7 @@ cp .env.example .env
 bun run dev
 ```
 
-The app will be available at [http://localhost:3000](http://localhost:3000).
+The app will be available at [http://localhost:4242](http://localhost:4242).
 
 ### Build for Production
 

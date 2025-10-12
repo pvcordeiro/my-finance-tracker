@@ -55,18 +55,16 @@ docker-compose up -d
 
 ### Environment Variables
 
-| Variable                 | Default    | Description                                  |
-| ------------------------ | ---------- | -------------------------------------------- |
-| `ADMIN_USERNAME`         | `admin`    | Initial admin username                       |
-| `ADMIN_PASSWORD`         | `changeme` | Initial admin password (change immediately!) |
-| `ALLOW_REGISTRATION`     | `true`     | Allow new user registration                  |
-| `ENABLE_BALANCE_HISTORY` | `true`     | Enable transaction history display           |
+| Variable                 | Default    | Description                                                |
+| ------------------------ | ---------- | ---------------------------------------------------------- |
+| `ADMIN_USERNAME`         | `admin`    | Initial admin username                                     |
+| `ADMIN_PASSWORD`         | `changeme` | Initial admin password (change immediately!)               |
+| `ALLOW_REGISTRATION`     | `true`     | Allow new user registration (disable after creating users) |
+| `ENABLE_BALANCE_HISTORY` | `true`     | Enable transaction history display                         |
 
 ### Volumes
 
 - `/app/data` - SQLite database and persistent data storage
-
-**Important:** Always mount a volume to `/app/data` to persist your financial data.
 
 ## 💾 Data Management
 
@@ -103,9 +101,8 @@ docker-compose up -d
 
 1. **Change Default Password** - Immediately change the default admin password after first login
 2. **Disable Registration** - Go into admin panel and disable account creation after creating the necessary accounts
-3. **Use Strong Passwords** - Enforce strong passwords for all users
-4. **Regular Backups** - Schedule regular backups of your data volume
-5. **Keep Updated** - Pull latest image regularly for security updates
+3. **Regular Backups** - Schedule regular backups of your data volume
+4. **Keep Updated** - Pull latest image regularly for security updates
 
 ## 📦 Available Tags
 
