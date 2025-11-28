@@ -232,17 +232,26 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
       entry: FinanceEntry
     ) => {
       e.stopPropagation();
-      const currentMonthIndex = 0;
-      const currentAmount = entry.amounts[currentMonthIndex] || 0;
 
-      if (currentAmount === 0) {
+      let firstNonZeroMonthIndex = -1;
+      let firstNonZeroAmount = 0;
+
+      for (let i = 0; i < entry.amounts.length; i++) {
+        if (entry.amounts[i] && entry.amounts[i] !== 0) {
+          firstNonZeroMonthIndex = i;
+          firstNonZeroAmount = entry.amounts[i];
+          break;
+        }
+      }
+
+      if (firstNonZeroMonthIndex === -1 || firstNonZeroAmount === 0) {
         return;
       }
 
       setEntryToResolve({
         entry,
-        monthIndex: currentMonthIndex,
-        amount: currentAmount,
+        monthIndex: firstNonZeroMonthIndex,
+        amount: firstNonZeroAmount,
       });
       setResolveDialogOpen(true);
     };
@@ -378,11 +387,15 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
                           variant="ghost"
                           size="sm"
                           onClick={(e) => handleResolveCurrentMonth(e, entry)}
-                          className="text-finance-positive hover:text-finance-positive hover:bg-finance-positive/10 h-8 w-8 p-0 touch-manipulation"
+                          className="text-muted-foreground hover:text-foreground hover:bg-muted h-8 w-8 p-0 touch-manipulation"
                           aria-label={`Mark current month as resolved: ${
                             entry.description || "unnamed entry"
                           }`}
-                          disabled={!entry.amounts[0] || entry.amounts[0] === 0}
+                          disabled={
+                            !entry.amounts.some(
+                              (amount) => amount && amount !== 0
+                            )
+                          }
                         >
                           <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
                         </Button>
@@ -451,7 +464,7 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
           </AlertDialogContent>
         </AlertDialog>
 
-        {/* Resolve Current Month Confirmation Dialog */}
+        {/* Resolve Value Confirmation Dialog */}
         <AlertDialog
           open={resolveDialogOpen}
           onOpenChange={setResolveDialogOpen}
@@ -472,8 +485,6 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
                     <strong>{rollingMonths[entryToResolve.monthIndex]}</strong>{" "}
                     as {type === "income" ? "received" : "paid"}?
                     <br />
-                    This will clear the current month&apos;s value for &quot;
-                    {entryToResolve.entry.description || "this entry"}&quot;.
                   </>
                 )}
               </AlertDialogDescription>
