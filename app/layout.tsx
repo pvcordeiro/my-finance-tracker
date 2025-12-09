@@ -11,6 +11,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { Suspense } from "react";
 import { NoGroupOverlay } from "@/components/finance/no-group-overlay";
 import { PWAInstallPrompt } from "@/components/pwa/pwa-install-prompt";
+import { LanguageProvider } from "@/hooks/use-language";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -71,15 +72,17 @@ html {
         >
           <ErrorBoundary>
             <AuthProvider>
-              <PrivacyProvider>
-                <PWAInstallPrompt />
-                {children}
-                <NoGroupOverlay />
-                <Suspense fallback={null}>
-                  <MobileBottomNav />
-                </Suspense>
-                <Toaster />
-              </PrivacyProvider>
+              <LanguageProvider>
+                <PrivacyProvider>
+                  <PWAInstallPrompt />
+                  {children}
+                  <NoGroupOverlay />
+                  <Suspense fallback={null}>
+                    <MobileBottomNav />
+                  </Suspense>
+                  <Toaster />
+                </PrivacyProvider>
+              </LanguageProvider>
             </AuthProvider>
           </ErrorBoundary>
         </ThemeProvider>

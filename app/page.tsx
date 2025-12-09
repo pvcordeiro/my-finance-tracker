@@ -9,6 +9,7 @@ import { SummaryTable } from "@/components/finance/summary-table";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { LoadingState } from "@/components/ui/loading";
 import { AuthGate } from "@/components/auth/auth-gate";
+import { useLanguage } from "@/hooks/use-language";
 
 const FinancialChart = lazy(() =>
   import("@/components/finance/financial-chart").then((mod) => ({
@@ -18,6 +19,7 @@ const FinancialChart = lazy(() =>
 
 function SummaryPageContent() {
   const { data } = useFinanceData();
+  const { t } = useLanguage();
 
   return (
     <div className="min-h-screen finance-gradient">
@@ -26,15 +28,17 @@ function SummaryPageContent() {
         <div className="flex items-center justify-between gap-2">
           <div>
             <h1 className="text-3xl font-bold text-primary">
-              Financial Summary
+              {t("common.financialSummary")}
             </h1>
             <p className="text-muted-foreground">
-              Your complete financial overview
+              {t("common.completeFinancialOverview")}
             </p>
           </div>
         </div>
         <SummaryTable data={data} />
-        <Suspense fallback={<LoadingState message="Loading chart..." />}>
+        <Suspense
+          fallback={<LoadingState message={t("common.loadingChart")} />}
+        >
           <FinancialChart data={data} />
         </Suspense>
       </main>

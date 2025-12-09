@@ -30,6 +30,8 @@ export async function GET(request) {
         theme_preference: user.theme_preference || "system",
         groups: user.groups,
         current_group_id: user.current_group_id,
+        language: user.language || "en",
+        currency: user.currency || "EUR",
       },
     });
   } catch (error) {

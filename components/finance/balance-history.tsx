@@ -10,7 +10,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { ChevronDown, History, Plus, Minus, Edit3 } from "lucide-react";
 import { format } from "date-fns";
+import { enUS, ptBR } from "date-fns/locale";
 import { PrivacyNumber } from "@/components/ui/privacy-number";
+import { useLanguage } from "@/hooks/use-language";
 
 interface BalanceHistoryEntry {
   id: number;
@@ -31,6 +33,7 @@ export function BalanceHistory({
   groupId,
   refreshTrigger,
 }: BalanceHistoryProps) {
+  const { t, language } = useLanguage();
   const [history, setHistory] = useState<BalanceHistoryEntry[]>([]);
   const [enabled, setEnabled] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
@@ -74,6 +77,8 @@ export function BalanceHistory({
     return null;
   }
 
+  const dateLocale = language === "pt" ? ptBR : enUS;
+
   return (
     <Card className="bg-gradient-to-r from-primary/5 to-accent/5 border-primary/20">
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -86,7 +91,7 @@ export function BalanceHistory({
               <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                 <History className="w-5 h-5 sm:w-6 sm:h-6 text-primary flex-shrink-0" />
                 <span className="font-semibold text-primary">
-                  Recent Balance Changes
+                  {t("dashboard.recentBalanceChanges")}
                 </span>
               </CardTitle>
               <ChevronDown
@@ -139,19 +144,18 @@ export function BalanceHistory({
                           }`}
                         >
                           {isPositive && "+"}
-                          <PrivacyNumber
-                            value={Math.abs(entry.delta)}
-                            prefix="€"
-                          />
+                          <PrivacyNumber value={Math.abs(entry.delta)} />
                         </span>
                         <span className="text-xs text-muted-foreground whitespace-nowrap">
-                          {format(new Date(entry.created_at), "MMM d, HH:mm")}
+                          {format(new Date(entry.created_at), "d MMM, HH:mm", {
+                            locale: dateLocale,
+                          })}
                         </span>
                       </div>
 
                       <div className="text-xs text-muted-foreground mb-1">
-                        <PrivacyNumber value={entry.old_amount} prefix="€" /> →{" "}
-                        <PrivacyNumber value={entry.new_amount} prefix="€" />
+                        <PrivacyNumber value={entry.old_amount} /> →{" "}
+                        <PrivacyNumber value={entry.new_amount} />
                       </div>
 
                       {entry.note && (
@@ -162,7 +166,8 @@ export function BalanceHistory({
 
                       {entry.username && (
                         <div className="text-xs text-muted-foreground mt-1">
-                          by <span className="font-bold">{entry.username}</span>
+                          {t("dashboard.by")}{" "}
+                          <span className="font-bold">{entry.username}</span>
                         </div>
                       )}
                     </div>

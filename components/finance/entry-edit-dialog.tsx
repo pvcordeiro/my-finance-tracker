@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { PrivacyNumber } from "@/components/ui/privacy-number";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/hooks/use-language";
 
 interface FinanceEntry {
   id: string;
@@ -64,6 +65,7 @@ export function EntryEditDialog({
   onDeleteEntry,
   rollingMonths,
 }: EntryEditDialogProps) {
+  const { currencySymbol, t } = useLanguage();
   const [changedFields, setChangedFields] = useState<Set<string>>(new Set());
   const [savedFields, setSavedFields] = useState<Set<string>>(new Set());
   const [localEntry, setLocalEntry] = useState<FinanceEntry | null>(null);
@@ -134,17 +136,21 @@ export function EntryEditDialog({
               <Trash2 className="w-4 h-4" />
             </Button>
             <DialogTitle className="text-center">
-              Edit {type === "income" ? "Income" : "Expense"}
+              {type === "income"
+                ? t("entries.editIncome")
+                : t("entries.editExpense")}
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-6 mt-4 px-1 pb-1 flex-1 overflow-y-auto">
             {/* Description */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Description</label>
+              <label className="text-sm font-medium">
+                {t("entries.description")}
+              </label>
               <Input
                 ref={descriptionInputRef}
-                placeholder="Description"
+                placeholder={t("entries.description")}
                 value={localEntry.description}
                 onChange={(e) => {
                   const newDescription = e.target.value;
@@ -188,7 +194,9 @@ export function EntryEditDialog({
             {/* Monthly Amounts */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <label className="text-sm font-medium">Monthly Amounts</label>
+                <label className="text-sm font-medium">
+                  {t("entries.monthlyAmounts")}
+                </label>
                 <span
                   className={cn(
                     "font-semibold text-base",
@@ -202,7 +210,6 @@ export function EntryEditDialog({
                       (sum, amount) => sum + (amount || 0),
                       0
                     )}
-                    prefix="€"
                   />
                 </span>
               </div>
@@ -214,7 +221,7 @@ export function EntryEditDialog({
                     </label>
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
-                        €
+                        {currencySymbol}
                       </span>
                       <Input
                         type="number"
@@ -292,14 +299,13 @@ export function EntryEditDialog({
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Entry</AlertDialogTitle>
+            <AlertDialogTitle>{t("entries.deleteEntry")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this entry? This action cannot be
-              undone.
+              {t("entries.deleteConfirm")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={async () => {
                 await onDeleteEntry(localEntry.id);
@@ -308,7 +314,7 @@ export function EntryEditDialog({
               }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Delete Entry
+              {t("entries.deleteEntry")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

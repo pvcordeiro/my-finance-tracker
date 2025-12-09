@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -23,7 +23,7 @@ import {
   Clock,
   MapPin,
 } from "lucide-react";
-import { format } from "date-fns";
+import { useLanguage } from "@/hooks/use-language";
 
 interface Session {
   id: number;
@@ -38,13 +38,14 @@ interface Session {
 }
 
 export function SessionsList() {
+  const { t, language } = useLanguage();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
   const [revoking, setRevoking] = useState<number | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [sessionToRevoke, setSessionToRevoke] = useState<Session | null>(null);
 
-  const fetchSessions = async () => {
+  const fetchSessions = useCallback(async () => {
     try {
       const response = await fetch("/api/user/sessions", {
         credentials: "include",
@@ -54,19 +55,19 @@ export function SessionsList() {
         const data = await response.json();
         setSessions(data.sessions || []);
       } else {
-        toast.error("Failed to load sessions");
+        toast.error(t("settings.failedToLoadSessions"));
       }
     } catch (error) {
       console.error("Error fetching sessions:", error);
-      toast.error("Failed to load sessions");
+      toast.error(t("settings.failedToLoadSessions"));
     } finally {
       setLoading(false);
     }
-  };
+  }, [t]);
 
   useEffect(() => {
     fetchSessions();
-  }, []);
+  }, [fetchSessions]);
 
   const revokeSession = async (sessionId: number) => {
     setRevoking(sessionId);
@@ -79,15 +80,15 @@ export function SessionsList() {
       });
 
       if (response.ok) {
-        toast.success("Session revoked successfully");
+        toast.success(t("settings.sessionRevokedSuccessfully"));
         setSessions(sessions.filter((s) => s.id !== sessionId));
       } else {
         const data = await response.json();
-        toast.error(data.error || "Failed to revoke session");
+        toast.error(data.error || t("settings.failedToRevokeSession"));
       }
     } catch (error) {
       console.error("Error revoking session:", error);
-      toast.error("Failed to revoke session");
+      toast.error(t("settings.failedToRevokeSession"));
     } finally {
       setRevoking(null);
       setSessionToRevoke(null);
@@ -115,22 +116,67 @@ export function SessionsList() {
     return <Monitor className="w-5 h-5" />;
   };
 
+  const getDeviceName = (deviceName: string) => {
+    if (!deviceName) return t("settings.unknownDevice");
+
+    const name = deviceName.toLowerCase();
+
+    if (name.includes("mobile") && name.includes("android")) {
+      return t("settings.androidMobile");
+    }
+    if (name.includes("mobile") && name.includes("iphone")) {
+      return t("settings.iPhoneMobile");
+    }
+    if (name.includes("mobile")) {
+      return t("settings.mobile");
+    }
+
+    if (name.includes("ipad")) {
+      return t("settings.iPad");
+    }
+    if (name.includes("tablet")) {
+      return t("settings.tablet");
+    }
+
+    if (name.includes("mac")) {
+      return t("settings.macComputer");
+    }
+    if (name.includes("windows")) {
+      return t("settings.windowsComputer");
+    }
+    if (name.includes("linux")) {
+      return t("settings.linuxComputer");
+    }
+
+    return deviceName;
+  };
+
   const getBrowserName = (userAgent: string) => {
-    if (!userAgent) return "Unknown Browser";
+    if (!userAgent) return t("settings.unknownBrowser");
     if (userAgent.includes("Chrome")) return "Chrome";
     if (userAgent.includes("Firefox")) return "Firefox";
     if (userAgent.includes("Safari") && !userAgent.includes("Chrome"))
       return "Safari";
     if (userAgent.includes("Edge")) return "Edge";
     if (userAgent.includes("Opera")) return "Opera";
-    return "Unknown Browser";
+    return t("settings.unknownBrowser");
   };
 
   const formatDate = (dateString: string) => {
     try {
-      return format(new Date(dateString), "MMM d, yyyy 'at' h:mm a");
+      const date = new Date(dateString);
+      const locale = language === "pt" ? "pt-BR" : "en-US";
+
+      return new Intl.DateTimeFormat(locale, {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      }).format(date);
     } catch {
-      return "Unknown";
+      return t("settings.unknown");
     }
   };
 
@@ -145,7 +191,7 @@ export function SessionsList() {
   if (sessions.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
-        No active sessions found.
+        {t("settings.noActiveSessions")}
       </div>
     );
   }
@@ -167,11 +213,11 @@ export function SessionsList() {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <h3 className="font-medium text-sm">
-                {session.device_name || "Unknown Device"}
+                {getDeviceName(session.device_name)}
               </h3>
               {session.is_current && (
                 <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full">
-                  Current
+                  {t("settings.current")}
                 </span>
               )}
             </div>
@@ -182,11 +228,16 @@ export function SessionsList() {
               </div>
               <div className="flex items-center gap-1.5">
                 <MapPin className="w-3 h-3" />
-                <span>{session.ip_address || "Unknown location"}</span>
+                <span>
+                  {session.ip_address || t("settings.unknownLocation")}
+                </span>
               </div>
               <div className="flex items-center gap-1.5">
                 <Clock className="w-3 h-3" />
-                <span>Last active: {formatDate(session.last_accessed)}</span>
+                <span>
+                  {t("settings.lastActive")}:{" "}
+                  {formatDate(session.last_accessed)}
+                </span>
               </div>
             </div>
           </div>
@@ -208,14 +259,13 @@ export function SessionsList() {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Revoke Session</AlertDialogTitle>
+            <AlertDialogTitle>{t("settings.revokeSession")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to revoke this session? This will log out
-              the device and it will need to sign in again.
+              {t("settings.revokeSessionDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 if (sessionToRevoke) {
@@ -224,7 +274,7 @@ export function SessionsList() {
               }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Revoke Session
+              {t("settings.revokeSession")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

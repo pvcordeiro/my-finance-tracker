@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Card,
   CardContent,
@@ -52,6 +52,9 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
+import { useLanguage } from "@/hooks/use-language";
+import { LanguageCurrencySelector } from "@/components/ui/language-currency-selector";
+import { LanguageCurrencyDialog } from "@/components/ui/language-currency-dialog";
 
 interface User {
   id: number;
@@ -76,6 +79,7 @@ interface Group {
 
 export function AdminDashboard() {
   const { user, logout } = useAuth();
+  const { t, language, currency, setLanguage, setCurrency } = useLanguage();
   const router = useRouter();
   const isMobile = useIsMobile();
   const [users, setUsers] = useState<User[]>([]);
@@ -93,6 +97,7 @@ export function AdminDashboard() {
   const [groupToRename, setGroupToRename] = useState<Group | null>(null);
   const [renameGroupName, setRenameGroupName] = useState("");
   const [activeTab, setActiveTab] = useState("users");
+  const [languageDialogOpen, setLanguageDialogOpen] = useState(false);
 
   useEffect(() => {
     if (isMobile) {
@@ -100,7 +105,7 @@ export function AdminDashboard() {
     }
   }, [activeTab, isMobile]);
 
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     try {
       const response = await fetch("/api/admin/users", {
         credentials: "include",
@@ -109,14 +114,14 @@ export function AdminDashboard() {
         const data = await response.json();
         setUsers(data.users);
       } else {
-        toast.error("Failed to load users");
+        toast.error(t("admin.failedToLoadUsers"));
       }
     } catch {
-      toast.error("Error loading users");
+      toast.error(t("admin.errorLoadingUsers"));
     }
-  };
+  }, [t]);
 
-  const loadGroups = async () => {
+  const loadGroups = useCallback(async () => {
     try {
       const response = await fetch("/api/admin/groups", {
         credentials: "include",
@@ -125,14 +130,14 @@ export function AdminDashboard() {
         const data = await response.json();
         setGroups(data.groups);
       } else {
-        toast.error("Failed to load groups");
+        toast.error(t("admin.failedToLoadGroups"));
       }
     } catch {
-      toast.error("Error loading groups");
+      toast.error(t("admin.errorLoadingGroups"));
     }
-  };
+  }, [t]);
 
-  const loadSettings = async () => {
+  const loadSettings = useCallback(async () => {
     try {
       const response = await fetch("/api/admin/settings", {
         credentials: "include",
@@ -141,19 +146,19 @@ export function AdminDashboard() {
         const data = await response.json();
         setSettings(data.settings);
       } else {
-        toast.error("Failed to load settings");
+        toast.error(t("admin.failedToLoadSettings"));
       }
     } catch {
-      toast.error("Error loading settings");
+      toast.error(t("admin.errorLoadingSettings"));
     }
-  };
+  }, [t]);
 
   useEffect(() => {
     const loadData = async () => {
       await Promise.all([loadUsers(), loadGroups(), loadSettings()]);
     };
     loadData();
-  }, []);
+  }, [loadUsers, loadGroups, loadSettings]);
 
   const deleteUser = async (userId: number) => {
     setUserToDelete(userId);
@@ -164,7 +169,7 @@ export function AdminDashboard() {
     if (!userToDelete) return;
 
     if (userToDelete === 1) {
-      toast.error("Cannot delete the primary admin user");
+      toast.error(t("admin.cannotDeletePrimaryAdmin"));
       setDeleteDialogOpen(false);
       setUserToDelete(null);
       return;
@@ -177,13 +182,13 @@ export function AdminDashboard() {
       });
 
       if (response.ok) {
-        toast.success("User deleted successfully");
+        toast.success(t("admin.userDeletedSuccessfully"));
         loadUsers();
       } else {
-        toast.error("Failed to delete user");
+        toast.error(t("admin.failedToDeleteUser"));
       }
     } catch {
-      toast.error("Error deleting user");
+      toast.error(t("admin.errorDeletingUser"));
     } finally {
       setDeleteDialogOpen(false);
       setUserToDelete(null);
@@ -204,12 +209,12 @@ export function AdminDashboard() {
 
       if (response.ok) {
         setSettings(updatedSettings);
-        toast.success("Settings updated successfully");
+        toast.success(t("admin.settingsUpdatedSuccessfully"));
       } else {
-        toast.error("Failed to update settings");
+        toast.error(t("admin.failedToUpdateSettings"));
       }
     } catch {
-      toast.error("Error updating settings");
+      toast.error(t("admin.errorUpdatingSettings"));
     }
   };
 
@@ -221,13 +226,13 @@ export function AdminDashboard() {
       });
 
       if (response.ok) {
-        toast.success("Admin status updated successfully");
+        toast.success(t("admin.adminStatusUpdatedSuccessfully"));
         loadUsers();
       } else {
-        toast.error("Failed to update admin status");
+        toast.error(t("admin.failedToUpdateAdminStatus"));
       }
     } catch {
-      toast.error("Error updating admin status");
+      toast.error(t("admin.errorUpdatingAdminStatus"));
     }
   };
 
@@ -245,15 +250,15 @@ export function AdminDashboard() {
       });
 
       if (response.ok) {
-        toast.success("Group created successfully");
+        toast.success(t("admin.groupCreatedSuccessfully"));
         setNewGroupName("");
         loadGroups();
         loadUsers();
       } else {
-        toast.error("Failed to create group");
+        toast.error(t("admin.failedToCreateGroup"));
       }
     } catch {
-      toast.error("Error creating group");
+      toast.error(t("admin.errorCreatingGroup"));
     }
   };
 
@@ -269,14 +274,14 @@ export function AdminDashboard() {
       });
 
       if (response.ok) {
-        toast.success("User assigned to group successfully");
+        toast.success(t("admin.userAssignedSuccessfully"));
         loadGroups();
         loadUsers();
       } else {
-        toast.error("Failed to assign user to group");
+        toast.error(t("admin.failedToAssignUser"));
       }
     } catch {
-      toast.error("Error assigning user to group");
+      toast.error(t("admin.errorAssigningUser"));
     }
   };
 
@@ -291,14 +296,14 @@ export function AdminDashboard() {
       );
 
       if (response.ok) {
-        toast.success("User removed from group successfully");
+        toast.success(t("admin.userRemovedSuccessfully"));
         loadGroups();
         loadUsers();
       } else {
-        toast.error("Failed to remove user from group");
+        toast.error(t("admin.failedToRemoveUser"));
       }
     } catch {
-      toast.error("Error removing user from group");
+      toast.error(t("admin.errorRemovingUser"));
     }
   };
 
@@ -320,14 +325,14 @@ export function AdminDashboard() {
       );
 
       if (response.ok) {
-        toast.success("Group deleted successfully");
+        toast.success(t("admin.groupDeletedSuccessfully"));
         loadGroups();
         loadUsers();
       } else {
-        toast.error("Failed to delete group");
+        toast.error(t("admin.failedToDeleteGroup"));
       }
     } catch {
-      toast.error("Error deleting group");
+      toast.error(t("admin.errorDeletingGroup"));
     } finally {
       setDeleteGroupDialogOpen(false);
       setGroupToDelete(null);
@@ -357,13 +362,13 @@ export function AdminDashboard() {
       );
 
       if (response.ok) {
-        toast.success("Group renamed successfully");
+        toast.success(t("admin.groupRenamedSuccessfully"));
         loadGroups();
       } else {
-        toast.error("Failed to rename group");
+        toast.error(t("admin.failedToRenameGroup"));
       }
     } catch {
-      toast.error("Error renaming group");
+      toast.error(t("admin.errorRenamingGroup"));
     } finally {
       setRenameGroupDialogOpen(false);
       setGroupToRename(null);
@@ -389,14 +394,14 @@ export function AdminDashboard() {
               </div>
               <div>
                 <h1 className="text-lg sm:text-xl font-bold text-destructive">
-                  Admin Panel
+                  {t("admin.title")}
                 </h1>
                 <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
-                  Finance Tracker Administration
+                  {t("admin.subtitle")}
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -415,26 +420,33 @@ export function AdminDashboard() {
                     className="cursor-pointer"
                   >
                     <User className="w-4 h-4 mr-2" />
-                    Account Settings
+                    {t("settings.accountSettings")}
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => router.push("/")}
                     className="cursor-pointer"
                   >
                     <Calculator className="w-4 h-4 mr-2" />
-                    Back to App
+                    {t("admin.backToApp")}
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => router.push("/manage?tab=management")}
                     className="cursor-pointer"
                   >
                     <Save className="w-4 h-4 mr-2" />
-                    Backup
+                    {t("manage.backup")}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => setLanguageDialogOpen(true)}
+                    className="cursor-pointer"
+                  >
+                    <LanguageCurrencySelector showInDropdown />
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={logout} className="cursor-pointer">
                     <LogOut className="w-4 h-4 mr-2" />
-                    Sign Out
+                    {t("common.signOut")}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -457,15 +469,15 @@ export function AdminDashboard() {
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="users">
                 <UserCog className="w-4 h-4 mr-2" />
-                User Management
+                {t("admin.userManagement")}
               </TabsTrigger>
               <TabsTrigger value="groups">
                 <Users className="w-4 h-4 mr-2" />
-                Group Management
+                {t("admin.groupManagement")}
               </TabsTrigger>
               <TabsTrigger value="settings">
                 <Settings className="w-4 h-4 mr-2" />
-                System Settings
+                {t("admin.systemSettings")}
               </TabsTrigger>
             </TabsList>
           )}
@@ -473,9 +485,9 @@ export function AdminDashboard() {
           <TabsContent value="users">
             <Card>
               <CardHeader>
-                <CardTitle>User Management</CardTitle>
+                <CardTitle>{t("admin.userManagement")}</CardTitle>
                 <CardDescription>
-                  Manage all registered users and their data
+                  {t("admin.userManagementDescription")}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -486,7 +498,9 @@ export function AdminDashboard() {
                         <div className="flex items-center space-x-2">
                           <Users className="w-4 h-4 text-primary" />
                           <div>
-                            <p className="text-sm font-medium">Total Users</p>
+                            <p className="text-sm font-medium">
+                              {t("admin.totalUsers")}
+                            </p>
                             <p className="text-2xl font-bold">{users.length}</p>
                           </div>
                         </div>
@@ -497,7 +511,9 @@ export function AdminDashboard() {
                         <div className="flex items-center space-x-2">
                           <UserPlus className="w-4 h-4 text-blue-600" />
                           <div>
-                            <p className="text-sm font-medium">Registration</p>
+                            <p className="text-sm font-medium">
+                              {t("admin.allowRegistration")}
+                            </p>
                             <Badge
                               variant={
                                 settings.allow_registration
@@ -506,8 +522,8 @@ export function AdminDashboard() {
                               }
                             >
                               {settings.allow_registration
-                                ? "Enabled"
-                                : "Disabled"}
+                                ? t("settings.enabled")
+                                : t("settings.disabled")}
                             </Badge>
                           </div>
                         </div>
@@ -558,8 +574,8 @@ export function AdminDashboard() {
                                               <Shield className="w-4 h-4 mr-2" />
                                             )}
                                             {userItem.is_admin
-                                              ? "Revoke Admin"
-                                              : "Make Admin"}
+                                              ? t("admin.revokeAdmin")
+                                              : t("admin.makeAdmin")}
                                           </DropdownMenuItem>
                                         )}
                                         <DropdownMenuItem
@@ -569,7 +585,7 @@ export function AdminDashboard() {
                                           className="cursor-pointer text-destructive focus:text-destructive"
                                         >
                                           <Trash2 className="w-4 h-4 mr-2" />{" "}
-                                          Delete User
+                                          {t("admin.deleteUser")}
                                         </DropdownMenuItem>
                                       </DropdownMenuContent>
                                     </DropdownMenu>
@@ -581,7 +597,7 @@ export function AdminDashboard() {
                                 </div>
                                 <div>
                                   <div className="text-sm font-medium mb-1">
-                                    Groups:
+                                    {t("admin.groups")}:
                                   </div>
                                   <div className="flex flex-wrap gap-1">
                                     {userItem.groups.length > 0 ? (
@@ -591,7 +607,9 @@ export function AdminDashboard() {
                                         </Badge>
                                       ))
                                     ) : (
-                                      <Badge variant="outline">No Groups</Badge>
+                                      <Badge variant="outline">
+                                        {t("admin.noGroups")}
+                                      </Badge>
                                     )}
                                   </div>
                                 </div>
@@ -601,7 +619,7 @@ export function AdminDashboard() {
                         ))}
                         {users.length === 0 && (
                           <div className="text-center py-8 text-muted-foreground">
-                            No users found
+                            {t("admin.noUsers")}
                           </div>
                         )}
                       </div>
@@ -611,16 +629,16 @@ export function AdminDashboard() {
                           <thead className="border-b">
                             <tr>
                               <th className="text-left p-2 sm:p-4 font-medium">
-                                Username
+                                {t("admin.username")}
                               </th>
                               <th className="text-left p-2 sm:p-4 font-medium hidden sm:table-cell">
-                                Created
+                                {t("admin.createdAt")}
                               </th>
                               <th className="text-left p-2 sm:p-4 font-medium">
-                                Group
+                                {t("admin.groups")}
                               </th>
                               <th className="text-right p-2 sm:p-4 font-medium">
-                                Actions
+                                {t("admin.actions")}
                               </th>
                             </tr>
                           </thead>
@@ -661,7 +679,9 @@ export function AdminDashboard() {
                                         </Badge>
                                       ))
                                     ) : (
-                                      <Badge variant="outline">No Groups</Badge>
+                                      <Badge variant="outline">
+                                        {t("admin.noGroups")}
+                                      </Badge>
                                     )}
                                   </div>
                                 </td>
@@ -693,8 +713,8 @@ export function AdminDashboard() {
                                                 <Shield className="w-4 h-4 mr-2" />
                                               )}
                                               {userItem.is_admin
-                                                ? "Revoke Admin"
-                                                : "Make Admin"}
+                                                ? t("admin.revokeAdmin")
+                                                : t("admin.makeAdmin")}
                                             </DropdownMenuItem>
                                           )}
                                           <DropdownMenuItem
@@ -704,7 +724,7 @@ export function AdminDashboard() {
                                             className="cursor-pointer text-destructive focus:text-destructive"
                                           >
                                             <Trash2 className="w-4 h-4 mr-2" />{" "}
-                                            Delete User
+                                            {t("admin.deleteUser")}
                                           </DropdownMenuItem>
                                         </DropdownMenuContent>
                                       </DropdownMenu>
@@ -719,7 +739,7 @@ export function AdminDashboard() {
                     )}
                     {!isMobile && users.length === 0 && (
                       <div className="text-center py-8 text-muted-foreground">
-                        No users found
+                        {t("admin.noUsers")}
                       </div>
                     )}
                   </div>
@@ -731,9 +751,9 @@ export function AdminDashboard() {
           <TabsContent value="groups">
             <Card>
               <CardHeader>
-                <CardTitle>Group Management</CardTitle>
+                <CardTitle>{t("admin.groupManagement")}</CardTitle>
                 <CardDescription>
-                  Create groups and assign users to them
+                  {t("admin.groupManagementDescription")}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -741,7 +761,7 @@ export function AdminDashboard() {
                   <div className="flex items-center space-x-2">
                     <input
                       type="text"
-                      placeholder="New group name"
+                      placeholder={t("admin.newGroupName")}
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                       value={newGroupName}
                       onChange={(e) => setNewGroupName(e.target.value)}
@@ -750,7 +770,7 @@ export function AdminDashboard() {
                       onClick={createGroup}
                       disabled={!newGroupName.trim()}
                     >
-                      Create Group
+                      {t("admin.createGroup")}
                     </Button>
                   </div>
                   <div className="border rounded-lg">
@@ -776,11 +796,12 @@ export function AdminDashboard() {
                                   </div>
                                 </div>
                                 <div className="text-sm text-muted-foreground">
-                                  Created: {formatDate(group.created_at)}
+                                  {t("admin.createdAt")}:{" "}
+                                  {formatDate(group.created_at)}
                                 </div>
                                 <div className="flex items-center space-x-2">
                                   <span className="text-sm font-medium">
-                                    Members:
+                                    {t("admin.members")}:
                                   </span>
                                   <Badge variant="outline">
                                     {group.member_count}
@@ -791,7 +812,7 @@ export function AdminDashboard() {
                                     <DropdownMenuTrigger asChild>
                                       <Button variant="outline" size="sm">
                                         <MoreHorizontal className="w-3 h-3 mr-1" />
-                                        Manage
+                                        {t("admin.manage")}
                                       </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent className="max-h-80 overflow-y-auto">
@@ -799,7 +820,7 @@ export function AdminDashboard() {
                                         disabled
                                         className="opacity-70 select-none"
                                       >
-                                        Add User
+                                        {t("admin.addUser")}
                                       </DropdownMenuItem>
                                       {users
                                         .filter(
@@ -827,7 +848,7 @@ export function AdminDashboard() {
                                         disabled
                                         className="opacity-70 mt-1 select-none"
                                       >
-                                        Remove User
+                                        {t("admin.removeUser")}
                                       </DropdownMenuItem>
                                       {users
                                         .filter((u) =>
@@ -855,7 +876,7 @@ export function AdminDashboard() {
                                         className="cursor-pointer mt-1"
                                       >
                                         <Edit className="w-3 h-3 mr-2" />
-                                        Rename Group
+                                        {t("admin.renameGroup")}
                                       </DropdownMenuItem>
                                       <DropdownMenuItem
                                         onClick={() => deleteGroup(group.id)}
@@ -863,7 +884,7 @@ export function AdminDashboard() {
                                         className="cursor-pointer text-destructive focus:text-destructive"
                                       >
                                         <Trash2 className="w-3 h-3 mr-2" />
-                                        Delete Group
+                                        {t("admin.deleteGroup")}
                                       </DropdownMenuItem>
                                     </DropdownMenuContent>
                                   </DropdownMenu>
@@ -874,7 +895,7 @@ export function AdminDashboard() {
                         ))}
                         {groups.length === 0 && (
                           <div className="text-center py-8 text-muted-foreground">
-                            No groups found
+                            {t("admin.noGroups")}
                           </div>
                         )}
                       </div>
@@ -884,16 +905,16 @@ export function AdminDashboard() {
                           <thead className="border-b">
                             <tr>
                               <th className="text-left p-2 sm:p-4 font-medium">
-                                Group Name
+                                {t("admin.groupName")}
                               </th>
                               <th className="text-left p-2 sm:p-4 font-medium">
-                                Members
+                                {t("admin.members")}
                               </th>
                               <th className="text-left p-2 sm:p-4 font-medium hidden sm:table-cell">
-                                Created
+                                {t("admin.createdAt")}
                               </th>
                               <th className="text-right p-2 sm:p-4 font-medium">
-                                Actions
+                                {t("admin.actions")}
                               </th>
                             </tr>
                           </thead>
@@ -946,7 +967,7 @@ export function AdminDashboard() {
                                           disabled
                                           className="opacity-70 select-none"
                                         >
-                                          Add User
+                                          {t("admin.addUser")}
                                         </DropdownMenuItem>
                                         {users
                                           .filter(
@@ -974,7 +995,7 @@ export function AdminDashboard() {
                                           disabled
                                           className="opacity-70 mt-1 select-none"
                                         >
-                                          Remove User
+                                          {t("admin.removeUser")}
                                         </DropdownMenuItem>
                                         {users
                                           .filter((u) =>
@@ -1002,7 +1023,7 @@ export function AdminDashboard() {
                                           className="cursor-pointer mt-1"
                                         >
                                           <Edit className="w-3 h-3 mr-2" />
-                                          Rename Group
+                                          {t("admin.renameGroup")}
                                         </DropdownMenuItem>
                                         <DropdownMenuItem
                                           onClick={() => deleteGroup(group.id)}
@@ -1010,7 +1031,7 @@ export function AdminDashboard() {
                                           className="cursor-pointer text-destructive focus:text-destructive"
                                         >
                                           <Trash2 className="w-3 h-3 mr-2" />
-                                          Delete Group
+                                          {t("admin.deleteGroup")}
                                         </DropdownMenuItem>
                                       </DropdownMenuContent>
                                     </DropdownMenu>
@@ -1024,7 +1045,7 @@ export function AdminDashboard() {
                     )}
                     {!isMobile && groups.length === 0 && (
                       <div className="text-center py-8 text-muted-foreground">
-                        No groups found
+                        {t("admin.noGroups")}
                       </div>
                     )}
                   </div>
@@ -1036,9 +1057,9 @@ export function AdminDashboard() {
           <TabsContent value="settings">
             <Card>
               <CardHeader>
-                <CardTitle>System Settings</CardTitle>
+                <CardTitle>{t("admin.systemSettings")}</CardTitle>
                 <CardDescription>
-                  Configure system-wide settings and features
+                  {t("admin.systemSettingsDescription")}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -1049,11 +1070,10 @@ export function AdminDashboard() {
                         htmlFor="allow-registration"
                         className="text-base font-medium"
                       >
-                        Allow New User Registration
+                        {t("admin.allowRegistration")}
                       </Label>
                       <p className="text-sm text-muted-foreground">
-                        When enabled, new users can create accounts. When
-                        disabled, only existing users can log in.
+                        {t("admin.allowRegistrationDescription")}
                       </p>
                     </div>
                     <Switch
@@ -1071,12 +1091,10 @@ export function AdminDashboard() {
                         htmlFor="enable-balance-history"
                         className="text-base font-medium"
                       >
-                        Show Balance History
+                        {t("admin.enableBalanceHistory")}
                       </Label>
                       <p className="text-sm text-muted-foreground">
-                        When enabled, users can view the balance history card
-                        showing all balance adjustments with optional notes.
-                        History is always logged regardless of this setting.
+                        {t("admin.enableBalanceHistoryDescription")}
                       </p>
                     </div>
                     <Switch
@@ -1134,21 +1152,20 @@ export function AdminDashboard() {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete User</AlertDialogTitle>
+            <AlertDialogTitle>{t("admin.deleteUser")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this user? This action cannot be
-              undone. All their financial data will be permanently removed.
+              {t("admin.confirmDeleteUserDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setUserToDelete(null)}>
-              Cancel
+              {t("common.cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDeleteUser}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Delete User
+              {t("admin.deleteUser")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -1160,21 +1177,20 @@ export function AdminDashboard() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Group</AlertDialogTitle>
+            <AlertDialogTitle>{t("admin.deleteGroup")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this group? All associated data
-              will be permanently deleted.
+              {t("admin.confirmDeleteGroupDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setGroupToDelete(null)}>
-              Cancel
+              {t("common.cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDeleteGroup}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Delete Group
+              {t("admin.deleteGroup")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -1186,15 +1202,15 @@ export function AdminDashboard() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Rename Group</AlertDialogTitle>
+            <AlertDialogTitle>{t("admin.renameGroup")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Enter a new name for this group.
+              {t("admin.enterNewGroupName")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="py-4">
             <input
               type="text"
-              placeholder="Group name"
+              placeholder={t("admin.enterGroupName")}
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               value={renameGroupName}
               onChange={(e) => setRenameGroupName(e.target.value)}
@@ -1212,7 +1228,7 @@ export function AdminDashboard() {
                 setRenameGroupName("");
               }}
             >
-              Cancel
+              {t("common.cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmRenameGroup}
@@ -1221,11 +1237,22 @@ export function AdminDashboard() {
                 renameGroupName.trim() === groupToRename?.name
               }
             >
-              Rename Group
+              {t("admin.renameGroup")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Language/Currency Dialog */}
+      <LanguageCurrencyDialog
+        open={languageDialogOpen}
+        onOpenChange={setLanguageDialogOpen}
+        language={language}
+        currency={currency}
+        onLanguageChange={setLanguage}
+        onCurrencyChange={setCurrency}
+        t={t}
+      />
     </div>
   );
 }

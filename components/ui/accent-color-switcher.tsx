@@ -3,61 +3,62 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Check } from "lucide-react";
+import { useLanguage } from "@/hooks/use-language";
 
 const ACCENT_COLORS = [
   {
     name: "blue",
-    label: "Blue",
+    labelKey: "settings.colorBlue",
     hue: "217",
     preview: "hsl(217, 91%, 60%)",
   },
   {
     name: "purple",
-    label: "Purple",
+    labelKey: "settings.colorPurple",
     hue: "270",
     preview: "hsl(270, 91%, 60%)",
   },
   {
     name: "yellow",
-    label: "Atomic Yellow",
+    labelKey: "settings.colorYellow",
     hue: "65",
     preview: "hsl(65, 100%, 50%)",
     lightModeLightness: "42%",
   },
   {
     name: "orange",
-    label: "Orange",
+    labelKey: "settings.colorOrange",
     hue: "25",
     preview: "hsl(25, 95%, 53%)",
   },
   {
     name: "pink",
-    label: "Pink",
+    labelKey: "settings.colorPink",
     hue: "330",
     preview: "hsl(330, 85%, 60%)",
   },
   {
     name: "magenta",
-    label: "Magenta",
+    labelKey: "settings.colorMagenta",
     hue: "300",
     preview: "hsl(300, 76%, 60%)",
   },
   {
     name: "cyan",
-    label: "Cyan",
+    labelKey: "settings.colorCyan",
     hue: "190",
     preview: "hsl(190, 76%, 50%)",
     lightModeLightness: "38%",
   },
   {
     name: "indigo",
-    label: "Indigo",
+    labelKey: "settings.colorIndigo",
     hue: "240",
     preview: "hsl(240, 76%, 60%)",
   },
   {
     name: "amber",
-    label: "Amber",
+    labelKey: "settings.colorAmber",
     hue: "45",
     preview: "hsl(45, 93%, 53%)",
     lightModeLightness: "42%",
@@ -65,6 +66,7 @@ const ACCENT_COLORS = [
 ];
 
 export function AccentColorSwitcher() {
+  const { t } = useLanguage();
   const [currentAccent, setCurrentAccent] = useState<string>("blue");
   const [loading, setLoading] = useState(false);
 
@@ -134,7 +136,7 @@ export function AccentColorSwitcher() {
               className="w-10 h-10 rounded-full shadow-md"
               style={{ backgroundColor: color.preview }}
             />
-            <span className="text-sm font-medium">{color.label}</span>
+            <span className="text-sm font-medium">{t(color.labelKey)}</span>
             {currentAccent === color.name && (
               <div
                 className="absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center"

@@ -14,14 +14,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-  Eye,
-  EyeOff,
-  EuroIcon,
-  UserPlus,
-  LogIn,
-  AlertTriangle,
-} from "lucide-react";
+import { Eye, EyeOff, UserPlus, LogIn, AlertTriangle } from "lucide-react";
+import { useLanguage } from "@/hooks/use-language";
+import { LanguageCurrencyDialog } from "@/components/ui/language-currency-dialog";
 
 interface LoginFormProps {
   onLogin: (username: string, password: string) => Promise<boolean>;
@@ -29,6 +24,8 @@ interface LoginFormProps {
 }
 
 export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
+  const { t, currencySymbol, language, currency, setLanguage, setCurrency } =
+    useLanguage();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -38,6 +35,7 @@ export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
   const [isRegisterMode, setIsRegisterMode] = useState(false);
   const [allowRegistration, setAllowRegistration] = useState(true);
   const [checkingRegistration, setCheckingRegistration] = useState(true);
+  const [languageDialogOpen, setLanguageDialogOpen] = useState(false);
 
   useEffect(() => {
     const checkRegistrationStatus = async () => {
@@ -71,14 +69,14 @@ export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
           return;
         }
         if (password.length < 6) {
-          setError("Password must be at least 6 characters long.");
+          setError(t("auth.passwordTooShort"));
           setIsLoading(false);
           return;
         }
         try {
           const success = await onRegister(username, password);
           if (!success) {
-            setError("Registration failed. Please try again.");
+            setError(t("auth.registrationFailed"));
           }
         } catch (registerError: unknown) {
           if (
@@ -88,17 +86,17 @@ export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
           ) {
             setError(String((registerError as { message?: unknown }).message));
           } else {
-            setError("Registration failed. Please try again.");
+            setError(t("auth.registrationFailed"));
           }
         }
       } else {
         const success = await onLogin(username, password);
         if (!success) {
-          setError("Invalid credentials. Please try again.");
+          setError(t("auth.invalidCredentials"));
         }
       }
     } catch {
-      setError("An error occurred. Please try again.");
+      setError(t("common.error"));
     } finally {
       setIsLoading(false);
     }
@@ -106,7 +104,7 @@ export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
 
   const toggleMode = () => {
     if (!allowRegistration && !isRegisterMode) {
-      setError("Account creation is currently disabled by an administrator.");
+      setError(t("auth.registrationDisabled"));
       return;
     }
     setIsRegisterMode(!isRegisterMode);
@@ -117,19 +115,32 @@ export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
 
   return (
     <div className="min-h-screen finance-gradient flex items-center justify-center p-4">
+      <div className="absolute top-4 right-4">
+        <Button
+          variant="outline"
+          size="sm"
+          className="flex items-center gap-2"
+          onClick={() => setLanguageDialogOpen(true)}
+        >
+          <span className="text-lg">{language === "pt" ? "🇧🇷" : "🇺🇸"}</span>
+          <span className="font-semibold">{currencySymbol}</span>
+        </Button>
+      </div>
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="text-center space-y-4">
           <div className="mx-auto w-12 h-12 bg-primary rounded-full flex items-center justify-center">
-            <EuroIcon className="w-6 h-6 text-primary-foreground" />
+            <span className="text-xl font-bold text-primary-foreground">
+              {currencySymbol}
+            </span>
           </div>
           <div>
             <CardTitle className="text-2xl font-bold">
-              {isRegisterMode ? "Create Account" : "Welcome Back"}
+              {isRegisterMode ? t("auth.registerTitle") : t("auth.loginTitle")}
             </CardTitle>
             <CardDescription>
               {isRegisterMode
-                ? "Create your finance tracker account"
-                : "Sign in to your finance tracker account"}
+                ? t("auth.registerDescription")
+                : t("auth.loginDescription")}
             </CardDescription>
           </div>
         </CardHeader>
@@ -139,8 +150,7 @@ export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
               <Alert variant="destructive">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertDescription>
-                  Account creation is currently disabled by an administrator.
-                  Please contact support if you need an account.
+                  {t("auth.registrationDisabledMessage")}
                 </AlertDescription>
               </Alert>
               <Button
@@ -150,32 +160,32 @@ export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
                 onClick={() => setIsRegisterMode(false)}
               >
                 <LogIn className="w-4 h-4 mr-2" />
-                Back to Sign In
+                {t("auth.backToSignIn")}
               </Button>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="username">Username</Label>
+                <Label htmlFor="username">{t("auth.username")}</Label>
                 <Input
                   id="username"
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Enter your username"
+                  placeholder={t("auth.enterUsername")}
                   required
                   className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t("auth.password")}</Label>
                 <div className="relative">
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter your password"
+                    placeholder={t("auth.enterPassword")}
                     required
                     className="pr-10 transition-all duration-200 focus:ring-2 focus:ring-primary/20"
                   />
@@ -196,13 +206,15 @@ export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
               </div>
               {isRegisterMode && (
                 <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirm Password</Label>
+                  <Label htmlFor="confirmPassword">
+                    {t("auth.confirmPassword")}
+                  </Label>
                   <Input
                     id="confirmPassword"
                     type="password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Confirm your password"
+                    placeholder={t("auth.confirmPasswordPlaceholder")}
                     required
                     className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
                   />
@@ -220,21 +232,21 @@ export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
               >
                 {isLoading ? (
                   isRegisterMode ? (
-                    "Creating Account..."
+                    t("auth.creatingAccount")
                   ) : (
-                    "Signing in..."
+                    t("auth.signingIn")
                   )
                 ) : (
                   <>
                     {isRegisterMode ? (
                       <>
                         <UserPlus className="w-4 h-4 mr-2" />
-                        Create Account
+                        {t("auth.createAccount")}
                       </>
                     ) : (
                       <>
                         <LogIn className="w-4 h-4 mr-2" />
-                        Sign In
+                        {t("auth.signIn")}
                       </>
                     )}
                   </>
@@ -249,18 +261,29 @@ export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
                   disabled={checkingRegistration}
                 >
                   {checkingRegistration
-                    ? "Loading..."
+                    ? t("common.loading")
                     : isRegisterMode
-                    ? "Already have an account? Sign in"
+                    ? t("auth.alreadyHaveAccount")
                     : allowRegistration
-                    ? "Don't have an account? Create one"
-                    : "Need an account? Contact administrator"}
+                    ? t("auth.dontHaveAccount")
+                    : t("auth.needAccount")}
                 </Button>
               </div>
             </form>
           )}
         </CardContent>
       </Card>
+
+      {/* Language/Currency Dialog */}
+      <LanguageCurrencyDialog
+        open={languageDialogOpen}
+        onOpenChange={setLanguageDialogOpen}
+        language={language}
+        currency={currency}
+        onLanguageChange={setLanguage}
+        onCurrencyChange={setCurrency}
+        t={t}
+      />
     </div>
   );
 }

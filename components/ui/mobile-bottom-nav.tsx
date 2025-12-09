@@ -6,18 +6,20 @@ import { Edit, BarChart3, FileSpreadsheet } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/use-auth";
-
-const navItems = [
-  { href: "/manage", label: "Manage", icon: Edit },
-  { href: "/", label: "Summary", icon: BarChart3 },
-  { href: "/details", label: "Details", icon: FileSpreadsheet },
-];
+import { useLanguage } from "@/hooks/use-language";
 
 export function MobileBottomNav() {
   const isMobile = useIsMobile();
   const { user } = useAuth();
+  const { t } = useLanguage();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+
+  const navItems = [
+    { href: "/manage", label: t("navigation.manage"), icon: Edit },
+    { href: "/", label: t("dashboard.summary"), icon: BarChart3 },
+    { href: "/details", label: t("navigation.details"), icon: FileSpreadsheet },
+  ];
 
   if (!isMobile || !user || pathname === "/login" || pathname === "/admin")
     return null;

@@ -30,6 +30,7 @@ import { GuidedEntryDialog } from "./guided-entry-dialog";
 import { EntryEditDialog } from "./entry-edit-dialog";
 import { PrivacyNumber } from "@/components/ui/privacy-number";
 import { PrivacyText } from "@/components/ui/privacy-text";
+import { useLanguage } from "@/hooks/use-language";
 
 export interface FinanceEntry {
   id: string;
@@ -75,34 +76,6 @@ interface EntryFormProps {
   totalFlashType?: "increase" | "decrease";
 }
 
-const MONTHS = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
-
-function getRollingMonths(): string[] {
-  const now = new Date();
-  const currentMonth = now.getMonth();
-  const months = [];
-
-  for (let i = 0; i < 12; i++) {
-    const monthIndex = (currentMonth + i) % 12;
-    months.push(MONTHS[monthIndex]);
-  }
-
-  return months;
-}
-
 export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
   function EntryForm(
     {
@@ -146,12 +119,45 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
     const [searchQuery, setSearchQuery] = useState("");
     const [totalFlashActive, setTotalFlashActive] = useState(false);
 
+    const { t } = useLanguage();
+
     const guidedDialogOpen =
       externalGuidedDialogOpen !== undefined
         ? externalGuidedDialogOpen
         : internalGuidedDialogOpen;
     const setGuidedDialogOpen =
       onGuidedDialogOpenChange || setInternalGuidedDialogOpen;
+
+    const getMonthLabel = (monthIndex: number): string => {
+      const monthKeys = [
+        "months.jan",
+        "months.feb",
+        "months.mar",
+        "months.apr",
+        "months.may",
+        "months.jun",
+        "months.jul",
+        "months.aug",
+        "months.sep",
+        "months.oct",
+        "months.nov",
+        "months.dec",
+      ];
+      return t(monthKeys[monthIndex]);
+    };
+
+    const getRollingMonths = (): string[] => {
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const months = [];
+
+      for (let i = 0; i < 12; i++) {
+        const monthIndex = (currentMonth + i) % 12;
+        months.push(getMonthLabel(monthIndex));
+      }
+
+      return months;
+    };
 
     const rollingMonths = getRollingMonths();
     const sectionRef = useRef<HTMLDivElement | null>(null);
@@ -321,7 +327,6 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
                         (sum, entry) => sum + calculateTotal(entry.amounts),
                         0
                       )}
-                      prefix="€"
                     />
                   </span>
                   {isOpen ? (
@@ -341,7 +346,7 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
                     type="text"
-                    placeholder="Search entries..."
+                    placeholder={t("entries.searchEntries")}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-10"
@@ -365,7 +370,9 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
                       <div className="flex flex-col pr-2 max-w-[60%] sm:max-w-[70%]">
                         <span className="font-medium text-sm sm:text-base truncate">
                           <PrivacyText
-                            value={entry.description || "(No description)"}
+                            value={
+                              entry.description || t("entries.noDescription")
+                            }
                           />
                         </span>
                         <span
@@ -378,7 +385,6 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
                         >
                           <PrivacyNumber
                             value={calculateTotal(entry.amounts)}
-                            prefix="€"
                           />
                         </span>
                       </div>
@@ -388,8 +394,8 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
                           size="sm"
                           onClick={(e) => handleResolveCurrentMonth(e, entry)}
                           className="text-muted-foreground hover:text-foreground hover:bg-muted h-8 w-8 p-0 touch-manipulation"
-                          aria-label={`Mark current month as resolved: ${
-                            entry.description || "unnamed entry"
+                          aria-label={`${t("entries.markCurrentMonth")}: ${
+                            entry.description || t("entries.unnamedEntry")
                           }`}
                           disabled={
                             !entry.amounts.some(
@@ -407,7 +413,7 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
 
               {filteredEntries.length === 0 && entries.length > 0 && (
                 <div className="text-center py-8 text-muted-foreground">
-                  No entries found matching &quot;{searchQuery}&quot;
+                  {t("entries.noEntriesFound")} &quot;{searchQuery}&quot;
                 </div>
               )}
               {!hideAddButton && (
@@ -420,12 +426,16 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
                       ? "border-finance-positive/30 hover:bg-card"
                       : "border-finance-negative/30 hover:bg-card"
                   )}
-                  aria-label={`Add new ${
-                    type === "income" ? "income" : "expense"
-                  } entry`}
+                  aria-label={`${t("entries.add")} ${
+                    type === "income"
+                      ? t("entries.income")
+                      : t("entries.expenses")
+                  }`}
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  Add {type === "income" ? "Income" : "Expense"}
+                  {type === "income"
+                    ? t("entries.addIncome")
+                    : t("entries.addExpense")}
                 </Button>
               )}
             </CardContent>
@@ -435,14 +445,13 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
         <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Delete Entry</AlertDialogTitle>
+              <AlertDialogTitle>{t("entries.deleteEntry")}</AlertDialogTitle>
               <AlertDialogDescription>
-                Are you sure you want to delete this entry? This action cannot
-                be undone.
+                {t("entries.deleteConfirm")}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
               <AlertDialogAction
                 onClick={async () => {
                   if (entryToDelete) {
@@ -458,7 +467,7 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
                 }}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
-                Delete Entry
+                {t("entries.deleteEntry")}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -472,18 +481,24 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>
-                Mark as {type === "income" ? "Received" : "Paid"}?
+                {type === "income"
+                  ? t("entries.markAsReceived")
+                  : t("entries.markAsPaid")}
               </AlertDialogTitle>
               <AlertDialogDescription>
                 {entryToResolve && (
                   <>
-                    Mark{" "}
+                    {t("entries.mark")}{" "}
                     <strong>
-                      <PrivacyNumber value={entryToResolve.amount} prefix="€" />
+                      <PrivacyNumber value={entryToResolve.amount} />
                     </strong>{" "}
-                    for{" "}
+                    {t("entries.markFor")}{" "}
                     <strong>{rollingMonths[entryToResolve.monthIndex]}</strong>{" "}
-                    as {type === "income" ? "received" : "paid"}?
+                    {t("entries.as")}{" "}
+                    {type === "income"
+                      ? t("entries.received")
+                      : t("entries.paid")}
+                    ?
                     <br />
                   </>
                 )}
@@ -491,13 +506,13 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel onClick={() => setEntryToResolve(null)}>
-                Cancel
+                {t("common.cancel")}
               </AlertDialogCancel>
               <AlertDialogAction
                 onClick={confirmResolveCurrentMonth}
                 className="bg-finance-positive text-primary-foreground hover:bg-finance-positive/70"
               >
-                Confirm
+                {t("common.confirm")}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

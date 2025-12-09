@@ -1,8 +1,8 @@
 "use client";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   LogOut,
-  EuroIcon,
   ChevronDown,
   Shield,
   User,
@@ -23,14 +23,20 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
+import { useLanguage } from "@/hooks/use-language";
+import { LanguageCurrencySelector } from "@/components/ui/language-currency-selector";
+import { LanguageCurrencyDialog } from "@/components/ui/language-currency-dialog";
 
 export function DashboardHeader() {
   const { user, logout } = useAuth();
   const { privacyMode, isLoading: privacyLoading } = usePrivacy();
+  const { t, currencySymbol, language, currency, setLanguage, setCurrency } =
+    useLanguage();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const isMobile = useIsMobile();
+  const [languageDialogOpen, setLanguageDialogOpen] = useState(false);
 
   const handleLogout = async () => {
     await logout();
@@ -49,7 +55,9 @@ export function DashboardHeader() {
 
       if (response.ok) {
         toast.success(
-          newPrivacyMode ? "Privacy mode enabled" : "Privacy mode disabled"
+          newPrivacyMode
+            ? t("settings.privacyEnabled")
+            : t("settings.privacyDisabled")
         );
         window.dispatchEvent(
           new CustomEvent("privacyModeUpdated", {
@@ -57,18 +65,18 @@ export function DashboardHeader() {
           })
         );
       } else {
-        toast.error("Failed to update privacy mode");
+        toast.error(t("settings.failedToUpdatePrivacy"));
       }
     } catch (error) {
       console.error("Failed to toggle privacy mode:", error);
-      toast.error("Error updating privacy mode");
+      toast.error(t("common.error"));
     }
   };
 
   const navItems = [
-    { href: "/manage", label: "Manage", icon: Edit },
-    { href: "/", label: "Summary", icon: BarChart3 },
-    { href: "/details", label: "Details", icon: FileSpreadsheet },
+    { href: "/manage", label: t("navigation.manage"), icon: Edit },
+    { href: "/", label: t("dashboard.summary"), icon: BarChart3 },
+    { href: "/details", label: t("navigation.details"), icon: FileSpreadsheet },
   ];
 
   return (
@@ -80,14 +88,16 @@ export function DashboardHeader() {
             onClick={() => router.push("/")}
           >
             <div className="w-8 h-8 sm:w-10 sm:h-10 bg-primary rounded-full flex items-center justify-center">
-              <EuroIcon className="w-4 h-4 sm:w-5 sm:h-5 text-primary-foreground" />
+              <span className="text-lg sm:text-xl font-bold text-primary-foreground">
+                {currencySymbol}
+              </span>
             </div>
             <div>
               <h1 className="text-lg sm:text-xl font-bold text-primary">
-                Finance Tracker
+                {t("dashboard.title")}
               </h1>
               <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
-                Take Control of Your Finances
+                {t("dashboard.subtitle")}
               </p>
             </div>
           </div>
@@ -100,7 +110,9 @@ export function DashboardHeader() {
               disabled={privacyLoading}
               className="flex items-center gap-2"
               title={
-                privacyMode ? "Disable Privacy Mode" : "Enable Privacy Mode"
+                privacyMode
+                  ? t("settings.disablePrivacy")
+                  : t("settings.enablePrivacy")
               }
             >
               {privacyMode ? (
@@ -110,7 +122,7 @@ export function DashboardHeader() {
               )}
               {!isMobile && (
                 <span className="text-sm">
-                  {privacyMode ? "Private" : "Visible"}
+                  {privacyMode ? t("settings.private") : t("settings.visible")}
                 </span>
               )}
             </Button>
@@ -133,7 +145,7 @@ export function DashboardHeader() {
                     className="cursor-pointer"
                   >
                     <Shield className="w-4 h-4 mr-2" />
-                    Admin Panel
+                    {t("admin.title")}
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuItem
@@ -141,14 +153,21 @@ export function DashboardHeader() {
                   className="cursor-pointer"
                 >
                   <User className="w-4 h-4 mr-2" />
-                  Account Settings
+                  {t("settings.accountSettings")}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => router.push("/manage?tab=management")}
                   className="cursor-pointer"
                 >
                   <Save className="w-4 h-4 mr-2" />
-                  Backup
+                  {t("manage.backup")}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => setLanguageDialogOpen(true)}
+                  className="cursor-pointer"
+                >
+                  <LanguageCurrencySelector showInDropdown />
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
@@ -156,7 +175,7 @@ export function DashboardHeader() {
                   className="cursor-pointer"
                 >
                   <LogOut className="w-4 h-4 mr-2" />
-                  Sign Out
+                  {t("common.signOut")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -188,6 +207,17 @@ export function DashboardHeader() {
           </nav>
         )}
       </div>
+
+      {/* Language/Currency Dialog */}
+      <LanguageCurrencyDialog
+        open={languageDialogOpen}
+        onOpenChange={setLanguageDialogOpen}
+        language={language}
+        currency={currency}
+        onLanguageChange={setLanguage}
+        onCurrencyChange={setCurrency}
+        t={t}
+      />
     </header>
   );
 }

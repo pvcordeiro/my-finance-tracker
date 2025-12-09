@@ -49,13 +49,17 @@ import { FullPageLoader } from "@/components/ui/loading";
 import { User } from "lucide-react";
 import { AccentColorSwitcher } from "@/components/ui/accent-color-switcher";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { LanguageCurrencySelector } from "@/components/ui/language-currency-selector";
+import { LanguageCurrencyDialog } from "@/components/ui/language-currency-dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTheme } from "next-themes";
 import { SessionsList } from "@/components/user/sessions-list";
 import { toast } from "sonner";
+import { useLanguage } from "@/hooks/use-language";
 
 export default function UserSettingsPage() {
   const { user, isLoading, logout, refreshUser } = useAuth();
+  const { t, language, setLanguage, currency, setCurrency } = useLanguage();
   const router = useRouter();
   const isMobile = useIsMobile();
   const { theme } = useTheme();
@@ -63,8 +67,51 @@ export default function UserSettingsPage() {
   const [accentOpen, setAccentOpen] = useState(false);
   const [usernameOpen, setUsernameOpen] = useState(false);
   const [passwordOpen, setPasswordOpen] = useState(false);
+  const [languageDialogOpen, setLanguageDialogOpen] = useState(false);
   const [currentAccent, setCurrentAccent] = useState<string>("blue");
   const [switchingGroup, setSwitchingGroup] = useState(false);
+
+  const handleLanguageChange = async (newLanguage: "en" | "pt") => {
+    try {
+      const response = await fetch("/api/user/language", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ language: newLanguage }),
+      });
+
+      if (response.ok) {
+        setLanguage(newLanguage);
+        await refreshUser();
+        toast.success(t("settings.languageUpdated"));
+      } else {
+        toast.error(t("common.error"));
+      }
+    } catch (error) {
+      console.error("Failed to update language:", error);
+      toast.error(t("common.error"));
+    }
+  };
+
+  const handleCurrencyChange = async (newCurrency: "EUR" | "USD" | "BRL") => {
+    try {
+      const response = await fetch("/api/user/currency", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currency: newCurrency }),
+      });
+
+      if (response.ok) {
+        setCurrency(newCurrency);
+        await refreshUser();
+        toast.success(t("settings.currencyUpdated"));
+      } else {
+        toast.error(t("common.error"));
+      }
+    } catch (error) {
+      console.error("Failed to update currency:", error);
+      toast.error(t("common.error"));
+    }
+  };
 
   const handleGroupSwitch = async (groupId: number) => {
     setSwitchingGroup(true);
@@ -83,14 +130,14 @@ export default function UserSettingsPage() {
         const groupName =
           user?.groups?.find((g) => g.group_id === groupId)?.name ||
           "selected group";
-        toast.success("Switched to " + groupName);
+        toast.success(t("settings.switchedTo") + " " + groupName);
         window.location.reload();
       } else {
-        toast.error("Failed to switch group");
+        toast.error(t("settings.failedToSwitch"));
       }
     } catch (error) {
       console.error("Failed to switch group:", error);
-      toast.error("Error switching group");
+      toast.error(t("settings.errorSwitching"));
     } finally {
       setSwitchingGroup(false);
     }
@@ -174,62 +221,71 @@ export default function UserSettingsPage() {
               </div>
               <div>
                 <h1 className="text-lg sm:text-xl font-bold text-primary">
-                  Account Settings
+                  {t("settings.accountSettings")}
                 </h1>
                 <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
-                  Manage your personal account preferences
+                  {t("settings.managePersonalPreferences")}
                 </p>
               </div>
             </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center gap-2"
-                >
-                  <User className="w-4 h-4" />
-                  <span>{user.username}</span>
-                  <ChevronDown className="w-4 h-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {user.is_admin && (
+            <div className="flex items-center gap-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-2"
+                  >
+                    <User className="w-4 h-4" />
+                    <span>{user.username}</span>
+                    <ChevronDown className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {user.is_admin && (
+                    <DropdownMenuItem
+                      onClick={() => router.push("/admin")}
+                      className="cursor-pointer"
+                    >
+                      <Shield className="w-4 h-4 mr-2" />
+                      {t("admin.title")}
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem
-                    onClick={() => router.push("/admin")}
+                    onClick={() => router.push("/")}
                     className="cursor-pointer"
                   >
-                    <Shield className="w-4 h-4 mr-2" />
-                    Admin Panel
+                    <Calculator className="w-4 h-4 mr-2" />
+                    {t("navigation.home")}
                   </DropdownMenuItem>
-                )}
-                <DropdownMenuItem
-                  onClick={() => router.push("/")}
-                  className="cursor-pointer"
-                >
-                  <Calculator className="w-4 h-4 mr-2" />
-                  Back to App
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => router.push("/manage?tab=management")}
-                  className="cursor-pointer"
-                >
-                  <Save className="w-4 h-4 mr-2" />
-                  Backup
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={async () => {
-                    await logout();
-                    router.push("/login");
-                  }}
-                  className="cursor-pointer"
-                >
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Sign Out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  <DropdownMenuItem
+                    onClick={() => router.push("/manage?tab=management")}
+                    className="cursor-pointer"
+                  >
+                    <Save className="w-4 h-4 mr-2" />
+                    {t("manage.backup")}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => setLanguageDialogOpen(true)}
+                    className="cursor-pointer"
+                  >
+                    <LanguageCurrencySelector showInDropdown />
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={async () => {
+                      await logout();
+                      router.push("/login");
+                    }}
+                    className="cursor-pointer"
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    {t("common.signOut")}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </div>
       </header>
@@ -238,10 +294,10 @@ export default function UserSettingsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Palette className="w-5 h-5" />
-              Customize
+              {t("settings.customize")}
             </CardTitle>
             <CardDescription>
-              Change the look and feel of the application.
+              {t("settings.customizeDescription")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -255,7 +311,9 @@ export default function UserSettingsPage() {
                     >
                       <span className="flex items-center gap-2">
                         {getThemeIcon()}
-                        <span className="text-sm font-medium">Theme</span>
+                        <span className="text-sm font-medium">
+                          {t("settings.theme")}
+                        </span>
                       </span>
                       <ChevronRight
                         className={`w-4 h-4 transition-transform ${
@@ -280,7 +338,7 @@ export default function UserSettingsPage() {
                           style={{ backgroundColor: getAccentColor() }}
                         />
                         <span className="text-sm font-medium">
-                          Accent Color
+                          {t("settings.accentColor")}
                         </span>
                       </span>
                       <ChevronRight
@@ -298,11 +356,15 @@ export default function UserSettingsPage() {
             ) : (
               <>
                 <div>
-                  <h3 className="text-sm font-medium mb-3">Theme</h3>
+                  <h3 className="text-sm font-medium mb-3">
+                    {t("settings.theme")}
+                  </h3>
                   <ThemeToggle />
                 </div>
                 <div>
-                  <h3 className="text-sm font-medium mb-3">Accent Color</h3>
+                  <h3 className="text-sm font-medium mb-3">
+                    {t("settings.accentColor")}
+                  </h3>
                   <AccentColorSwitcher />
                 </div>
               </>
@@ -314,10 +376,10 @@ export default function UserSettingsPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Users className="w-5 h-5" />
-                Group Selection
+                {t("settings.groupSelection")}
               </CardTitle>
               <CardDescription>
-                Switch between your groups to view different financial data
+                {t("settings.groupSelectionDescription")}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -349,10 +411,10 @@ export default function UserSettingsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Key className="w-5 h-5" />
-              Update Credentials
+              {t("settings.updateCredentials")}
             </CardTitle>
             <CardDescription>
-              Change your username and password settings.
+              {t("settings.updateCredentialsDescription")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -367,7 +429,7 @@ export default function UserSettingsPage() {
                       <span className="flex items-center gap-2">
                         <UserCog className="w-4 h-4" />
                         <span className="text-sm font-medium">
-                          Change Username
+                          {t("auth.changeUsername")}
                         </span>
                       </span>
                       <ChevronRight
@@ -379,7 +441,7 @@ export default function UserSettingsPage() {
                   </CollapsibleTrigger>
                   <CollapsibleContent className="pt-4">
                     <p className="text-sm text-muted-foreground mb-3">
-                      Update your public username (used for login).
+                      {t("settings.changeUsernameDescription")}
                     </p>
                     <ChangeUsernameForm />
                   </CollapsibleContent>
@@ -393,7 +455,7 @@ export default function UserSettingsPage() {
                       <span className="flex items-center gap-2">
                         <Lock className="w-4 h-4" />
                         <span className="text-sm font-medium">
-                          Change Password
+                          {t("auth.changePassword")}
                         </span>
                       </span>
                       <ChevronRight
@@ -405,29 +467,33 @@ export default function UserSettingsPage() {
                   </CollapsibleTrigger>
                   <CollapsibleContent className="pt-4">
                     <p className="text-sm text-muted-foreground mb-3">
-                      Update your password (minimum 6 characters).
+                      {t("settings.changePasswordDescription")}
                     </p>
                     <ChangePasswordForm />
                   </CollapsibleContent>
                 </Collapsible>
               </>
             ) : (
-              <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h3 className="text-sm font-medium mb-1">Change Username</h3>
+                  <h3 className="text-sm font-medium mb-1">
+                    {t("auth.changeUsername")}
+                  </h3>
                   <p className="text-sm text-muted-foreground mb-3">
-                    Update your public username (used for login).
+                    {t("settings.changeUsernameDescription")}
                   </p>
                   <ChangeUsernameForm />
                 </div>
                 <div>
-                  <h3 className="text-sm font-medium mb-1">Change Password</h3>
+                  <h3 className="text-sm font-medium mb-1">
+                    {t("auth.changePassword")}
+                  </h3>
                   <p className="text-sm text-muted-foreground mb-3">
-                    Update your password (minimum 6 characters).
+                    {t("settings.changePasswordDescription")}
                   </p>
                   <ChangePasswordForm />
                 </div>
-              </>
+              </div>
             )}
           </CardContent>
         </Card>
@@ -435,10 +501,10 @@ export default function UserSettingsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Laptop className="w-5 h-5" />
-              Active Sessions
+              {t("settings.activeSessions")}
             </CardTitle>
             <CardDescription>
-              Manage your active sessions across different devices.
+              {t("settings.activeSessionsDescription")}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -446,6 +512,17 @@ export default function UserSettingsPage() {
           </CardContent>
         </Card>
       </main>
+
+      {/* Language/Currency Dialog */}
+      <LanguageCurrencyDialog
+        open={languageDialogOpen}
+        onOpenChange={setLanguageDialogOpen}
+        language={language}
+        currency={currency}
+        onLanguageChange={handleLanguageChange}
+        onCurrencyChange={handleCurrencyChange}
+        t={t}
+      />
     </div>
   );
 }

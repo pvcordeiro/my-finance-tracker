@@ -24,8 +24,10 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import type { FinanceData, CommitResult } from "@/hooks/use-finance-data";
+import { useLanguage } from "@/hooks/use-language";
 
 function HomePageContent() {
+  const { currencySymbol, t } = useLanguage();
   const { user } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -114,9 +116,11 @@ function HomePageContent() {
           });
 
           toast.success(
-            `${type === "incomes" ? "Income" : "Expense"} added successfully`,
+            type === "incomes"
+              ? t("entries.incomeAdded")
+              : t("entries.expenseAdded"),
             {
-              description: description || "New entry created",
+              description: description || t("entries.newEntryCreated"),
             }
           );
 
@@ -137,6 +141,7 @@ function HomePageContent() {
     commitEntryAmount,
     commitEntryDescription,
     updateEntry,
+    t,
   ]);
 
   useEffect(() => {
@@ -190,6 +195,8 @@ function HomePageContent() {
   const lastKnownBankAmountRef = useRef<number>(0);
 
   useEffect(() => {
+    if (!user) return;
+
     const eventSource = new EventSource("/api/bank-amount/stream", {
       withCredentials: true,
     });
@@ -235,7 +242,15 @@ function HomePageContent() {
     };
 
     eventSource.onerror = (error) => {
-      console.error("SSE error:", error);
+      console.error("SSE error:", {
+        readyState: eventSource.readyState,
+        url: eventSource.url,
+        error: error,
+      });
+
+      if (eventSource.readyState === EventSource.CLOSED) {
+        console.log("SSE connection closed, will reconnect on next render");
+      }
     };
 
     return () => {
@@ -244,7 +259,7 @@ function HomePageContent() {
         eventSourceRef.current = null;
       }
     };
-  }, [data.bankAmount, updateBankAmount]);
+  }, [user, data.bankAmount, updateBankAmount]);
 
   const handleAddToBankAmount = async (delta: number, note?: string) => {
     await addToBankAmount(delta, note);
@@ -328,20 +343,27 @@ function HomePageContent() {
           ? data.incomes.find((e) => e.id === id)
           : data.expenses.find((e) => e.id === id);
 
-      const description = entry?.description || "Entry";
+      const description = entry?.description || t("entries.entry");
 
       updateEntry(type, id, "amount", 0, monthIndex);
       await commitEntryAmount(type, id, monthIndex, 0);
 
-      toast.success(`${type === "incomes" ? "Income" : "Expense"} resolved`, {
-        description: `€${amount.toFixed(2)} from "${description}" marked as ${
-          type === "incomes" ? "received" : "paid"
-        }`,
-      });
+      toast.success(
+        type === "incomes"
+          ? t("entries.incomeResolved")
+          : t("entries.expenseResolved"),
+        {
+          description: `${currencySymbol}${amount.toFixed(2)} ${t(
+            "entries.from"
+          )} "${description}" ${t("entries.markedAs")} ${
+            type === "incomes" ? t("entries.received") : t("entries.paid")
+          }`,
+        }
+      );
     } catch (error) {
       console.error("Failed to resolve current month:", error);
-      toast.error("Failed to resolve entry", {
-        description: "Please try again",
+      toast.error(t("entries.failedToResolve"), {
+        description: t("entries.pleaseTryAgain"),
       });
     }
   };
@@ -392,7 +414,7 @@ function HomePageContent() {
                       className="w-full transition-all duration-200 active:scale-[0.98] touch-manipulation py-4 sm:py-3 border-finance-positive/30 hover:bg-card"
                     >
                       <Plus className="w-4 h-4 mr-2" />
-                      Add Income
+                      {t("entries.addIncome")}
                     </Button>
                     <Button
                       onClick={() => {
@@ -402,14 +424,14 @@ function HomePageContent() {
                       className="w-full transition-all duration-200 active:scale-[0.98] touch-manipulation py-4 sm:py-3 border-finance-negative/30 hover:bg-card"
                     >
                       <Plus className="w-4 h-4 mr-2" />
-                      Add Expense
+                      {t("entries.addExpense")}
                     </Button>
                   </div>
                 </div>
 
                 <EntryForm
                   ref={incomeSectionRef}
-                  title="Income"
+                  title={t("entries.income")}
                   entries={data.incomes}
                   onAddEntry={() => addEntry("incomes")}
                   onGuidedAddEntry={handleGuidedAddIncome}
@@ -419,7 +441,8 @@ function HomePageContent() {
                   onRemoveEntry={async (id) => {
                     try {
                       const entry = data.incomes.find((e) => e.id === id);
-                      const description = entry?.description || "Entry";
+                      const description =
+                        entry?.description || t("entries.entry");
 
                       await removeEntry("incomes", id);
                       flashCounterRef.current += 1;
@@ -429,13 +452,15 @@ function HomePageContent() {
                         token: flashCounterRef.current,
                       });
 
-                      toast.success("Income deleted", {
-                        description: `${description} was removed successfully`,
+                      toast.success(t("entries.incomeDeleted"), {
+                        description: `${description} ${t(
+                          "entries.removedSuccessfully"
+                        )}`,
                       });
                     } catch (error) {
                       console.error("Failed to delete income entry:", error);
-                      toast.error("Failed to delete income", {
-                        description: "Please try again",
+                      toast.error(t("entries.failedToDeleteIncome"), {
+                        description: t("entries.pleaseTryAgain"),
                       });
                     }
                   }}
@@ -505,7 +530,7 @@ function HomePageContent() {
 
                 <EntryForm
                   ref={expenseSectionRef}
-                  title="Expenses"
+                  title={t("entries.expenses")}
                   entries={data.expenses}
                   onAddEntry={() => addEntry("expenses")}
                   onGuidedAddEntry={handleGuidedAddExpense}
@@ -515,7 +540,8 @@ function HomePageContent() {
                   onRemoveEntry={async (id) => {
                     try {
                       const entry = data.expenses.find((e) => e.id === id);
-                      const description = entry?.description || "Entry";
+                      const description =
+                        entry?.description || t("entries.entry");
 
                       await removeEntry("expenses", id);
                       flashCounterRef.current += 1;
@@ -525,13 +551,15 @@ function HomePageContent() {
                         token: flashCounterRef.current,
                       });
 
-                      toast.success("Expense deleted", {
-                        description: `${description} was removed successfully`,
+                      toast.success(t("entries.expenseDeleted"), {
+                        description: `${description} ${t(
+                          "entries.removedSuccessfully"
+                        )}`,
                       });
                     } catch (error) {
                       console.error("Failed to delete expense entry:", error);
-                      toast.error("Failed to delete expense", {
-                        description: "Please try again",
+                      toast.error(t("entries.failedToDeleteExpense"), {
+                        description: t("entries.pleaseTryAgain"),
                       });
                     }
                   }}
@@ -615,18 +643,15 @@ function HomePageContent() {
       <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Unsaved Changes</DialogTitle>
+            <DialogTitle>{t("manage.unsavedChanges")}</DialogTitle>
           </DialogHeader>
-          <div className="py-2">
-            You have unsaved changes. Are you sure you want to leave this page?
-            Your changes will be lost.
-          </div>
+          <div className="py-2">{t("manage.unsavedChangesDescription")}</div>
           <DialogFooter>
             <Button variant="outline" onClick={cancelNavigation}>
-              Stay
+              {t("manage.stay")}
             </Button>
             <Button variant="destructive" onClick={confirmNavigation}>
-              Leave Page
+              {t("manage.leavePage")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -636,11 +661,12 @@ function HomePageContent() {
 }
 
 import { AuthGate } from "@/components/auth/auth-gate";
+import { FullPageLoader } from "@/components/ui/loading";
 
-export default function Page() {
+export default function ManagePage() {
   return (
     <AuthGate>
-      <Suspense fallback={<div>Loading...</div>}>
+      <Suspense fallback={<FullPageLoader />}>
         <HomePageContent />
       </Suspense>
     </AuthGate>

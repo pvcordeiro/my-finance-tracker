@@ -1,3 +1,6 @@
+"use client";
+import { useLanguage } from "@/hooks/use-language";
+
 interface LoadingSpinnerProps {
   size?: "sm" | "md" | "lg";
   className?: string;
@@ -25,28 +28,27 @@ interface LoadingStateProps {
   className?: string;
 }
 
-export function LoadingState({
-  message = "Loading...",
-  className = "",
-}: LoadingStateProps) {
+export function LoadingState({ message, className = "" }: LoadingStateProps) {
+  const { t } = useLanguage();
+  const displayMessage = message || t("common.loading");
+
   return (
     <div className={`flex items-center justify-center p-8 ${className}`}>
       <div className="text-center">
         <LoadingSpinner size="lg" className="mx-auto mb-4" />
-        <p className="text-muted-foreground">{message}</p>
+        <p className="text-muted-foreground">{displayMessage}</p>
       </div>
     </div>
   );
 }
 
-export function FullPageLoader({
-  message = "Loading...",
-}: {
-  message?: string;
-}) {
+export function FullPageLoader({ message }: { message?: string }) {
+  const { t } = useLanguage();
+  const displayMessage = message || t("common.loading");
+
   return (
     <div className="flex items-center justify-center p-4 min-h-screen">
-      <LoadingState message={message} />
+      <LoadingState message={displayMessage} />
     </div>
   );
 }

@@ -1,63 +1,66 @@
 "use client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, TrendingDown, EuroIcon } from "lucide-react";
+import { TrendingUp, TrendingDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { FinanceData } from "@/hooks/use-finance-data";
 import { PrivacyNumber } from "@/components/ui/privacy-number";
+import { useLanguage } from "@/hooks/use-language";
 
 interface SummaryTableProps {
   data: FinanceData;
 }
 
-const MONTHS = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
+export function SummaryTable({ data }: SummaryTableProps) {
+  const { t } = useLanguage();
 
-function getRollingMonths(): Array<{
-  label: string;
-  year: number;
-  month: number;
-}> {
-  const now = new Date();
-  const currentMonth = now.getMonth();
-  const currentYear = now.getFullYear();
-  const months = [];
+  const MONTHS = [
+    t("months.jan"),
+    t("months.feb"),
+    t("months.mar"),
+    t("months.apr"),
+    t("months.may"),
+    t("months.jun"),
+    t("months.jul"),
+    t("months.aug"),
+    t("months.sep"),
+    t("months.oct"),
+    t("months.nov"),
+    t("months.dec"),
+  ];
 
-  for (let i = 0; i < 12; i++) {
-    const monthIndex = (currentMonth + i) % 12;
-    const year = currentYear + Math.floor((currentMonth + i) / 12);
-    months.push({
-      label: MONTHS[monthIndex],
-      year,
-      month: monthIndex,
-    });
+  function getRollingMonths(): Array<{
+    label: string;
+    year: number;
+    month: number;
+  }> {
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    const months = [];
+
+    for (let i = 0; i < 12; i++) {
+      const monthIndex = (currentMonth + i) % 12;
+      const year = currentYear + Math.floor((currentMonth + i) / 12);
+      months.push({
+        label: MONTHS[monthIndex],
+        year,
+        month: monthIndex,
+      });
+    }
+
+    return months;
   }
 
-  return months;
-}
-
-export function SummaryTable({ data }: SummaryTableProps) {
   if (!data || (!data.incomes && !data.expenses)) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Financial Summary</CardTitle>
+          <CardTitle>{t("dashboard.financialSummary")}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8 text-muted-foreground">
-            No data available
+            {t("common.noData")}
           </div>
         </CardContent>
       </Card>
@@ -136,10 +139,9 @@ export function SummaryTable({ data }: SummaryTableProps) {
         <Card className="bg-accent/10 border-primary/50">
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2">
-              <EuroIcon className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
               <div className="min-w-0">
                 <p className="text-xs sm:text-sm font-bold text-primary text-shadow-sm">
-                  Current Month
+                  {t("dashboard.currentMonth")}
                 </p>
                 <p
                   className={cn(
@@ -152,7 +154,6 @@ export function SummaryTable({ data }: SummaryTableProps) {
                   <PrivacyNumber
                     value={currentBalance}
                     className="text-lg sm:text-2xl font-bold truncate text-shadow-sm"
-                    prefix="€"
                   />
                 </p>
               </div>
@@ -163,10 +164,9 @@ export function SummaryTable({ data }: SummaryTableProps) {
         <Card className="bg-accent/10 border-primary/50">
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2">
-              <EuroIcon className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
               <div className="min-w-0">
                 <p className="text-xs sm:text-sm font-bold text-primary text-shadow-sm">
-                  Next Month
+                  {t("dashboard.nextMonth")}
                 </p>
                 <p
                   className={cn(
@@ -179,7 +179,6 @@ export function SummaryTable({ data }: SummaryTableProps) {
                   <PrivacyNumber
                     value={nextMonthBalance}
                     className="text-lg sm:text-2xl font-bold truncate text-shadow-sm"
-                    prefix="€"
                   />
                 </p>
               </div>
@@ -193,13 +192,12 @@ export function SummaryTable({ data }: SummaryTableProps) {
               <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-finance-positive flex-shrink-0" />
               <div className="min-w-0">
                 <p className="text-xs sm:text-sm font-bold text-finance-positive text-shadow-sm">
-                  1 Year Income
+                  {t("dashboard.yearIncome")}
                 </p>
                 <p className="text-lg sm:text-2xl font-bold text-finance-positive truncate text-shadow-sm">
                   <PrivacyNumber
                     value={annualIncome}
                     className="text-lg sm:text-2xl font-bold text-shadow-sm"
-                    prefix="€"
                   />
                 </p>
               </div>
@@ -213,13 +211,12 @@ export function SummaryTable({ data }: SummaryTableProps) {
               <TrendingDown className="w-4 h-4 sm:w-5 sm:h-5 text-finance-negative flex-shrink-0" />
               <div className="min-w-0">
                 <p className="text-xs sm:text-sm font-bold text-finance-negative text-shadow-sm">
-                  1 Year Expense
+                  {t("dashboard.yearExpense")}
                 </p>
                 <p className="text-lg sm:text-2xl font-bold text-finance-negative truncate text-shadow-sm">
                   <PrivacyNumber
                     value={annualExpenses}
                     className="text-lg sm:text-2xl font-bold text-shadow-sm"
-                    prefix="€"
                   />
                 </p>
               </div>
@@ -231,8 +228,7 @@ export function SummaryTable({ data }: SummaryTableProps) {
       <Card>
         <CardHeader className="pb-3 sm:pb-6">
           <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
-            <EuroIcon className="w-4 h-4 sm:w-5 sm:h-5" />
-            Monthly Financial Summary
+            {t("dashboard.monthlyFinancialSummary")}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0 sm:p-6 sm:pt-0">
@@ -241,16 +237,16 @@ export function SummaryTable({ data }: SummaryTableProps) {
               <thead>
                 <tr className="border-b bg-muted/50">
                   <th className="text-left px-2 py-2 font-semibold min-w-0 whitespace-nowrap">
-                    Month
+                    {t("dashboard.month")}
                   </th>
                   <th className="text-right px-2 py-2 font-semibold text-finance-positive min-w-0 whitespace-nowrap">
-                    Income
+                    {t("dashboard.income")}
                   </th>
                   <th className="text-right px-2 py-2 font-semibold text-finance-negative min-w-0 whitespace-nowrap">
-                    Expenses
+                    {t("dashboard.expenses")}
                   </th>
                   <th className="text-right px-2 py-2 font-semibold min-w-0 whitespace-nowrap">
-                    Balance
+                    {t("dashboard.balance")}
                   </th>
                 </tr>
               </thead>
@@ -270,16 +266,16 @@ export function SummaryTable({ data }: SummaryTableProps) {
                         </span>
                         {row.isCurrentMonth && (
                           <Badge variant="secondary" className="text-xs px-1">
-                            Current
+                            {t("common.current")}
                           </Badge>
                         )}
                       </div>
                     </td>
                     <td className="px-2 py-2 text-right text-finance-positive font-medium min-w-0">
-                      <PrivacyNumber value={row.income} prefix="€" />
+                      <PrivacyNumber value={row.income} />
                     </td>
                     <td className="px-2 py-2 text-right text-finance-negative font-medium min-w-0">
-                      <PrivacyNumber value={row.expenses} prefix="€" />
+                      <PrivacyNumber value={row.expenses} />
                     </td>
                     <td
                       className={cn(
@@ -289,7 +285,7 @@ export function SummaryTable({ data }: SummaryTableProps) {
                           : "text-finance-negative"
                       )}
                     >
-                      <PrivacyNumber value={row.balance} prefix="€" />
+                      <PrivacyNumber value={row.balance} />
                     </td>
                   </tr>
                 ))}
@@ -298,10 +294,10 @@ export function SummaryTable({ data }: SummaryTableProps) {
                 <tr className="border-t-2 bg-muted/50 font-bold">
                   <td className="px-2 py-2">Total</td>
                   <td className="px-2 py-2 text-right text-finance-positive">
-                    <PrivacyNumber value={annualIncome} prefix="€" />
+                    <PrivacyNumber value={annualIncome} />
                   </td>
                   <td className="px-2 py-2 text-right text-finance-negative">
-                    <PrivacyNumber value={annualExpenses} prefix="€" />
+                    <PrivacyNumber value={annualExpenses} />
                   </td>
                   <td
                     className={cn(
@@ -311,7 +307,7 @@ export function SummaryTable({ data }: SummaryTableProps) {
                         : "text-finance-negative"
                     )}
                   >
-                    <PrivacyNumber value={finalBalance} prefix="€" />
+                    <PrivacyNumber value={finalBalance} />
                   </td>
                 </tr>
               </tfoot>

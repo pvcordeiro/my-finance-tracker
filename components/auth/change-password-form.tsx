@@ -3,8 +3,10 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
+import { useLanguage } from "@/hooks/use-language";
 
 export function ChangePasswordForm() {
+  const { t } = useLanguage();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -13,7 +15,7 @@ export function ChangePasswordForm() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newPassword !== confirmPassword) {
-      toast.error("New passwords do not match");
+      toast.error(t("settings.passwordsDoNotMatch"));
       return;
     }
     setIsLoading(true);
@@ -29,16 +31,16 @@ export function ChangePasswordForm() {
       });
 
       if (response.ok) {
-        toast.success("Password updated");
+        toast.success(t("settings.passwordUpdated"));
         setCurrentPassword("");
         setNewPassword("");
         setConfirmPassword("");
       } else {
         const data = await response.json().catch(() => ({}));
-        toast.error(data.error || "Failed to update password");
+        toast.error(data.error || t("settings.failedToUpdatePassword"));
       }
     } catch {
-      toast.error("Error updating password");
+      toast.error(t("settings.errorUpdatingPassword"));
     } finally {
       setIsLoading(false);
     }
@@ -48,7 +50,7 @@ export function ChangePasswordForm() {
     <form onSubmit={submit} className="space-y-4 max-w-md">
       <div>
         <label className="block text-sm font-medium mb-1">
-          Current Password
+          {t("settings.currentPassword")}
         </label>
         <Input
           type="password"
@@ -58,7 +60,9 @@ export function ChangePasswordForm() {
         />
       </div>
       <div>
-        <label className="block text-sm font-medium mb-1">New Password</label>
+        <label className="block text-sm font-medium mb-1">
+          {t("settings.newPassword")}
+        </label>
         <Input
           type="password"
           value={newPassword}
@@ -68,7 +72,7 @@ export function ChangePasswordForm() {
       </div>
       <div>
         <label className="block text-sm font-medium mb-1">
-          Confirm New Password
+          {t("settings.confirmNewPassword")}
         </label>
         <Input
           type="password"
@@ -78,7 +82,7 @@ export function ChangePasswordForm() {
         />
       </div>
       <Button type="submit" disabled={isLoading}>
-        {isLoading ? "Updating..." : "Change Password"}
+        {isLoading ? t("settings.updating") : t("auth.changePassword")}
       </Button>
     </form>
   );

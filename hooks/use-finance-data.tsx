@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { toast } from "sonner";
 import { useAuth } from "./use-auth";
+import { useLanguage } from "@/hooks/use-language";
 import type { FinanceEntry } from "@/components/finance/entry-form";
 
 export interface FinanceData {
@@ -52,6 +53,8 @@ export type CommitResult =
   | { success: false; conflict?: true; error?: string };
 
 export function useFinanceData() {
+  const { currencySymbol } = useLanguage();
+
   const [data, setData] = useState<FinanceData>(defaultData);
   const [originalData, setOriginalData] = useState<FinanceData>(defaultData);
   const [lastUpdated, setLastUpdated] = useState<{
@@ -204,7 +207,17 @@ export function useFinanceData() {
     };
 
     eventSource.onerror = (error) => {
-      console.error("Entries SSE error:", error);
+      console.error("Entries SSE error:", {
+        readyState: eventSource.readyState,
+        url: eventSource.url,
+        error: error,
+      });
+
+      if (eventSource.readyState === EventSource.CLOSED) {
+        console.log(
+          "Entries SSE connection closed, will reconnect on next render"
+        );
+      }
     };
 
     return () => {
@@ -736,7 +749,9 @@ export function useFinanceData() {
       setData((prev) => ({ ...prev, bankAmount: result.amount }));
       setOriginalData((prev) => ({ ...prev, bankAmount: result.amount }));
       setHasBankChanges(false);
-      toast.success(`Added €${delta.toFixed(2)} to bank balance`);
+      toast.success(
+        `Added ${currencySymbol}${delta.toFixed(2)} to bank balance`
+      );
     } catch (error) {
       console.error("Error adding to bank amount:", error);
       toast.error("Failed to add to bank amount");
@@ -772,7 +787,9 @@ export function useFinanceData() {
       setData((prev) => ({ ...prev, bankAmount: result.amount }));
       setOriginalData((prev) => ({ ...prev, bankAmount: result.amount }));
       setHasBankChanges(false);
-      toast.success(`Subtracted €${delta.toFixed(2)} from bank balance`);
+      toast.success(
+        `Subtracted ${currencySymbol}${delta.toFixed(2)} from bank balance`
+      );
     } catch (error) {
       console.error("Error subtracting from bank amount:", error);
       toast.error("Failed to subtract from bank amount");

@@ -14,12 +14,19 @@ interface User {
   is_admin?: boolean;
   groups?: Array<{ group_id: number; name: string }>;
   current_group_id?: number | null;
+  language?: string;
+  currency?: string;
 }
 
 interface AuthContextType {
   user: User | null;
   login: (username: string, password: string) => Promise<boolean>;
-  register: (username: string, password: string) => Promise<boolean>;
+  register: (
+    username: string,
+    password: string,
+    language?: string,
+    currency?: string
+  ) => Promise<boolean>;
   logout: () => void;
   refreshUser: () => Promise<void>;
   isLoading: boolean;
@@ -106,7 +113,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = async (
     username: string,
-    password: string
+    password: string,
+    language: string = "en",
+    currency: string = "EUR"
   ): Promise<boolean> => {
     try {
       const response = await fetch("/api/auth/register", {
@@ -114,25 +123,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username, password, language, currency }),
         credentials: "include",
       });
 
       if (response.ok) {
-        const { user: userData } = await response.json();
-        setUser(userData);
-
-        window.dispatchEvent(new Event("userLoggedIn"));
-
-        return true;
+        return login(username, password);
+      } else {
+        const data = await response.json();
+        throw new Error(data.error || "Registration failed");
       }
-
-      if (response.status === 403) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Registration is disabled");
-      }
-
-      return false;
     } catch (error) {
       console.error("Registration error:", error);
       throw error;

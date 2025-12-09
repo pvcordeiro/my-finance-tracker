@@ -54,7 +54,12 @@ export async function POST(request) {
       );
     }
 
-    const { username, password } = validation.data;
+    const {
+      username,
+      password,
+      language = "en",
+      currency = "EUR",
+    } = validation.data;
 
     const existingUser = await new Promise((resolve, reject) => {
       db.get(
@@ -77,8 +82,8 @@ export async function POST(request) {
 
     const userId = await new Promise((resolve, reject) => {
       db.run(
-        "INSERT INTO users (username, password_hash) VALUES (?, ?)",
-        [username, hashedPassword],
+        "INSERT INTO users (username, password_hash, language, currency) VALUES (?, ?, ?, ?)",
+        [username, hashedPassword, language, currency],
         function (err) {
           if (err) reject(err);
           else resolve(this.lastID);

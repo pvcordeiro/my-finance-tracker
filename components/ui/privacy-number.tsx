@@ -2,6 +2,7 @@
 
 import { usePrivacy } from "@/hooks/use-privacy";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/hooks/use-language";
 
 interface PrivacyNumberProps {
   value: number | string;
@@ -19,17 +20,13 @@ export function PrivacyNumber({
   format,
 }: PrivacyNumberProps) {
   const { privacyMode, isRevealed, isLoading } = usePrivacy();
+  const { formatCurrency } = useLanguage();
 
   const shouldHide = privacyMode && !isRevealed && !isLoading;
 
   if (!shouldHide) {
     const numValue = typeof value === "string" ? parseFloat(value) : value;
-    const formattedValue = format
-      ? format(numValue)
-      : numValue.toLocaleString("en-GB", {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        });
+    const formattedValue = format ? format(numValue) : formatCurrency(numValue);
 
     return (
       <span className={className}>
@@ -41,12 +38,7 @@ export function PrivacyNumber({
   }
 
   const numValue = typeof value === "string" ? parseFloat(value) : value;
-  const formattedValue = format
-    ? format(numValue)
-    : numValue.toLocaleString("en-GB", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      });
+  const formattedValue = format ? format(numValue) : formatCurrency(numValue);
 
   const fullText = `${prefix}${formattedValue}${suffix}`;
   const charCount = fullText.length;

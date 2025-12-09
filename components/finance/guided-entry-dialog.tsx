@@ -14,34 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const MONTHS = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
-
-function getRollingMonths(): string[] {
-  const now = new Date();
-  const currentMonth = now.getMonth();
-  const months = [];
-
-  for (let i = 0; i < 12; i++) {
-    const monthIndex = (currentMonth + i) % 12;
-    months.push(MONTHS[monthIndex]);
-  }
-
-  return months;
-}
+import { useLanguage } from "@/hooks/use-language";
 
 interface GuidedEntryDialogProps {
   open: boolean;
@@ -56,6 +29,7 @@ export function GuidedEntryDialog({
   type,
   onSubmit,
 }: GuidedEntryDialogProps) {
+  const { currencySymbol, t } = useLanguage();
   const [step, setStep] = useState<"description" | "type" | "amounts">(
     "description"
   );
@@ -65,6 +39,37 @@ export function GuidedEntryDialog({
   const [amounts, setAmounts] = useState<string[]>(Array(12).fill(""));
   const [currentMonthIndex, setCurrentMonthIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const getMonthLabel = (monthIndex: number): string => {
+    const monthKeys = [
+      "months.jan",
+      "months.feb",
+      "months.mar",
+      "months.apr",
+      "months.may",
+      "months.jun",
+      "months.jul",
+      "months.aug",
+      "months.sep",
+      "months.oct",
+      "months.nov",
+      "months.dec",
+    ];
+    return t(monthKeys[monthIndex]);
+  };
+
+  const getRollingMonths = (): string[] => {
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const months = [];
+
+    for (let i = 0; i < 12; i++) {
+      const monthIndex = (currentMonth + i) % 12;
+      months.push(getMonthLabel(monthIndex));
+    }
+
+    return months;
+  };
 
   const months = getRollingMonths();
 
@@ -181,11 +186,14 @@ export function GuidedEntryDialog({
                   : "text-finance-negative"
               )}
             >
-              Add {type === "income" ? "Income" : "Expense"}
+              {type === "income"
+                ? t("entries.addIncome")
+                : t("entries.addExpense")}
             </span>
             <Badge variant="outline" className="ml-auto">
-              Step {step === "description" ? "1" : step === "type" ? "2" : "3"}{" "}
-              of 3
+              {t("entries.step")}{" "}
+              {step === "description" ? "1" : step === "type" ? "2" : "3"}{" "}
+              {t("entries.of")} 3
             </Badge>
           </DialogTitle>
         </DialogHeader>
@@ -194,11 +202,11 @@ export function GuidedEntryDialog({
           {step === "description" && (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
+                <Label htmlFor="description">{t("entries.description")}</Label>
                 <Input
                   ref={inputRef}
                   id="description"
-                  placeholder="e.g., Monthly Salary, Rent, Electricity..."
+                  placeholder={t("entries.descriptionPlaceholder")}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   onKeyDown={handleKeyDown}
@@ -221,10 +229,10 @@ export function GuidedEntryDialog({
               <div className="flex items-center justify-between p-4 border rounded-lg">
                 <div className="space-y-0.5">
                   <Label htmlFor="fixed-toggle" className="text-base">
-                    Fixed amount for all months
+                    {t("entries.fixedAmountAllMonths")}
                   </Label>
                   <p className="text-sm text-muted-foreground">
-                    Same value will be applied to all 12 months
+                    {t("entries.sameValueAllMonths")}
                   </p>
                 </div>
                 <Switch
@@ -235,8 +243,8 @@ export function GuidedEntryDialog({
               </div>
               <div className="text-sm text-muted-foreground text-center">
                 {isFixed
-                  ? "You'll enter one amount for all months"
-                  : "You'll enter amounts month by month"}
+                  ? t("entries.enterOneAmount")
+                  : t("entries.enterAmountsMonthly")}
               </div>
             </div>
           )}
@@ -246,7 +254,7 @@ export function GuidedEntryDialog({
               {isFixed ? (
                 <div className="space-y-2">
                   <Label htmlFor="fixed-amount" className="text-base">
-                    Amount (€)
+                    {t("entries.amount")} ({currencySymbol})
                   </Label>
                   <Input
                     ref={inputRef}
@@ -275,7 +283,7 @@ export function GuidedEntryDialog({
                     className="text-2xl font-semibold text-center"
                   />
                   <p className="text-sm text-muted-foreground text-center">
-                    This amount will be applied to all 12 months
+                    {t("entries.thisWillApplyToAllMonths")}
                   </p>
                 </div>
               ) : (
@@ -285,7 +293,9 @@ export function GuidedEntryDialog({
                       {months[currentMonthIndex]}
                     </Badge>
                     <span className="text-sm text-muted-foreground">
-                      Month {currentMonthIndex + 1} of 12
+                      {t("entries.monthOf")
+                        .replace("{current}", String(currentMonthIndex + 1))
+                        .replace("{total}", "12")}
                     </span>
                   </div>
                   <div className="space-y-2">
@@ -293,10 +303,12 @@ export function GuidedEntryDialog({
                       htmlFor="variable-amount"
                       className="text-base flex items-center justify-between"
                     >
-                      <span>Amount (€)</span>
+                      <span>
+                        {t("entries.amount")} ({currencySymbol})
+                      </span>
                       {currentMonthIndex > 0 && (
                         <span className="text-xs text-muted-foreground font-normal">
-                          Leave empty for €0.00
+                          {t("entries.leaveEmpty")} {currencySymbol}0.00
                         </span>
                       )}
                     </Label>
@@ -360,7 +372,7 @@ export function GuidedEntryDialog({
               className="flex-1 sm:flex-1"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
+              {t("entries.back")}
             </Button>
           )}
           {step !== "amounts" ? (
@@ -370,7 +382,7 @@ export function GuidedEntryDialog({
               disabled={!canProceed()}
               className="flex-1 sm:flex-1"
             >
-              Next
+              {t("entries.next")}
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           ) : (
@@ -383,17 +395,17 @@ export function GuidedEntryDialog({
               {isFixed ? (
                 <>
                   <Check className="w-4 h-4 mr-2" />
-                  Complete
+                  {t("entries.complete")}
                 </>
               ) : currentMonthIndex < 11 ? (
                 <>
-                  Next Month
+                  {t("entries.nextMonth")}
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </>
               ) : (
                 <>
                   <Check className="w-4 h-4 mr-2" />
-                  Complete
+                  {t("entries.complete")}
                 </>
               )}
             </Button>

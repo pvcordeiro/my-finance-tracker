@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Banknote, Plus, Minus } from "lucide-react";
 import { PrivacyNumber } from "@/components/ui/privacy-number";
+import { useLanguage } from "@/hooks/use-language";
 
 interface BankAmountProps {
   amount: number;
@@ -22,6 +23,7 @@ export function BankAmount({
   flashToken,
   flashType,
 }: BankAmountProps) {
+  const { currencySymbol, t } = useLanguage();
   const [inputValue, setInputValue] = useState<number>(0);
   const [note, setNote] = useState<string>("");
   const [flashActive, setFlashActive] = useState(false);
@@ -63,9 +65,7 @@ export function BankAmount({
       };
     }
   }, [flashToken, flashType]);
-  const handleInputChange = (value: number) => {
-    setInputValue(value);
-  };
+
   const handleAdd = () => {
     if (!isNaN(inputValue) && inputValue !== 0) {
       onAdd(inputValue, note || undefined);
@@ -88,7 +88,7 @@ export function BankAmount({
             <Banknote className="w-5 h-5 sm:w-6 sm:h-6 text-primary flex-shrink-0" />
             <div className="flex flex-col gap-1">
               <Label className="font-semibold text-primary text-sm sm:text-base">
-                Current Balance
+                {t("dashboard.currentBalance")}
               </Label>
               <span
                 className={`text-2xl sm:text-3xl font-bold text-primary transition-all duration-300 ${
@@ -102,8 +102,6 @@ export function BankAmount({
                 <PrivacyNumber
                   value={amount}
                   className="text-2xl sm:text-3xl font-bold"
-                  prefix="€ "
-                  format={(val) => val.toFixed(2)}
                 />
               </span>
             </div>
@@ -111,7 +109,7 @@ export function BankAmount({
 
           <div className="border-t pt-4">
             <Label className="text-sm font-medium mb-3 block">
-              Adjust Balance
+              {t("dashboard.adjustBalance")}
             </Label>
             <div className="flex flex-col gap-3">
               <div
@@ -122,29 +120,23 @@ export function BankAmount({
                 }`}
               >
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none z-10 select-none">
-                    €
-                  </span>
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                    {currencySymbol}
+                  </div>
                   <Input
                     type="number"
-                    inputMode="decimal"
-                    step="0.01"
-                    placeholder="Enter amount"
-                    value={inputValue === 0 ? "" : inputValue}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      const regex = /^\d*\.?\d{0,2}$/;
-                      if (value === "" || regex.test(value)) {
-                        handleInputChange(Number.parseFloat(value) || 0);
-                      }
-                    }}
-                    className="pl-8 w-full text-sm sm:text-base"
+                    value={inputValue || ""}
+                    onChange={(e) =>
+                      setInputValue(parseFloat(e.target.value) || 0)
+                    }
+                    className="pl-8 text-lg h-10"
+                    placeholder="0.00"
                   />
                 </div>
                 {noteFieldEnabled && (
                   <Input
                     type="text"
-                    placeholder="Add note (optional)"
+                    placeholder={t("dashboard.addNote")}
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
                     className="w-full text-sm sm:text-base"
@@ -162,7 +154,7 @@ export function BankAmount({
                   disabled={!inputValue || inputValue <= 0}
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  Add
+                  {t("common.add")}
                 </Button>
                 <Button
                   type="button"
@@ -173,7 +165,7 @@ export function BankAmount({
                   disabled={!inputValue || inputValue <= 0}
                 >
                   <Minus className="w-4 h-4 mr-2" />
-                  Subtract
+                  {t("dashboard.subtract")}
                 </Button>
               </div>
             </div>

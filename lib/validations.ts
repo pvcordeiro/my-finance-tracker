@@ -8,6 +8,8 @@ export const loginSchema = z.object({
 export const registerSchema = z.object({
   username: z.string().min(1, "Username is required").max(50),
   password: z.string().min(6, "Password must be at least 6 characters"),
+  language: z.string().optional(),
+  currency: z.string().optional(),
 });
 
 export const entrySchema = z.object({
