@@ -32,7 +32,6 @@ export function LanguageCurrencyDialog({
       "settings.languageAndCurrency": "Language & Currency",
       "auth.language": "Language",
       "auth.currency": "Currency",
-      "common.done": "Done",
     };
     return translations[key] || key;
   },
@@ -117,15 +116,6 @@ export function LanguageCurrencyDialog({
               ))}
             </div>
           </div>
-        </div>
-
-        <div className="flex justify-end pt-4 border-t">
-          <Button
-            onClick={() => onOpenChange(false)}
-            className="w-full sm:w-auto"
-          >
-            {t("common.done")}
-          </Button>
         </div>
       </DialogContent>
     </Dialog>
