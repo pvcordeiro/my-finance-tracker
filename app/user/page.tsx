@@ -176,7 +176,7 @@ export default function UserSettingsPage() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen finance-gradient">
+    <div className="min-h-screen finance-gradient pb-16 md:pb-0">
       <header className="bg-background/90 backdrop-blur-sm border-b border-border/50 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3 sm:py-4">
           <div className="flex items-center justify-between">
