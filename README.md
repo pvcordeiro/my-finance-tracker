@@ -21,6 +21,8 @@ https://github.com/user-attachments/assets/9d37742a-c131-46b8-b92d-5f7dd30c2cf0
 - 🎨 Modern, responsive UI (Tailwind CSS, Radix UI, shadcn/ui)
 - 🌓 Dark/Light/System theme support with persistence
 - 🎨 Customizable accent colors (Blue, Purple, Yellow, Orange, Pink, Magenta, Cyan)
+- 🌍 Multi-language support (English 🇺🇸, Portuguese 🇧🇷)
+- 💱 Multi-currency support (USD $, EUR €, BRL R$) with proper formatting
 - 👁️ Privacy mode to hide sensitive financial data
 - 📱 Mobile-optimized interface with bottom navigation
 - 🖥️ Multi-device access (desktop, mobile, tablet)
@@ -55,13 +57,15 @@ https://github.com/user-attachments/assets/9d37742a-c131-46b8-b92d-5f7dd30c2cf0
 
 ### Technical Features
 
-- � SQLite database for reliable, local data persistence
+- 💾 SQLite database for reliable, local data persistence
 - ⚡ Bun runtime for fast performance
 - 🐳 Docker support with compose configuration
 - 🚀 Server-Sent Events for real-time updates
 - 📡 REST API with comprehensive endpoints
 - 🔄 Automatic session cleanup
 - 🛡️ Rate limiting for security
+- 🌍 i18n support with client-side translations
+- 💱 Localized currency formatting (Intl.NumberFormat)
 
 # 🚀 Quick Start
 
@@ -152,9 +156,19 @@ bun run start
 ### First Time Setup
 
 1. On first run, the admin account is automatically created using credentials from `.env`
-2. Create groups for organizing finances (e.g., "Personal", "Family", "Business")
-3. Create user accounts or enable registration for users to sign up
-4. Assign users to groups as needed
+2. Select your preferred language (English or Portuguese) and currency (USD, EUR, or BRL)
+3. Create groups for organizing finances (e.g., "Personal", "Family", "Business")
+4. Create user accounts or enable registration for users to sign up
+5. Assign users to groups as needed
+
+### Language & Currency
+
+- **Language selection:** Choose between English (🇺🇸) and Portuguese (🇧🇷)
+- **Currency selection:** Choose between USD ($), EUR (€), and BRL (R$)
+- **Localization:** All financial amounts are formatted according to the selected language and currency
+- **Client-side storage:** Language and currency preferences are stored in browser localStorage
+- **Per-device settings:** Each device can have its own preferred language and currency
+- **Seamless switching:** Change language and currency at any time from the user settings panel
 
 ### Authentication
 
@@ -174,6 +188,7 @@ bun run start
 
 - **Themes:** Choose between Light, Dark, or System theme (syncs across devices)
 - **Accent colors:** Customize the UI with 7 different accent colors
+- **Language & Currency:** Select your preferred language (English or Portuguese) and currency (USD, EUR, or BRL) with proper localization
 - **Privacy mode:** Toggle to hide sensitive financial numbers
 - **Session management:** View all active sessions and revoke access from other devices
 
@@ -190,8 +205,9 @@ bun run start
 
 ### Multi-Device
 
-- Access from any browser/device on your network or the internet(if exposed)
-- All preferences and settings sync automatically
+- Access from any browser/device on your network or the internet (if exposed)
+- Theme, accent color, and privacy mode sync automatically across devices
+- Language and currency are stored per-device in browser localStorage
 - Real-time updates when data changes
 
 ## Admin Panel

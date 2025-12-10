@@ -71,46 +71,14 @@ export default function UserSettingsPage() {
   const [currentAccent, setCurrentAccent] = useState<string>("blue");
   const [switchingGroup, setSwitchingGroup] = useState(false);
 
-  const handleLanguageChange = async (newLanguage: "en" | "pt") => {
-    try {
-      const response = await fetch("/api/user/language", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ language: newLanguage }),
-      });
-
-      if (response.ok) {
-        setLanguage(newLanguage);
-        await refreshUser();
-        toast.success(t("settings.languageUpdated"));
-      } else {
-        toast.error(t("common.error"));
-      }
-    } catch (error) {
-      console.error("Failed to update language:", error);
-      toast.error(t("common.error"));
-    }
+  const handleLanguageChange = (newLanguage: "en" | "pt") => {
+    setLanguage(newLanguage);
+    toast.success(t("settings.languageUpdated"));
   };
 
-  const handleCurrencyChange = async (newCurrency: "EUR" | "USD" | "BRL") => {
-    try {
-      const response = await fetch("/api/user/currency", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ currency: newCurrency }),
-      });
-
-      if (response.ok) {
-        setCurrency(newCurrency);
-        await refreshUser();
-        toast.success(t("settings.currencyUpdated"));
-      } else {
-        toast.error(t("common.error"));
-      }
-    } catch (error) {
-      console.error("Failed to update currency:", error);
-      toast.error(t("common.error"));
-    }
+  const handleCurrencyChange = (newCurrency: "EUR" | "USD" | "BRL") => {
+    setCurrency(newCurrency);
+    toast.success(t("settings.currencyUpdated"));
   };
 
   const handleGroupSwitch = async (groupId: number) => {

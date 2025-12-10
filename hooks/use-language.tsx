@@ -43,11 +43,19 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setLanguage = (lang: Language) => {
+    if (lang !== "en" && lang !== "pt") {
+      console.warn(`Invalid language: ${lang}. Defaulting to "en".`);
+      return;
+    }
     setLanguageState(lang);
     localStorage.setItem("language", lang);
   };
 
   const setCurrency = (curr: Currency) => {
+    if (!["EUR", "USD", "BRL"].includes(curr)) {
+      console.warn(`Invalid currency: ${curr}. Defaulting to "EUR".`);
+      return;
+    }
     setCurrencyState(curr);
     localStorage.setItem("currency", curr);
   };
@@ -70,9 +78,6 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   };
 
   const formatCurrency = (amount: number) => {
-    const currencyConfig =
-      currencies.find((c) => c.code === currency) || currencies[0];
-
     return new Intl.NumberFormat(language === "pt" ? "pt-BR" : "en-US", {
       style: "currency",
       currency: currency,
