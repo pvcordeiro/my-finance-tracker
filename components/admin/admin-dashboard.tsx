@@ -455,11 +455,7 @@ export function AdminDashboard() {
         </div>
       </header>
 
-      <main
-        className={`container mx-auto p-2 sm:p-4 space-y-6 ${
-          isMobile ? "pb-20" : ""
-        }`}
-      >
+      <main className="container mx-auto p-2 sm:p-4 space-y-6 lg:h-full lg:overflow-hidden">
         <Tabs
           value={activeTab}
           onValueChange={setActiveTab}

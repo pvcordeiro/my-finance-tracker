@@ -257,7 +257,7 @@ export default function UserSettingsPage() {
           </div>
         </div>
       </header>
-      <main className="container mx-auto p-4 space-y-6">
+      <main className="container mx-auto p-4 space-y-6 lg:h-full lg:overflow-hidden">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
