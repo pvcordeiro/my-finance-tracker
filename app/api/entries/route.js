@@ -16,8 +16,6 @@ export const GET = withAuth(async (request) => {
       return NextResponse.json({ entries: [], code: "no_group" });
     }
 
-    const currentYear = new Date().getFullYear();
-
     const db = await getDatabase();
 
     const entriesWithAmounts = await new Promise((resolve, reject) => {
@@ -27,11 +25,11 @@ export const GET = withAuth(async (request) => {
           e.id, e.name, e.type, e.created_at, e.updated_at,
           ea.month, ea.amount
         FROM entries e
-        LEFT JOIN entry_amounts ea ON e.id = ea.entry_id AND ea.year = ?
+        LEFT JOIN entry_amounts ea ON e.id = ea.entry_id
         WHERE e.group_id = ?
         ORDER BY e.created_at DESC, ea.month ASC
       `,
-        [currentYear, groupId],
+        [groupId],
         (err, rows) => {
           if (err) reject(err);
           else resolve(rows);
@@ -212,9 +210,9 @@ export const POST = withAuth(async (request) => {
 
               await new Promise((resolve, reject) => {
                 db.run(
-                  `INSERT INTO entry_amounts (entry_id, month, year, amount) 
-                   VALUES (?, ?, ?, ?)`,
-                  [entryId, month, currentYear, amount],
+                  `INSERT OR REPLACE INTO entry_amounts (entry_id, month, amount, created_at, updated_at) 
+                   VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+                  [entryId, month, amount],
                   function (err) {
                     if (err) reject(err);
                     else resolve();
@@ -370,33 +368,21 @@ export const PATCH = withAuth(async (request) => {
     if (month !== undefined && amount !== undefined) {
       const numericMonth = Number(month);
       const numericAmount = Number(amount) || 0;
-      const effectiveYear = year || new Date().getFullYear();
 
-      const updateResult = await new Promise((resolve, reject) => {
+      await new Promise((resolve, reject) => {
         db.run(
-          `UPDATE entry_amounts SET amount = ?, updated_at = CURRENT_TIMESTAMP WHERE entry_id = ? AND month = ? AND year = ?`,
-          [numericAmount, id, numericMonth, effectiveYear],
+          `INSERT OR REPLACE INTO entry_amounts (entry_id, month, amount, created_at, updated_at) 
+           VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+          [id, numericMonth, numericAmount],
           function (err) {
             if (err) reject(err);
-            else resolve({ changes: this.changes });
+            else resolve();
           }
         );
       });
-      if (updateResult.changes === 0) {
-        await new Promise((resolve, reject) => {
-          db.run(
-            `INSERT INTO entry_amounts (entry_id, month, year, amount) VALUES (?, ?, ?, ?)`,
-            [id, numericMonth, effectiveYear, numericAmount],
-            function (err) {
-              if (err) reject(err);
-              else resolve();
-            }
-          );
-        });
-      }
+
       updates.month = numericMonth;
       updates.amount = numericAmount;
-      updates.year = effectiveYear;
     }
 
     notifyEntryChange(groupId, "update", {

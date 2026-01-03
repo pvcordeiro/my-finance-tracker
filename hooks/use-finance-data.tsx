@@ -426,19 +426,18 @@ export function useFinanceData() {
       return { success: false };
     }
     try {
-      const currentYear = new Date().getFullYear();
+      const now = new Date();
+      const currentMonth = now.getMonth();
 
-      const currentMonth = new Date().getMonth();
-      const actualMonth = (currentMonth + monthIndex) % 12;
+      const actualMonth = ((currentMonth + monthIndex) % 12) + 1;
 
       const res = await fetch("/api/entries", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id,
-          month: actualMonth + 1,
+          month: actualMonth,
           amount,
-          year: currentYear,
         }),
         credentials: "include",
       });
