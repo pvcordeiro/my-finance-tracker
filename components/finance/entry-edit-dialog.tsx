@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -71,6 +71,37 @@ export function EntryEditDialog({
   const [localEntry, setLocalEntry] = useState<FinanceEntry | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const descriptionInputRef = useRef<HTMLInputElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  // Keep dialog centered in the visible viewport above the iOS keyboard,
+  // and cap its height to the visible viewport so overflow-y-auto can scroll.
+  const reposition = useCallback(() => {
+    const el = dialogRef.current;
+    const vv = window.visualViewport;
+    if (!el || !vv) return;
+    const center = vv.offsetTop + vv.height / 2;
+    el.style.top = `${center}px`;
+    el.style.transform = `translateX(-50%) translateY(-50%)`;
+    el.style.maxHeight = `${vv.height * 0.92}px`;
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    const vv = window.visualViewport;
+    if (!vv) return;
+    vv.addEventListener("resize", reposition);
+    vv.addEventListener("scroll", reposition);
+    reposition();
+    return () => {
+      vv.removeEventListener("resize", reposition);
+      vv.removeEventListener("scroll", reposition);
+      if (dialogRef.current) {
+        dialogRef.current.style.top = "";
+        dialogRef.current.style.transform = "";
+        dialogRef.current.style.maxHeight = "";
+      }
+    };
+  }, [open, reposition]);
 
   useEffect(() => {
     if (entry) {
@@ -82,10 +113,6 @@ export function EntryEditDialog({
     if (open && descriptionInputRef.current) {
       setTimeout(() => {
         descriptionInputRef.current?.focus();
-        descriptionInputRef.current?.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-        });
       }, 300);
     }
   }, [open]);
@@ -108,6 +135,21 @@ export function EntryEditDialog({
     }
   }, [open, changedFields, localEntry, onCommitDescription, onCommitAmount]);
 
+  const scrollInputIntoView = useCallback((input: HTMLElement) => {
+    const container = dialogRef.current;
+    if (!container) return;
+    const inputRect = input.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+    const relativeTop = inputRect.top - containerRect.top;
+    const relativeBottom = inputRect.bottom - containerRect.top;
+    // Only scroll if the input is outside the visible area of the container
+    if (relativeTop < 80) {
+      container.scrollTop += relativeTop - 80;
+    } else if (relativeBottom > containerRect.height - 20) {
+      container.scrollTop += relativeBottom - containerRect.height + 20;
+    }
+  }, []);
+
   const markSaved = (fieldKey: string) => {
     setSavedFields((prev) => new Set(prev).add(fieldKey));
     setTimeout(() => {
@@ -124,9 +166,8 @@ export function EntryEditDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-2xl max-h-[85dvh] overflow-y-auto flex flex-col">
-          <DialogHeader className="relative">
-            <Button
+        <DialogContent ref={dialogRef} className="max-w-2xl max-h-[85dvh] overflow-y-auto flex flex-col">
+          <DialogHeader className="relative">            <Button
               variant="ghost"
               size="icon"
               onClick={() => setDeleteDialogOpen(true)}
@@ -142,7 +183,7 @@ export function EntryEditDialog({
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-6 mt-4 px-1 pb-1 flex-1 overflow-y-auto">
+          <div className="space-y-6 mt-4 px-1 pb-1">
             {/* Description */}
             <div className="space-y-2">
               <label className="text-sm font-medium">
@@ -176,12 +217,7 @@ export function EntryEditDialog({
                   }
                 }}
                 onFocus={(e) => {
-                  setTimeout(() => {
-                    e.target.scrollIntoView({
-                      behavior: "smooth",
-                      block: "center",
-                    });
-                  }, 300);
+                  scrollInputIntoView(e.target as HTMLElement);
                 }}
                 className={cn(
                   "transition-all duration-200",
@@ -273,12 +309,7 @@ export function EntryEditDialog({
                           }
                         }}
                         onFocus={(e) => {
-                          setTimeout(() => {
-                            e.target.scrollIntoView({
-                              behavior: "smooth",
-                              block: "center",
-                            });
-                          }, 300);
+                          scrollInputIntoView(e.target as HTMLElement);
                         }}
                         className={cn(
                           "pl-8 transition-all duration-200",

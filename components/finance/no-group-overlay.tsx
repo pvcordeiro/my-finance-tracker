@@ -1,12 +1,14 @@
 "use client";
 import { AlertTriangle } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { useLanguage } from "@/hooks/use-language";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
 export function NoGroupOverlay({ className }: { className?: string }) {
   const { user, isLoading } = useAuth();
+  const { t } = useLanguage();
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
 
@@ -47,18 +49,15 @@ export function NoGroupOverlay({ className }: { className?: string }) {
           <div className="space-y-3">
             <div>
               <h2 className="text-lg font-semibold mb-1">
-                No Group Membership
+                {t("settings.noGroupTitle")}
               </h2>
               <p className="text-sm leading-relaxed">
-                You currently are not a member of any group. Until an
-                administrator adds you to a group, you cannot save changes.
+                {t("settings.noGroupDescription")}
               </p>
             </div>
             <ul className="list-disc list-inside text-sm space-y-1">
-              <li>
-                Ask an admin to add you to an existing group or create a new one
-              </li>
-              <li>Refresh after being added to dismiss this notice</li>
+              <li>{t("settings.noGroupAskAdmin")}</li>
+              <li>{t("settings.noGroupRefresh")}</li>
             </ul>
           </div>
         </div>

@@ -212,15 +212,15 @@ function HomePageContent() {
 
     eventSource.onmessage = (event) => {
       try {
-        const data = JSON.parse(event.data);
-        const serverAmount = data.amount;
-        const operationType = data.operationType;
+        const msg = JSON.parse(event.data);
+        const serverAmount = msg.amount;
+        const operationType = msg.operationType;
 
         if (
           serverAmount !== undefined &&
-          serverAmount !== data.bankAmount &&
           serverAmount !== lastKnownBankAmountRef.current
         ) {
+          const prev = lastKnownBankAmountRef.current;
           lastKnownBankAmountRef.current = serverAmount;
 
           updateBankAmount(serverAmount);
@@ -229,7 +229,7 @@ function HomePageContent() {
           if (operationType === "add" || operationType === "subtract") {
             flashType = operationType;
           } else {
-            flashType = serverAmount > data.bankAmount ? "add" : "subtract";
+            flashType = serverAmount > prev ? "add" : "subtract";
           }
 
           flashCounterRef.current += 1;
@@ -262,7 +262,7 @@ function HomePageContent() {
         eventSourceRef.current = null;
       }
     };
-  }, [user, data.bankAmount, updateBankAmount]);
+  }, [user, updateBankAmount]);
 
   const handleAddToBankAmount = async (delta: number, note?: string) => {
     await addToBankAmount(delta, note);
@@ -296,20 +296,6 @@ function HomePageContent() {
     };
 
     setIncomeOpen(true);
-
-    setTimeout(() => {
-      if (incomeSectionRef.current) {
-        const offset = 120;
-        const elementTop =
-          incomeSectionRef.current.getBoundingClientRect().top +
-          window.pageYOffset;
-        window.scrollTo({
-          top: elementTop - offset,
-          behavior: "smooth",
-        });
-      }
-    }, 100);
-
     addEntry("incomes");
   };
 
@@ -321,20 +307,6 @@ function HomePageContent() {
     };
 
     setExpenseOpen(true);
-
-    setTimeout(() => {
-      if (expenseSectionRef.current) {
-        const offset = 120;
-        const elementTop =
-          expenseSectionRef.current.getBoundingClientRect().top +
-          window.pageYOffset;
-        window.scrollTo({
-          top: elementTop - offset,
-          behavior: "smooth",
-        });
-      }
-    }, 100);
-
     addEntry("expenses");
   };
 

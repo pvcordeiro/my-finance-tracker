@@ -57,19 +57,6 @@ export function OfflineBanner() {
         .offline-banner-inner {
           overflow: hidden;
         }
-        .offline-reconnected-row {
-          display: grid;
-          grid-template-rows: 1fr;
-          transition: grid-template-rows 300ms cubic-bezier(0.16, 1, 0.3, 1) 2000ms;
-        }
-        .offline-reconnected-row[data-gone="true"] {
-          grid-template-rows: 0fr;
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .offline-reconnected-row {
-            transition: none;
-          }
-        }
       `}</style>
 
       {/* Offline banner — fixed so it stays visible while scrolling */}
@@ -102,32 +89,3 @@ export function OfflineBanner() {
   );
 }
 
-function ReconnectedBanner() {
-  const [gone, setGone] = useState(false);
-
-  useEffect(() => {
-    const t = setTimeout(() => setGone(true), 2500);
-    return () => clearTimeout(t);
-  }, []);
-
-  return (
-    <div
-      className="offline-reconnected-row fixed top-0 left-0 right-0 z-[100]"
-      data-gone={gone ? "true" : "false"}
-      role="status"
-      aria-live="polite"
-    >
-      <div className="offline-banner-inner">
-        <div
-          style={{
-            backgroundColor: "oklch(0.75 0.12 145)",
-            color: "oklch(0.25 0.06 145)",
-          }}
-          className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium"
-        >
-          <span>Back online — data refreshing</span>
-        </div>
-      </div>
-    </div>
-  );
-}

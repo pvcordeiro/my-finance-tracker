@@ -99,8 +99,6 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
     },
     ref
   ) {
-    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-    const [entryToDelete, setEntryToDelete] = useState<string | null>(null);
     const [resolveDialogOpen, setResolveDialogOpen] = useState(false);
     const [entryToResolve, setEntryToResolve] = useState<{
       entry: FinanceEntry;
@@ -112,6 +110,7 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
     const [flashingEntries, setFlashingEntries] = useState<Set<string>>(
       new Set()
     );
+    const entryCardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
     const [editDialogOpen, setEditDialogOpen] = useState(false);
     const [selectedEntry, setSelectedEntry] = useState<FinanceEntry | null>(
       null
@@ -168,14 +167,32 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
 
     useEffect(() => {
       if (flashEntryId && flashToken) {
-        setFlashingEntries((prev) => new Set(prev).add(flashEntryId));
-        setTimeout(() => {
-          setFlashingEntries((prev) => {
-            const ns = new Set(prev);
-            ns.delete(flashEntryId);
-            return ns;
-          });
-        }, 650);
+        // Poll for the card to appear in the DOM (it may not exist yet if the
+        // server round-trip hasn't completed). Scroll first, flash after scroll.
+        const startTime = Date.now();
+        const tryScroll = () => {
+          const card = entryCardRefs.current.get(flashEntryId);
+          if (card) {
+            const rect = card.getBoundingClientRect();
+            const absoluteTop = rect.top + window.scrollY;
+            const offset = 80;
+            window.scrollTo({ top: absoluteTop - offset, behavior: "smooth" });
+            // Flash after smooth scroll has had time to finish (~400ms)
+            setTimeout(() => {
+              setFlashingEntries((prev) => new Set(prev).add(flashEntryId));
+              setTimeout(() => {
+                setFlashingEntries((prev) => {
+                  const ns = new Set(prev);
+                  ns.delete(flashEntryId);
+                  return ns;
+                });
+              }, 650);
+            }, 400);
+          } else if (Date.now() - startTime < 3000) {
+            setTimeout(tryScroll, 100);
+          }
+        };
+        setTimeout(tryScroll, 300);
       }
     }, [flashEntryId, flashToken, isOpen]);
 
@@ -217,7 +234,7 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
             if (isMobile) {
               const elementTop =
                 sectionRef.current.getBoundingClientRect().top +
-                window.pageYOffset;
+                window.scrollY;
               window.scrollTo({
                 top: elementTop - 80,
                 behavior: "smooth",
@@ -338,7 +355,7 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
               </CardTitle>
             </CardHeader>
           </CollapsibleTrigger>
-          <CollapsibleContent className="space-y-4 data-[state=open]:animate-in data-[state=open]:slide-in-from-top-5 data-[state=open]:fade-in-5 data-[state=closed]:animate-out data-[state=closed]:slide-out-to-top-5 data-[state=closed]:fade-out-5">
+          <CollapsibleContent className="space-y-4 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 overflow-hidden transition-all data-[state=closed]:duration-200 data-[state=open]:duration-300">
             <CardContent className="space-y-4">
               {/* Search Input */}
               {entries.length > 0 && (
@@ -358,6 +375,10 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
               {filteredEntries.map((entry) => (
                 <Card
                   key={entry.id}
+                  ref={(el) => {
+                    if (el) entryCardRefs.current.set(entry.id, el);
+                    else entryCardRefs.current.delete(entry.id);
+                  }}
                   className={cn(
                     "border-muted transition-all cursor-pointer hover:border-primary/50",
                     flashingEntries.has(entry.id) &&
@@ -441,37 +462,6 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
             </CardContent>
           </CollapsibleContent>
         </Collapsible>
-        {/* Delete Entry Confirmation Dialog */}
-        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>{t("entries.deleteEntry")}</AlertDialogTitle>
-              <AlertDialogDescription>
-                {t("entries.deleteConfirm")}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={async () => {
-                  if (entryToDelete) {
-                    try {
-                      await onRemoveEntry(entryToDelete);
-
-                      setEntryToDelete(null);
-                    } catch (error) {
-                      console.error("Failed to delete entry:", error);
-                    }
-                  }
-                  setDeleteDialogOpen(false);
-                }}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              >
-                {t("entries.deleteEntry")}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
 
         {/* Resolve Value Confirmation Dialog */}
         <AlertDialog
