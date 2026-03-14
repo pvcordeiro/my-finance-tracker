@@ -22,7 +22,7 @@ function SummaryPageContent() {
   const { t } = useLanguage();
 
   return (
-    <div className="min-h-screen finance-gradient">
+    <div className="min-h-dvh finance-gradient">
       <DashboardHeader />
       <main className="container mx-auto p-4 space-y-6">
         <div className="flex items-center justify-between gap-2">

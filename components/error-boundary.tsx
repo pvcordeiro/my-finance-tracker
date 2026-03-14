@@ -47,7 +47,7 @@ export class ErrorBoundary extends Component<
 function DefaultErrorFallback({ error }: { error: Error }) {
   return (
     <div
-      className="min-h-screen flex items-center justify-center p-4"
+      className="min-h-dvh flex items-center justify-center p-4"
       role="alert"
       aria-live="assertive"
     >

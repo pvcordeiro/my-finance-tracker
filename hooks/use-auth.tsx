@@ -56,18 +56,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (response.ok) {
             const data = await response.json();
             setUser(data.user);
+            // Persist user identity for offline fallback
+            try {
+              localStorage.setItem(
+                "finance-tracker-user",
+                JSON.stringify(data.user)
+              );
+            } catch {}
           } else {
             setUser(null);
+            try {
+              localStorage.removeItem("finance-tracker-user");
+            } catch {}
           }
         }
       } catch (error) {
         clearTimeout(timeoutId);
-        if (error instanceof Error && error.name === "AbortError") {
-          console.warn("Session check timed out - API may still be starting");
+        // If we're offline, use the cached user identity so the app still renders
+        if (!navigator.onLine) {
+          try {
+            const cached = localStorage.getItem("finance-tracker-user");
+            if (cached && isMounted) {
+              setUser(JSON.parse(cached));
+            } else if (isMounted) {
+              setUser(null);
+            }
+          } catch {
+            if (isMounted) setUser(null);
+          }
         } else {
-          console.error("Session check error:", error);
+          if (error instanceof Error && error.name === "AbortError") {
+            console.warn("Session check timed out - API may still be starting");
+          } else {
+            console.error("Session check error:", error);
+          }
+          if (isMounted) setUser(null);
         }
-        if (isMounted) setUser(null);
       } finally {
         if (isMounted) setIsLoading(false);
       }
@@ -99,6 +123,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (response.ok) {
         const { user: userData } = await response.json();
         setUser(userData);
+        try {
+          localStorage.setItem(
+            "finance-tracker-user",
+            JSON.stringify(userData)
+          );
+        } catch {}
 
         window.dispatchEvent(new Event("userLoggedIn"));
 
@@ -142,6 +172,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     try {
       setUser(null);
+      try {
+        localStorage.removeItem("finance-tracker-user");
+      } catch {}
       await fetch("/api/auth/logout", {
         method: "POST",
         credentials: "include",
@@ -151,6 +184,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error("Logout error:", error);
       setUser(null);
+      try {
+        localStorage.removeItem("finance-tracker-user");
+      } catch {}
 
       window.dispatchEvent(new Event("userLoggedOut"));
     }

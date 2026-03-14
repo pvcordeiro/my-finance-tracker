@@ -114,7 +114,7 @@ export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
   };
 
   return (
-    <div className="min-h-screen finance-gradient flex items-center justify-center p-4">
+    <div className="min-h-dvh finance-gradient flex items-center justify-center p-4">
       <div className="absolute top-4 right-4">
         <Button
           variant="outline"

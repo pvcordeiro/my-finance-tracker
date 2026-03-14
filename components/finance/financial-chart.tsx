@@ -154,9 +154,9 @@ export function FinancialChart({ data }: FinancialChartProps) {
                   <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
                   <XAxis dataKey="month" className="text-xs" />
                   <YAxis className="text-xs" />
-                  <Tooltip
-                    formatter={(value: number, name: string) => [
-                      `${currencySymbol}${value.toFixed(2)}`,
+                   <Tooltip
+                    formatter={(value, name) => [
+                      `${currencySymbol}${Number(value).toFixed(2)}`,
                       name === "income"
                         ? t("dashboard.income")
                         : t("dashboard.expenses"),
@@ -206,9 +206,9 @@ export function FinancialChart({ data }: FinancialChartProps) {
                   <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
                   <XAxis dataKey="month" className="text-xs" />
                   <YAxis className="text-xs" />
-                  <Tooltip
-                    formatter={(value: number) => [
-                      `${currencySymbol}${value.toFixed(2)}`,
+                   <Tooltip
+                    formatter={(value) => [
+                      `${currencySymbol}${Number(value).toFixed(2)}`,
                       t("dashboard.balance"),
                     ]}
                     labelFormatter={(label) =>

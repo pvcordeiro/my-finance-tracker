@@ -14,7 +14,7 @@ function DetailsPageContent() {
   const { t } = useLanguage();
 
   return (
-    <div className="min-h-screen finance-gradient">
+    <div className="min-h-dvh finance-gradient">
       <Suspense fallback={<div>{t("common.loading")}</div>}>
         <DashboardHeader />
       </Suspense>

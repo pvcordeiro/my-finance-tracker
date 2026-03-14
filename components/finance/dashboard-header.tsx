@@ -26,6 +26,8 @@ import { toast } from "sonner";
 import { useLanguage } from "@/hooks/use-language";
 import { LanguageCurrencySelector } from "@/components/ui/language-currency-selector";
 import { LanguageCurrencyDialog } from "@/components/ui/language-currency-dialog";
+import { useOnline } from "@/hooks/use-online";
+import { OFFLINE_BANNER_HEIGHT } from "@/components/pwa/offline-banner";
 
 export function DashboardHeader() {
   const { user, logout } = useAuth();
@@ -36,6 +38,7 @@ export function DashboardHeader() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const isMobile = useIsMobile();
+  const isOnline = useOnline();
   const [languageDialogOpen, setLanguageDialogOpen] = useState(false);
 
   const handleLogout = async () => {
@@ -44,6 +47,10 @@ export function DashboardHeader() {
   };
 
   const handlePrivacyToggle = async () => {
+    if (!isOnline) {
+      toast.error(t("common.offlineError"));
+      return;
+    }
     try {
       const newPrivacyMode = !privacyMode;
       const response = await fetch("/api/user/privacy-mode", {
@@ -80,7 +87,13 @@ export function DashboardHeader() {
   ];
 
   return (
-    <header className="bg-background/90 backdrop-blur-sm border-b border-border/50 sticky top-0 z-50">
+    <header
+      className="bg-background/90 backdrop-blur-sm border-b border-border/50 sticky z-50"
+      style={{
+        top: isOnline ? 0 : OFFLINE_BANNER_HEIGHT,
+        marginTop: isOnline ? 0 : OFFLINE_BANNER_HEIGHT,
+      }}
+    >
       <div className="container mx-auto px-4 py-3 sm:py-4 sm:pb-2">
         <div className="flex items-center justify-between">
           <div
@@ -143,6 +156,7 @@ export function DashboardHeader() {
                   <DropdownMenuItem
                     onClick={() => router.push("/admin")}
                     className="cursor-pointer"
+                    disabled={!isOnline}
                   >
                     <Shield className="w-4 h-4 mr-2" />
                     {t("admin.title")}
@@ -151,6 +165,7 @@ export function DashboardHeader() {
                 <DropdownMenuItem
                   onClick={() => router.push("/user")}
                   className="cursor-pointer"
+                  disabled={!isOnline}
                 >
                   <User className="w-4 h-4 mr-2" />
                   {t("settings.accountSettings")}
@@ -158,6 +173,7 @@ export function DashboardHeader() {
                 <DropdownMenuItem
                   onClick={() => router.push("/manage?tab=management")}
                   className="cursor-pointer"
+                  disabled={!isOnline}
                 >
                   <Save className="w-4 h-4 mr-2" />
                   {t("manage.backup")}
@@ -198,6 +214,7 @@ export function DashboardHeader() {
                   size="sm"
                   onClick={() => router.push(href)}
                   className="flex items-center gap-2"
+                  disabled={!isOnline && href === "/manage"}
                 >
                   <Icon className="w-4 h-4" />
                   {label}

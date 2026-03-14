@@ -359,7 +359,7 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
                 <Card
                   key={entry.id}
                   className={cn(
-                    "border-muted cursor-pointer hover:border-primary/50 transition-all",
+                    "border-muted transition-all cursor-pointer hover:border-primary/50",
                     flashingEntries.has(entry.id) &&
                       (type === "income" ? "flash-success" : "flash-error")
                   )}

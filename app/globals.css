@@ -110,6 +110,7 @@
   
   body {
     @apply bg-background text-foreground;
+    overflow-x: hidden;
   }
   
   /* Input fields - lighter/darker for contrast in layered design */

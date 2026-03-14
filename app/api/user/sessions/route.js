@@ -43,9 +43,9 @@ export async function GET(request) {
             return;
           }
 
-          const sessions = rows.map((row) => ({
+          const sessions = rows.map(({ token: _token, ...row }) => ({
             ...row,
-            is_current: row.token === sessionToken,
+            is_current: _token === sessionToken,
           }));
 
           resolve(

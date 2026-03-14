@@ -47,7 +47,7 @@ export function FullPageLoader({ message }: { message?: string }) {
   const displayMessage = message || t("common.loading");
 
   return (
-    <div className="flex items-center justify-center p-4 min-h-screen">
+    <div className="flex items-center justify-center p-4 min-h-dvh">
       <LoadingState message={displayMessage} />
     </div>
   );

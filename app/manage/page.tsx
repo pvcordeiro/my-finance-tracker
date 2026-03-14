@@ -25,9 +25,12 @@ import {
 } from "@/components/ui/dialog";
 import type { FinanceData, CommitResult } from "@/hooks/use-finance-data";
 import { useLanguage } from "@/hooks/use-language";
+import { useOnline } from "@/hooks/use-online";
+import { OfflineBlockedPage } from "@/components/pwa/offline-blocked-page";
 
 function HomePageContent() {
   const { currencySymbol, t } = useLanguage();
+  const isOnline = useOnline();
   const { user } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -263,6 +266,8 @@ function HomePageContent() {
 
   const handleAddToBankAmount = async (delta: number, note?: string) => {
     await addToBankAmount(delta, note);
+    // Don't flash when offline — the mutation was blocked by the hook guard
+    if (!isOnline) return;
     flashCounterRef.current += 1;
     setLastSaved({
       kind: "bank",
@@ -273,6 +278,8 @@ function HomePageContent() {
 
   const handleSubtractFromBankAmount = async (delta: number, note?: string) => {
     await subtractFromBankAmount(delta, note);
+    // Don't flash when offline — the mutation was blocked by the hook guard
+    if (!isOnline) return;
     flashCounterRef.current += 1;
     setLastSaved({
       kind: "bank",
@@ -370,8 +377,17 @@ function HomePageContent() {
 
   if (!user) return null;
 
+  if (!isOnline) {
+    return (
+      <div className="min-h-dvh finance-gradient">
+        <DashboardHeader />
+        <OfflineBlockedPage />
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen finance-gradient lg:h-screen lg:overflow-hidden">
+    <div className="min-h-dvh finance-gradient lg:h-screen lg:overflow-hidden">
       <DashboardHeader />
       <main className="container mx-auto p-4 pt-0 space-y-6 lg:h-full lg:overflow-hidden">
         <Tabs
@@ -406,21 +422,23 @@ function HomePageContent() {
                 {/* Add Entry Buttons */}
                 <div className="space-y-3 pt-3 border-t lg:border-t-0 lg:pt-0 lg:space-y-0">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <Button
+                     <Button
                       onClick={() => {
                         setIncomeGuidedDialogOpen(true);
                       }}
                       variant="outline"
+                      disabled={!isOnline}
                       className="w-full transition-all duration-200 active:scale-[0.98] touch-manipulation py-4 sm:py-3 border-finance-positive/30 hover:bg-card"
                     >
                       <Plus className="w-4 h-4 mr-2" />
                       {t("entries.addIncome")}
                     </Button>
-                    <Button
+                     <Button
                       onClick={() => {
                         setExpenseGuidedDialogOpen(true);
                       }}
                       variant="outline"
+                      disabled={!isOnline}
                       className="w-full transition-all duration-200 active:scale-[0.98] touch-manipulation py-4 sm:py-3 border-finance-negative/30 hover:bg-card"
                     >
                       <Plus className="w-4 h-4 mr-2" />

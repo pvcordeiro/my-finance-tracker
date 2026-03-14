@@ -56,6 +56,9 @@ import { useTheme } from "next-themes";
 import { SessionsList } from "@/components/user/sessions-list";
 import { toast } from "sonner";
 import { useLanguage } from "@/hooks/use-language";
+import { useOnline } from "@/hooks/use-online";
+import { OfflineBlockedPage } from "@/components/pwa/offline-blocked-page";
+import { MinimalPageHeader } from "@/components/pwa/minimal-page-header";
 
 export default function UserSettingsPage() {
   const { user, isLoading, logout, refreshUser } = useAuth();
@@ -63,6 +66,7 @@ export default function UserSettingsPage() {
   const router = useRouter();
   const isMobile = useIsMobile();
   const { theme } = useTheme();
+  const isOnline = useOnline();
   const [themeOpen, setThemeOpen] = useState(false);
   const [accentOpen, setAccentOpen] = useState(false);
   const [usernameOpen, setUsernameOpen] = useState(false);
@@ -82,6 +86,10 @@ export default function UserSettingsPage() {
   };
 
   const handleGroupSwitch = async (groupId: number) => {
+    if (!isOnline) {
+      toast.error(t("common.offlineError"));
+      return;
+    }
     setSwitchingGroup(true);
     try {
       const response = await fetch("/api/switch-group", {
@@ -175,9 +183,21 @@ export default function UserSettingsPage() {
   if (isLoading) return <FullPageLoader />;
   if (!user) return null;
 
+  if (!isOnline) {
+    return (
+      <div className="min-h-dvh finance-gradient">
+        <MinimalPageHeader title={t("settings.accountSettings")} icon={<User className="w-4 h-4 sm:w-5 sm:h-5 text-primary-foreground" />} />
+        <OfflineBlockedPage />
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen finance-gradient">
-      <header className="bg-background/90 backdrop-blur-sm border-b border-border/50 sticky top-0 z-50">
+    <div className="min-h-dvh finance-gradient">
+      <header
+        className="bg-background/90 backdrop-blur-sm border-b border-border/50 sticky z-50"
+        style={{ top: 0, marginTop: 0 }}
+      >
         <div className="container mx-auto px-4 py-3 sm:py-4">
           <div className="flex items-center justify-between">
             <div

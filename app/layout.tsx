@@ -11,6 +11,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { Suspense } from "react";
 import { NoGroupOverlay } from "@/components/finance/no-group-overlay";
 import { PWAInstallPrompt } from "@/components/pwa/pwa-install-prompt";
+import { OfflineBanner } from "@/components/pwa/offline-banner";
 import { LanguageProvider } from "@/hooks/use-language";
 
 const dmSans = DM_Sans({
@@ -75,6 +76,7 @@ html {
               <LanguageProvider>
                 <PrivacyProvider>
                   <PWAInstallPrompt />
+                  <OfflineBanner />
                   {children}
                   <NoGroupOverlay />
                   <Suspense fallback={null}>
