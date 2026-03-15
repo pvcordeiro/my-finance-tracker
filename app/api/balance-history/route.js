@@ -14,42 +14,29 @@ export const GET = withAuth(async (request) => {
       return NextResponse.json({ history: [], enabled: false });
     }
 
-    const db = await getDatabase();
+    const db = getDatabase();
 
-    const settingRow = await new Promise((resolve, reject) => {
-      db.get(
-        "SELECT value FROM settings WHERE key = 'enable_balance_history'",
-        (err, row) => {
-          if (err) reject(err);
-          else resolve(row);
-        }
-      );
-    });
+    const settingRow = db.prepare(
+      "SELECT value FROM settings WHERE key = 'enable_balance_history'"
+    ).get();
 
     const displayEnabled = settingRow?.value === "true";
 
-    const history = await new Promise((resolve, reject) => {
-      db.all(
-        `SELECT 
-          bh.id,
-          bh.old_amount,
-          bh.new_amount,
-          bh.delta,
-          bh.note,
-          bh.created_at,
-          u.username
-        FROM balance_history bh
-        LEFT JOIN users u ON bh.user_id = u.id
-        WHERE bh.group_id = ?
-        ORDER BY bh.created_at DESC
-        LIMIT 50`,
-        [groupId],
-        (err, rows) => {
-          if (err) reject(err);
-          else resolve(rows || []);
-        }
-      );
-    });
+    const history = db.prepare(`
+      SELECT 
+        bh.id,
+        bh.old_amount,
+        bh.new_amount,
+        bh.delta,
+        bh.note,
+        bh.created_at,
+        u.username
+      FROM balance_history bh
+      LEFT JOIN users u ON bh.user_id = u.id
+      WHERE bh.group_id = ?
+      ORDER BY bh.created_at DESC
+      LIMIT 50
+    `).all(groupId) ?? [];
 
     return NextResponse.json({ history, enabled: displayEnabled });
   } catch (error) {

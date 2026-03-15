@@ -43,7 +43,7 @@ export const POST = withAuth(async (request) => {
       );
     }
 
-    await switchGroup(sessionToken, numericGroupId);
+    switchGroup(sessionToken, numericGroupId);
 
     return NextResponse.json({ success: true });
   } catch (error) {

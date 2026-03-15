@@ -5,3 +5,9 @@ bun.lockb
 data
 .env
 */.DS_Store
+
+# Serwist generated files
+public/sw*
+public/swe-worker*
+public/workbox*
+public/fallback*

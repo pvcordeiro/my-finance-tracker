@@ -8,30 +8,21 @@ import {
 export async function GET(request) {
   try {
     const sessionToken = getSessionFromRequest(request);
-    const userSession = await validateSession(sessionToken);
+    const userSession = validateSession(sessionToken);
 
     if (!userSession) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const db = await getDatabase();
-    const user = await new Promise((resolve, reject) => {
-      db.get(
-        "SELECT privacy_mode FROM users WHERE id = ?",
-        [userSession.id],
-        (err, row) => {
-          if (err) reject(err);
-          else resolve(row);
-        }
-      );
-    });
+    const db = getDatabase();
+    const user = db.prepare(
+      "SELECT privacy_mode FROM users WHERE id = ?"
+    ).get(userSession.id);
 
     const privacyModeValue =
       user?.privacy_mode === 1 || user?.privacy_mode === true;
 
-    return NextResponse.json({
-      privacyMode: privacyModeValue,
-    });
+    return NextResponse.json({ privacyMode: privacyModeValue });
   } catch (error) {
     console.error("Get privacy mode error:", error);
     return NextResponse.json(
@@ -44,7 +35,7 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const sessionToken = getSessionFromRequest(request);
-    const userSession = await validateSession(sessionToken);
+    const userSession = validateSession(sessionToken);
 
     if (!userSession) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -60,22 +51,12 @@ export async function POST(request) {
       );
     }
 
-    const db = await getDatabase();
-    await new Promise((resolve, reject) => {
-      db.run(
-        "UPDATE users SET privacy_mode = ? WHERE id = ?",
-        [privacyMode ? 1 : 0, userSession.id],
-        (err) => {
-          if (err) reject(err);
-          else resolve();
-        }
-      );
-    });
+    const db = getDatabase();
+    db.prepare(
+      "UPDATE users SET privacy_mode = ? WHERE id = ?"
+    ).run(privacyMode ? 1 : 0, userSession.id);
 
-    return NextResponse.json({
-      success: true,
-      privacyMode,
-    });
+    return NextResponse.json({ success: true, privacyMode });
   } catch (error) {
     console.error("Update privacy mode error:", error);
     return NextResponse.json(

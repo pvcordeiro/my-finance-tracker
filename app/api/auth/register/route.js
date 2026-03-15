@@ -12,17 +12,10 @@ import {
 
 export async function POST(request) {
   try {
-    const db = await getDatabase();
-    const registrationSetting = await new Promise((resolve, reject) => {
-      db.get(
-        "SELECT value FROM settings WHERE key = 'allow_registration'",
-        [],
-        (err, row) => {
-          if (err) reject(err);
-          else resolve(row);
-        }
-      );
-    });
+    const db = getDatabase();
+    const registrationSetting = db.prepare(
+      "SELECT value FROM settings WHERE key = 'allow_registration'"
+    ).get();
 
     if (!registrationSetting || registrationSetting.value !== "true") {
       return NextResponse.json(
@@ -61,16 +54,9 @@ export async function POST(request) {
       currency = "EUR",
     } = validation.data;
 
-    const existingUser = await new Promise((resolve, reject) => {
-      db.get(
-        "SELECT id FROM users WHERE username = ?",
-        [username],
-        (err, row) => {
-          if (err) reject(err);
-          else resolve(row);
-        }
-      );
-    });
+    const existingUser = db.prepare(
+      "SELECT id FROM users WHERE username = ?"
+    ).get(username);
     if (existingUser) {
       return NextResponse.json(
         { error: "Invalid username or password" },
@@ -80,57 +66,31 @@ export async function POST(request) {
 
     const hashedPassword = hashPassword(password);
 
-    const userId = await new Promise((resolve, reject) => {
-      db.run(
-        "INSERT INTO users (username, password_hash, language, currency) VALUES (?, ?, ?, ?)",
-        [username, hashedPassword, language, currency],
-        function (err) {
-          if (err) reject(err);
-          else resolve(this.lastID);
-        }
-      );
-    });
+    const userResult = db.prepare(
+      "INSERT INTO users (username, password_hash, language, currency) VALUES (?, ?, ?, ?)"
+    ).run(username, hashedPassword, language, currency);
+    const userId = userResult.lastInsertRowid;
 
     const groupName = `${username}'s group`;
-    const groupId = await new Promise((resolve, reject) => {
-      db.run(
-        "INSERT INTO groups (name, created_by) VALUES (?, ?)",
-        [groupName, userId],
-        function (err) {
-          if (err) reject(err);
-          else resolve(this.lastID);
-        }
-      );
-    });
+    const groupResult = db.prepare(
+      "INSERT INTO groups (name, created_by) VALUES (?, ?)"
+    ).run(groupName, userId);
+    const groupId = groupResult.lastInsertRowid;
 
-    await new Promise((resolve, reject) => {
-      db.run(
-        "INSERT INTO user_groups (user_id, group_id) VALUES (?, ?)",
-        [userId, groupId],
-        function (err) {
-          if (err) reject(err);
-          else resolve();
-        }
-      );
-    });
+    db.prepare(
+      "INSERT INTO user_groups (user_id, group_id) VALUES (?, ?)"
+    ).run(userId, groupId);
 
     const deviceInfo = getDeviceInfo(request);
-    const sessionToken = await createSession(userId, deviceInfo);
+    const sessionToken = createSession(userId, deviceInfo);
 
-    const groups = await new Promise((resolve, reject) => {
-      db.all(
-        `SELECT ug.group_id, g.name
-         FROM user_groups ug
-         JOIN groups g ON ug.group_id = g.id
-         WHERE ug.user_id = ?
-         ORDER BY ug.joined_at ASC`,
-        [userId],
-        (err, rows) => {
-          if (err) reject(err);
-          else resolve(rows || []);
-        }
-      );
-    });
+    const groups = db.prepare(
+      `SELECT ug.group_id, g.name
+       FROM user_groups ug
+       JOIN groups g ON ug.group_id = g.id
+       WHERE ug.user_id = ?
+       ORDER BY ug.joined_at ASC`
+    ).all(userId) ?? [];
 
     const current_group_id = groups.length > 0 ? groups[0].group_id : null;
 

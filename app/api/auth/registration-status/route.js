@@ -3,17 +3,10 @@ import { getDatabase } from "../../../../lib/database.js";
 
 export async function GET() {
   try {
-    const db = await getDatabase();
-    const registrationSetting = await new Promise((resolve, reject) => {
-      db.get(
-        "SELECT value FROM settings WHERE key = 'allow_registration'",
-        [],
-        (err, row) => {
-          if (err) reject(err);
-          else resolve(row);
-        }
-      );
-    });
+    const db = getDatabase();
+    const registrationSetting = db.prepare(
+      "SELECT value FROM settings WHERE key = 'allow_registration'"
+    ).get();
 
     const allowRegistration = registrationSetting?.value === "true";
 

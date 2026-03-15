@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Download, X, Smartphone } from "lucide-react";
+import { useLanguage } from "@/hooks/use-language";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -11,6 +12,7 @@ interface BeforeInstallPromptEvent extends Event {
 const DISMISSED_KEY = "finance-tracker-pwa-install-dismissed";
 
 export function PWAInstallPrompt() {
+  const { t } = useLanguage();
   const [deferredPrompt, setDeferredPrompt] =
     useState<BeforeInstallPromptEvent | null>(null);
   const [visible, setVisible] = useState(false);
@@ -28,6 +30,8 @@ export function PWAInstallPrompt() {
 
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
+      // Re-check in case it fires again after dismissal
+      if (localStorage.getItem(DISMISSED_KEY)) return;
       setDeferredPrompt(e as BeforeInstallPromptEvent);
       // Small delay so the page has settled before showing the prompt
       setTimeout(() => {
@@ -66,22 +70,22 @@ export function PWAInstallPrompt() {
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-40 bg-black/20 backdrop-blur-[2px] transition-opacity duration-300"
+        className="fixed inset-0 z-[60] bg-black/20 backdrop-blur-[2px] transition-opacity duration-300"
         style={{ opacity: animating ? 1 : 0 }}
         onClick={dismiss}
         aria-hidden="true"
       />
 
-      {/* Bottom sheet */}
+      {/* Bottom sheet — z-[70] puts it above the bottom nav (z-50) */}
       <div
-        className="fixed bottom-0 left-0 right-0 z-50 transition-transform duration-300"
+        className="fixed bottom-0 left-0 right-0 z-[70] transition-transform duration-300"
         style={{
           transform: animating ? "translateY(0)" : "translateY(110%)",
           transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
         }}
         role="dialog"
         aria-modal="true"
-        aria-label="Install Finance Tracker"
+        aria-label={t("pwa.title")}
       >
         {/* Safe area padding for iOS */}
         <div className="bg-card border-t border-border rounded-t-2xl shadow-2xl mx-0 pb-safe">
@@ -100,17 +104,17 @@ export function PWAInstallPrompt() {
                 </div>
                 <div>
                   <p className="font-semibold text-foreground leading-tight">
-                    Finance Tracker
+                    {t("pwa.title")}
                   </p>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Add to Home Screen
+                    {t("pwa.subtitle")}
                   </p>
                 </div>
               </div>
               <button
                 onClick={dismiss}
                 className="w-7 h-7 rounded-full bg-muted hover:bg-secondary flex items-center justify-center transition-colors shrink-0 mt-0.5"
-                aria-label="Dismiss"
+                aria-label={t("pwa.dismiss")}
               >
                 <X className="w-3.5 h-3.5 text-muted-foreground" />
               </button>
@@ -118,8 +122,7 @@ export function PWAInstallPrompt() {
 
             {/* Description */}
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Install for quick access and offline use — works even without
-              internet.
+              {t("pwa.description")}
             </p>
 
             {/* Action buttons */}
@@ -128,14 +131,14 @@ export function PWAInstallPrompt() {
                 onClick={dismiss}
                 className="flex-1 h-10 rounded-lg border border-border bg-background text-sm font-medium text-muted-foreground hover:bg-muted transition-colors active:scale-[0.98]"
               >
-                Not now
+                {t("pwa.notNow")}
               </button>
               <button
                 onClick={install}
                 className="flex-[2] h-10 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity active:scale-[0.98] flex items-center justify-center gap-2"
               >
                 <Download className="w-4 h-4" />
-                Install app
+                {t("pwa.install")}
               </button>
             </div>
           </div>

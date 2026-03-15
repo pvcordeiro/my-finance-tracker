@@ -5,42 +5,33 @@ import {
   getSessionFromRequest,
 } from "../../../../lib/session.js";
 
-async function verifyAdmin(request) {
+function verifyAdmin(request) {
   const sessionToken = getSessionFromRequest(request);
-  const userSession = await validateSession(sessionToken);
+  const userSession = validateSession(sessionToken);
   return userSession && userSession.is_admin == true;
 }
 
 export async function GET(request) {
   try {
-    if (!(await verifyAdmin(request))) {
+    if (!verifyAdmin(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const db = await getDatabase();
-    const groups = await new Promise((resolve, reject) => {
-      db.all(
-        `
-          SELECT
-            g.id,
-            g.name,
-            g.created_at,
-            u.username as created_by_username,
-            u.is_admin as created_by_admin,
-            COUNT(ug.user_id) as member_count
-          FROM groups g
-          LEFT JOIN users u ON g.created_by = u.id
-          LEFT JOIN user_groups ug ON g.id = ug.group_id
-          GROUP BY g.id, g.name, g.created_at, u.username, u.is_admin
-          ORDER BY g.created_at DESC
-        `,
-        [],
-        (err, rows) => {
-          if (err) reject(err);
-          else resolve(rows);
-        }
-      );
-    });
+    const db = getDatabase();
+    const groups = db.prepare(`
+      SELECT
+        g.id,
+        g.name,
+        g.created_at,
+        u.username as created_by_username,
+        u.is_admin as created_by_admin,
+        COUNT(ug.user_id) as member_count
+      FROM groups g
+      LEFT JOIN users u ON g.created_by = u.id
+      LEFT JOIN user_groups ug ON g.id = ug.group_id
+      GROUP BY g.id, g.name, g.created_at, u.username, u.is_admin
+      ORDER BY g.created_at DESC
+    `).all() ?? [];
 
     return NextResponse.json({ groups });
   } catch (error) {
@@ -54,12 +45,12 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
-    if (!(await verifyAdmin(request))) {
+    if (!verifyAdmin(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const sessionToken = getSessionFromRequest(request);
-    const adminUser = await validateSession(sessionToken);
+    const adminUser = validateSession(sessionToken);
 
     const rawBody = await request.text();
     if (rawBody.length > 20_000) {
@@ -80,18 +71,12 @@ export async function POST(request) {
       );
     }
 
-    const db = await getDatabase();
+    const db = getDatabase();
 
-    const groupId = await new Promise((resolve, reject) => {
-      db.run(
-        `INSERT INTO groups (name, created_by, created_at) VALUES (?, ?, CURRENT_TIMESTAMP)`,
-        [name.trim(), adminUser.id],
-        function (err) {
-          if (err) reject(err);
-          else resolve(this.lastID);
-        }
-      );
-    });
+    const result = db.prepare(
+      `INSERT INTO groups (name, created_by, created_at) VALUES (?, ?, CURRENT_TIMESTAMP)`
+    ).run(name.trim(), adminUser.id);
+    const groupId = result.lastInsertRowid;
 
     return NextResponse.json({
       success: true,
@@ -113,7 +98,7 @@ export async function POST(request) {
 
 export async function PATCH(request) {
   try {
-    if (!(await verifyAdmin(request))) {
+    if (!verifyAdmin(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -146,33 +131,19 @@ export async function PATCH(request) {
       );
     }
 
-    const db = await getDatabase();
+    const db = getDatabase();
 
-    const group = await new Promise((resolve, reject) => {
-      db.get(
-        "SELECT id, name FROM groups WHERE id = ?",
-        [groupId],
-        (err, row) => {
-          if (err) reject(err);
-          else resolve(row);
-        }
-      );
-    });
+    const group = db.prepare(
+      "SELECT id, name FROM groups WHERE id = ?"
+    ).get(groupId);
 
     if (!group) {
       return NextResponse.json({ error: "Group not found" }, { status: 404 });
     }
 
-    await new Promise((resolve, reject) => {
-      db.run(
-        "UPDATE groups SET name = ? WHERE id = ?",
-        [name.trim(), groupId],
-        function (err) {
-          if (err) reject(err);
-          else resolve({ changes: this.changes });
-        }
-      );
-    });
+    db.prepare(
+      "UPDATE groups SET name = ? WHERE id = ?"
+    ).run(name.trim(), groupId);
 
     return NextResponse.json({
       success: true,
@@ -193,7 +164,7 @@ export async function PATCH(request) {
 
 export async function DELETE(request) {
   try {
-    if (!(await verifyAdmin(request))) {
+    if (!verifyAdmin(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -207,18 +178,11 @@ export async function DELETE(request) {
       );
     }
 
-    const db = await getDatabase();
+    const db = getDatabase();
 
-    const group = await new Promise((resolve, reject) => {
-      db.get(
-        "SELECT id, name FROM groups WHERE id = ?",
-        [groupId],
-        (err, row) => {
-          if (err) reject(err);
-          else resolve(row);
-        }
-      );
-    });
+    const group = db.prepare(
+      "SELECT id, name FROM groups WHERE id = ?"
+    ).get(groupId);
 
     if (!group) {
       return NextResponse.json({ error: "Group not found" }, { status: 404 });
@@ -231,23 +195,11 @@ export async function DELETE(request) {
       );
     }
 
-    await new Promise((resolve, reject) => {
-      db.run(
-        "UPDATE users SET last_selected_group_id = NULL WHERE last_selected_group_id = ?",
-        [groupId],
-        function (err) {
-          if (err) reject(err);
-          else resolve();
-        }
-      );
-    });
+    db.prepare(
+      "UPDATE users SET last_selected_group_id = NULL WHERE last_selected_group_id = ?"
+    ).run(groupId);
 
-    await new Promise((resolve, reject) => {
-      db.run("DELETE FROM groups WHERE id = ?", [groupId], function (err) {
-        if (err) reject(err);
-        else resolve({ changes: this.changes });
-      });
-    });
+    db.prepare("DELETE FROM groups WHERE id = ?").run(groupId);
 
     return NextResponse.json({
       success: true,

@@ -17,39 +17,23 @@ export const GET = withAuth(async (request) => {
       );
     }
 
-    const db = await getDatabase();
+    const db = getDatabase();
 
-    const bankAmount = await new Promise((resolve, reject) => {
-      db.get(
-        "SELECT amount FROM bank_amounts WHERE group_id = ? ORDER BY updated_at DESC LIMIT 1",
-        [groupId],
-        (err, row) => {
-          if (err) reject(err);
-          else resolve(row);
-        }
-      );
-    });
+    const bankAmount = db.prepare(
+      "SELECT amount FROM bank_amounts WHERE group_id = ? ORDER BY updated_at DESC LIMIT 1"
+    ).get(groupId);
 
     const currentYear = new Date().getFullYear();
 
-    const entriesWithAmounts = await new Promise((resolve, reject) => {
-      db.all(
-        `
-        SELECT 
-          e.id, e.name, e.type, e.created_at, e.updated_at,
-          ea.month, ea.amount
-        FROM entries e
-        LEFT JOIN entry_amounts ea ON e.id = ea.entry_id AND ea.year = ?
-        WHERE e.group_id = ?
-        ORDER BY e.created_at DESC, ea.month ASC
-      `,
-        [currentYear, groupId],
-        (err, rows) => {
-          if (err) reject(err);
-          else resolve(rows);
-        }
-      );
-    });
+    const entriesWithAmounts = db.prepare(`
+      SELECT 
+        e.id, e.name, e.type, e.created_at, e.updated_at,
+        ea.month, ea.amount
+      FROM entries e
+      LEFT JOIN entry_amounts ea ON e.id = ea.entry_id AND ea.year = ?
+      WHERE e.group_id = ?
+      ORDER BY e.created_at DESC, ea.month ASC
+    `).all(currentYear, groupId) ?? [];
 
     const entriesMap = new Map();
 

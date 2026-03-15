@@ -11,36 +11,18 @@ export async function GET(request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const session = await validateSession(sessionToken);
+    const session = validateSession(sessionToken);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const db = await getDatabase();
+    const db = getDatabase();
+    const row = db.prepare(
+      `SELECT theme_preference FROM users WHERE id = ?`
+    ).get(session.id);
 
-    return new Promise((resolve) => {
-      db.get(
-        `SELECT theme_preference FROM users WHERE id = ?`,
-        [session.id],
-        (err, row) => {
-          if (err) {
-            console.error("Database error:", err);
-            resolve(
-              NextResponse.json(
-                { error: "Failed to fetch theme preference" },
-                { status: 500 }
-              )
-            );
-            return;
-          }
-
-          resolve(
-            NextResponse.json({
-              theme: row?.theme_preference || "system",
-            })
-          );
-        }
-      );
+    return NextResponse.json({
+      theme: row?.theme_preference || "system",
     });
   } catch (error) {
     console.error("Error fetching theme preference:", error);
@@ -58,7 +40,7 @@ export async function POST(request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const session = await validateSession(sessionToken);
+    const session = validateSession(sessionToken);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -73,33 +55,12 @@ export async function POST(request) {
       );
     }
 
-    const db = await getDatabase();
+    const db = getDatabase();
+    db.prepare(
+      `UPDATE users SET theme_preference = ? WHERE id = ?`
+    ).run(theme, session.id);
 
-    return new Promise((resolve) => {
-      db.run(
-        `UPDATE users SET theme_preference = ? WHERE id = ?`,
-        [theme, session.id],
-        function (err) {
-          if (err) {
-            console.error("Database error:", err);
-            resolve(
-              NextResponse.json(
-                { error: "Failed to update theme preference" },
-                { status: 500 }
-              )
-            );
-            return;
-          }
-
-          resolve(
-            NextResponse.json({
-              success: true,
-              theme,
-            })
-          );
-        }
-      );
-    });
+    return NextResponse.json({ success: true, theme });
   } catch (error) {
     console.error("Error updating theme preference:", error);
     return NextResponse.json(

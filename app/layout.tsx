@@ -13,6 +13,7 @@ import { NoGroupOverlay } from "@/components/finance/no-group-overlay";
 import { PWAInstallPrompt } from "@/components/pwa/pwa-install-prompt";
 import { OfflineBanner } from "@/components/pwa/offline-banner";
 import { LanguageProvider } from "@/hooks/use-language";
+import { SerwistProvider } from "./serwist";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -65,6 +66,7 @@ html {
       <body
         className={`${dmSans.variable} font-sans antialiased bg-background text-foreground`}
       >
+        <SerwistProvider swUrl="/serwist/sw.js">
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -88,6 +90,7 @@ html {
             </AuthProvider>
           </ErrorBoundary>
         </ThemeProvider>
+        </SerwistProvider>
       </body>
     </html>
   );

@@ -13,7 +13,7 @@ export async function POST(request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const sessionUser = await validateSession(sessionToken);
+    const sessionUser = validateSession(sessionToken);
     if (!sessionUser) {
       return NextResponse.json({ error: "Invalid session" }, { status: 401 });
     }
@@ -29,15 +29,11 @@ export async function POST(request) {
 
     const { new_username } = validation.data;
 
-    const db = await getDatabase();
+    const db = getDatabase();
 
-    const existing = await new Promise((resolve, reject) => {
-      db.get(
-        "SELECT id FROM users WHERE username = ?",
-        [new_username],
-        (err, row) => (err ? reject(err) : resolve(row))
-      );
-    });
+    const existing = db.prepare(
+      "SELECT id FROM users WHERE username = ?"
+    ).get(new_username);
     if (existing) {
       return NextResponse.json(
         { error: "Username already taken" },
@@ -45,16 +41,9 @@ export async function POST(request) {
       );
     }
 
-    await new Promise((resolve, reject) => {
-      db.run(
-        "UPDATE users SET username = ? WHERE id = ?",
-        [new_username, sessionUser.id],
-        function (err) {
-          if (err) reject(err);
-          else resolve();
-        }
-      );
-    });
+    db.prepare(
+      "UPDATE users SET username = ? WHERE id = ?"
+    ).run(new_username, sessionUser.id);
 
     return NextResponse.json({
       message: "Username updated successfully",
