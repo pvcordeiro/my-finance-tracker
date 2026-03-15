@@ -76,6 +76,7 @@ interface EntryFormProps {
   flashEntryId?: string;
   flashToken?: number;
   hideAddButton?: boolean;
+  onHeaderAdd?: () => void;
   guidedDialogOpen?: boolean;
   onGuidedDialogOpenChange?: (open: boolean) => void;
   totalFlashToken?: number;
@@ -99,6 +100,7 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
       flashEntryId,
       flashToken,
       hideAddButton = false,
+      onHeaderAdd,
       guidedDialogOpen: externalGuidedDialogOpen,
       onGuidedDialogOpenChange,
       totalFlashToken,
@@ -319,12 +321,14 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
         }}
         className={cn(
           "transition-all duration-200",
-          type === "income" ? "income-card" : "expense-card"
+          type === "income" ? "income-card bg-finance-positive/5" : "expense-card bg-finance-negative/5"
         )}
       >
         <Collapsible open={isOpen} onOpenChange={handleSectionToggle}>
           <CollapsibleTrigger asChild>
-            <CardHeader className="cursor-pointer touch-manipulation">
+            <CardHeader className={cn(
+              "cursor-pointer touch-manipulation rounded-t-lg",
+            )}>
               <CardTitle
                 className={cn(
                   "flex items-center justify-between text-lg sm:text-xl",
@@ -334,7 +338,7 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
                 )}
               >
                 <span>{title}</span>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <span
                     className={cn(
                       "font-semibold text-base sm:text-lg tracking-tight transition-all duration-300",
@@ -352,10 +356,28 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
                       )}
                     />
                   </span>
+                  {onHeaderAdd && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onHeaderAdd();
+                      }}
+                      className={cn(
+                        "flex items-center justify-center h-8 w-8 rounded-full transition-colors touch-manipulation",
+                        type === "income"
+                          ? "text-finance-positive hover:bg-finance-positive/15"
+                          : "text-finance-negative hover:bg-finance-negative/15"
+                      )}
+                      aria-label={type === "income" ? "Add income" : "Add expense"}
+                    >
+                      <Plus className="w-5 h-5" />
+                    </button>
+                  )}
                   {isOpen ? (
-                    <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                   ) : (
-                    <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                   )}
                 </div>
               </CardTitle>

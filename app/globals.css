@@ -149,22 +149,22 @@
   
   .income-card {
     /* Light mode: subtle background with green border */
-    @apply bg-card border-2 border-finance-positive/20 shadow-md;
+    @apply bg-card border border-finance-positive/25 shadow-sm;
   }
   
   .dark .income-card {
     /* Dark mode: subtle background with green border */
-    @apply bg-card border-2 border-finance-positive/30 shadow-sm;
+    @apply bg-card border border-finance-positive/30 shadow-sm;
   }
   
   .expense-card {
     /* Light mode: subtle background with red border */
-    @apply bg-card border-2 border-finance-negative/20 shadow-md;
+    @apply bg-card border border-finance-negative/25 shadow-sm;
   }
   
   .dark .expense-card {
     /* Dark mode: subtle background with red border */
-    @apply bg-card border-2 border-finance-negative/30 shadow-sm;
+    @apply bg-card border border-finance-negative/30 shadow-sm;
   }
 
   /* Enhanced depth for light mode */

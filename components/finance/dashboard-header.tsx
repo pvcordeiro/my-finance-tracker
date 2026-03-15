@@ -106,7 +106,7 @@ export function DashboardHeader() {
               </span>
             </div>
             <div>
-              <span className="text-lg sm:text-xl font-bold text-primary block">
+              <span className="text-lg sm:text-xl font-bold text-foreground block">
                 {t("dashboard.title")}
               </span>
               <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">

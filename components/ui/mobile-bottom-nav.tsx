@@ -42,7 +42,7 @@ export function MobileBottomNav() {
               onClick={isDisabled ? (e) => e.preventDefault() : undefined}
               aria-disabled={isDisabled}
               className={cn(
-                "flex flex-col items-center justify-center flex-1 py-2 px-1 text-xs font-medium transition-colors min-h-[44px]",
+                "relative flex flex-col items-center justify-center flex-1 py-2 px-1 text-xs font-medium transition-colors min-h-[44px]",
                 isDisabled
                   ? "text-muted-foreground/40 pointer-events-none"
                   : isActive
@@ -50,6 +50,9 @@ export function MobileBottomNav() {
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
+              {isActive && !isDisabled && (
+                <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-primary" />
+              )}
               <Icon className="w-5 h-5 mb-1" />
               <span>{label}</span>
             </Link>

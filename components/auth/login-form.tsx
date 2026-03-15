@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Eye, EyeOff, UserPlus, LogIn, AlertTriangle } from "lucide-react";
+import { LoadingSpinner } from "@/components/ui/loading";
 import { useLanguage } from "@/hooks/use-language";
 import { LanguageCurrencyDialog } from "@/components/ui/language-currency-dialog";
 
@@ -231,11 +232,10 @@ export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
                 disabled={isLoading}
               >
                 {isLoading ? (
-                  isRegisterMode ? (
-                    t("auth.creatingAccount")
-                  ) : (
-                    t("auth.signingIn")
-                  )
+                  <>
+                    <LoadingSpinner size="sm" className="mr-2" />
+                    {isRegisterMode ? t("auth.creatingAccount") : t("auth.signingIn")}
+                  </>
                 ) : (
                   <>
                     {isRegisterMode ? (

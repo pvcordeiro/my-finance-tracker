@@ -14,7 +14,6 @@ import { Button } from "@/components/ui/button";
 import { DataManagement } from "@/components/finance/data-management";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Plus } from "lucide-react";
 
 import { Dialog } from "@/components/ui/dialog";
 import {
@@ -391,36 +390,8 @@ function HomePageContent() {
                   }
                 />
               </div>
-              {/* Right Column - Add Buttons + Income and Expenses */}
+              {/* Right Column - Income and Expenses */}
               <div className="space-y-4 pt-2 lg:overflow-y-auto lg:pl-1 lg:h-full lg:pb-36">
-                {/* Add Entry Buttons */}
-                <div className="space-y-3 pt-3 border-t lg:border-t-0 lg:pt-0 lg:space-y-0">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                     <Button
-                      onClick={() => {
-                        setIncomeGuidedDialogOpen(true);
-                      }}
-                      variant="outline"
-                      disabled={!isOnline}
-                      className="w-full transition-all duration-200 active:scale-[0.98] touch-manipulation py-4 sm:py-3 border-finance-positive/30 hover:bg-card"
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      {t("entries.addIncome")}
-                    </Button>
-                     <Button
-                      onClick={() => {
-                        setExpenseGuidedDialogOpen(true);
-                      }}
-                      variant="outline"
-                      disabled={!isOnline}
-                      className="w-full transition-all duration-200 active:scale-[0.98] touch-manipulation py-4 sm:py-3 border-finance-negative/30 hover:bg-card"
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      {t("entries.addExpense")}
-                    </Button>
-                  </div>
-                </div>
-
                 <EntryForm
                   ref={incomeSectionRef}
                   title={t("entries.income")}
@@ -468,6 +439,7 @@ function HomePageContent() {
                   isOpen={incomeOpen}
                   onToggle={() => setIncomeOpen(!incomeOpen)}
                   hideAddButton={true}
+                  onHeaderAdd={isOnline ? () => setIncomeGuidedDialogOpen(true) : undefined}
                   guidedDialogOpen={incomeGuidedDialogOpen}
                   onGuidedDialogOpenChange={setIncomeGuidedDialogOpen}
                   flashEntryId={
@@ -567,6 +539,7 @@ function HomePageContent() {
                   isOpen={expenseOpen}
                   onToggle={() => setExpenseOpen(!expenseOpen)}
                   hideAddButton={true}
+                  onHeaderAdd={isOnline ? () => setExpenseGuidedDialogOpen(true) : undefined}
                   guidedDialogOpen={expenseGuidedDialogOpen}
                   onGuidedDialogOpenChange={setExpenseGuidedDialogOpen}
                   flashEntryId={

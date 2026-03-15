@@ -1,6 +1,5 @@
 "use client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, TrendingDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { FinanceData } from "@/hooks/use-finance-data";
 import { PrivacyNumber } from "@/components/ui/privacy-number";
@@ -149,94 +148,56 @@ export function SummaryTable({ data }: SummaryTableProps) {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-3 sm:gap-4">
-        <Card className="bg-accent/10 border-primary/50">
-          <CardContent className="p-3 sm:p-4">
-            <div className="flex items-center gap-2">
-              <div className="min-w-0">
-                <p className="text-xs sm:text-sm font-bold text-primary text-shadow-sm">
-                  {t("dashboard.currentMonth")}
-                </p>
-                <p
-                  className={cn(
-                    "text-lg sm:text-2xl font-bold truncate text-shadow-sm",
-                    currentBalance >= 0
-                      ? "text-finance-positive"
-                      : "text-finance-negative"
-                  )}
-                >
-                  <PrivacyNumber
-                    value={currentBalance}
-                    className="text-lg sm:text-2xl font-bold truncate text-shadow-sm"
-                  />
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-border rounded-xl overflow-hidden border border-border">
+        <div className="bg-card px-3 py-3 sm:px-4 sm:py-4">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+            {t("dashboard.currentMonth")}
+          </p>
+          <p
+            className={cn(
+              "text-xl sm:text-2xl font-bold truncate",
+              currentBalance >= 0
+                ? "text-finance-positive"
+                : "text-finance-negative"
+            )}
+          >
+            <PrivacyNumber value={currentBalance} />
+          </p>
+        </div>
 
-        <Card className="bg-accent/10 border-primary/50">
-          <CardContent className="p-3 sm:p-4">
-            <div className="flex items-center gap-2">
-              <div className="min-w-0">
-                <p className="text-xs sm:text-sm font-bold text-primary text-shadow-sm">
-                  {t("dashboard.nextMonth")}
-                </p>
-                <p
-                  className={cn(
-                    "text-lg sm:text-2xl font-bold truncate text-shadow-sm",
-                    nextMonthBalance >= 0
-                      ? "text-finance-positive"
-                      : "text-finance-negative"
-                  )}
-                >
-                  <PrivacyNumber
-                    value={nextMonthBalance}
-                    className="text-lg sm:text-2xl font-bold truncate text-shadow-sm"
-                  />
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="bg-card px-3 py-3 sm:px-4 sm:py-4">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+            {t("dashboard.nextMonth")}
+          </p>
+          <p
+            className={cn(
+              "text-xl sm:text-2xl font-bold truncate",
+              nextMonthBalance >= 0
+                ? "text-finance-positive"
+                : "text-finance-negative"
+            )}
+          >
+            <PrivacyNumber value={nextMonthBalance} />
+          </p>
+        </div>
 
-        <Card className="income-card">
-          <CardContent className="p-3 sm:p-4">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-finance-positive flex-shrink-0" />
-              <div className="min-w-0">
-                <p className="text-xs sm:text-sm font-bold text-finance-positive text-shadow-sm">
-                  {t("dashboard.yearIncome")}
-                </p>
-                <p className="text-lg sm:text-2xl font-bold text-finance-positive truncate text-shadow-sm">
-                  <PrivacyNumber
-                    value={annualIncome}
-                    className="text-lg sm:text-2xl font-bold text-shadow-sm"
-                  />
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="bg-card px-3 py-3 sm:px-4 sm:py-4">
+          <p className="text-xs font-semibold uppercase tracking-wider text-finance-positive/70 mb-1">
+            {t("dashboard.yearIncome")}
+          </p>
+          <p className="text-xl sm:text-2xl font-bold text-finance-positive truncate">
+            <PrivacyNumber value={annualIncome} />
+          </p>
+        </div>
 
-        <Card className="expense-card">
-          <CardContent className="p-3 sm:p-4">
-            <div className="flex items-center gap-2">
-              <TrendingDown className="w-4 h-4 sm:w-5 sm:h-5 text-finance-negative flex-shrink-0" />
-              <div className="min-w-0">
-                <p className="text-xs sm:text-sm font-bold text-finance-negative text-shadow-sm">
-                  {t("dashboard.yearExpense")}
-                </p>
-                <p className="text-lg sm:text-2xl font-bold text-finance-negative truncate text-shadow-sm">
-                  <PrivacyNumber
-                    value={annualExpenses}
-                    className="text-lg sm:text-2xl font-bold text-shadow-sm"
-                  />
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="bg-card px-3 py-3 sm:px-4 sm:py-4">
+          <p className="text-xs font-semibold uppercase tracking-wider text-finance-negative/70 mb-1">
+            {t("dashboard.yearExpense")}
+          </p>
+          <p className="text-xl sm:text-2xl font-bold text-finance-negative truncate">
+            <PrivacyNumber value={annualExpenses} />
+          </p>
+        </div>
       </div>
 
       <Card>
