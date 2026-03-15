@@ -10,6 +10,7 @@ import {
   ResponsiveContainer,
   LineChart,
   Line,
+  Legend,
 } from "recharts";
 import type { FinanceData } from "@/hooks/use-finance-data";
 import { usePrivacy } from "@/hooks/use-privacy";
@@ -40,6 +41,12 @@ export function FinancialChart({ data }: FinancialChartProps) {
       "dec",
     ];
     return t(`months.${monthKeys[monthIndex]}`);
+  };
+
+  const formatYAxis = (value: number): string => {
+    if (Math.abs(value) >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
+    if (Math.abs(value) >= 1_000) return `${(value / 1_000).toFixed(1)}k`;
+    return String(value);
   };
 
   const getRollingMonths = (): Array<{ label: string; month: number }> => {
@@ -153,8 +160,8 @@ export function FinancialChart({ data }: FinancialChartProps) {
                 <BarChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
                   <XAxis dataKey="month" className="text-xs" />
-                  <YAxis className="text-xs" />
-                   <Tooltip
+                  <YAxis className="text-xs" tickFormatter={formatYAxis} />
+                  <Tooltip
                     formatter={(value, name) => [
                       `${currencySymbol}${Number(value).toFixed(2)}`,
                       name === "income"
@@ -170,15 +177,23 @@ export function FinancialChart({ data }: FinancialChartProps) {
                       borderRadius: "8px",
                     }}
                   />
+                  <Legend
+                    formatter={(value) =>
+                      value === "income"
+                        ? t("dashboard.income")
+                        : t("dashboard.expenses")
+                    }
+                    wrapperStyle={{ fontSize: "0.75rem" }}
+                  />
                   <Bar
                     dataKey="income"
-                    fill="#22c55e"
+                    fill="hsl(var(--finance-positive))"
                     name="income"
                     radius={[2, 2, 0, 0]}
                   />
                   <Bar
                     dataKey="expenses"
-                    fill="#ef4444"
+                    fill="hsl(var(--finance-negative))"
                     name="expenses"
                     radius={[2, 2, 0, 0]}
                   />
@@ -205,8 +220,8 @@ export function FinancialChart({ data }: FinancialChartProps) {
                 <LineChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
                   <XAxis dataKey="month" className="text-xs" />
-                  <YAxis className="text-xs" />
-                   <Tooltip
+                  <YAxis className="text-xs" tickFormatter={formatYAxis} />
+                  <Tooltip
                     formatter={(value) => [
                       `${currencySymbol}${Number(value).toFixed(2)}`,
                       t("dashboard.balance"),
@@ -219,6 +234,10 @@ export function FinancialChart({ data }: FinancialChartProps) {
                       border: "1px solid hsl(var(--border))",
                       borderRadius: "8px",
                     }}
+                  />
+                  <Legend
+                    formatter={() => t("dashboard.balance")}
+                    wrapperStyle={{ fontSize: "0.75rem" }}
                   />
                   <Line
                     type="monotone"

@@ -92,25 +92,16 @@
 @layer base {
   * {
     @apply border-border;
-    /* Disable text selection/highlighting across the entire site */
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
   }
   
-  /* Re-enable selection for input fields and textareas for usability */
-  input,
-  textarea {
-    -webkit-user-select: text;
-    -moz-user-select: text;
-    -ms-user-select: text;
-    user-select: text;
+  /* Prevent accidental text selection on interactive UI chrome only */
+  nav, header, [role="navigation"] {
+    -webkit-user-select: none;
+    user-select: none;
   }
   
   body {
     @apply bg-background text-foreground;
-    overflow-x: hidden;
   }
   
   /* Input fields - lighter/darker for contrast in layered design */
@@ -147,13 +138,13 @@
   }
 
   .finance-gradient {
-  /* Light mode: White to light gray with subtle blue tint */
-  background: linear-gradient(135deg, #ffffff 0%, #f5f5f5 50%, #e8f0fe 100%);
+  /* Light mode: white → card → subtle primary tint (follows active accent) */
+  background: linear-gradient(135deg, hsl(var(--popover)) 0%, hsl(var(--card)) 50%, hsl(var(--primary) / 0.12) 100%);
   }
   
   .dark .finance-gradient {
-  /* Dark mode: Dark gray to darker gray with subtle blue tint */
-  background: linear-gradient(135deg, #1a1a1a 0%, #141414 50%, #0f1419 100%);
+  /* Dark mode: card → background → subtle primary tint (follows active accent) */
+  background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--background)) 50%, hsl(var(--primary) / 0.10) 100%);
   }
   
   .income-card {
@@ -215,6 +206,8 @@
 
   .touch-manipulation {
     touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
   }
 
   input[type="number"]::-webkit-outer-spin-button,
@@ -248,13 +241,11 @@
     }
   } */
 
-  @media (max-width: 768px) {
-    button:focus-visible,
-    input:focus-visible,
-    [role="button"]:focus-visible {
-      outline: 2px solid hsl(var(--primary));
-      outline-offset: 2px;
-    }
+  button:focus-visible,
+  input:focus-visible,
+  [role="button"]:focus-visible {
+    outline: 2px solid hsl(var(--primary));
+    outline-offset: 2px;
   }
 }
 
@@ -277,6 +268,33 @@
 }
 .dark .text-soft-shadow-strong {
   text-shadow: 0 1px 1px rgba(0,0,0,0.55), 0 0 2px rgba(0,0,0,0.45);
+}
+
+/* Bottom safe-area padding for mobile nav — applied inside page containers, not on body */
+.page-nav-padding {
+  padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 768px) {
+  .page-nav-padding {
+    padding-bottom: 0;
+  }
+}
+
+/* Smooth collapsible height animation via CSS grid trick (works with Radix UI) */
+[data-radix-collapsible-content] {
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 280ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-radix-collapsible-content][data-state="open"] {
+  grid-template-rows: 1fr;
+}
+
+[data-radix-collapsible-content] > * {
+  min-height: 0;
 }
 
 /* Inline field save success flash */

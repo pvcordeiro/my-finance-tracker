@@ -185,7 +185,7 @@ export default function UserSettingsPage() {
 
   if (!isOnline) {
     return (
-      <div className="min-h-dvh finance-gradient">
+      <div className="min-h-dvh finance-gradient page-nav-padding">
         <MinimalPageHeader title={t("settings.accountSettings")} icon={<User className="w-4 h-4 sm:w-5 sm:h-5 text-primary-foreground" />} />
         <OfflineBlockedPage />
       </div>
@@ -193,7 +193,7 @@ export default function UserSettingsPage() {
   }
 
   return (
-    <div className="min-h-dvh finance-gradient">
+    <div className="min-h-dvh finance-gradient page-nav-padding">
       <header
         className="bg-background/90 backdrop-blur-sm border-b border-border/50 sticky z-50"
         style={{ top: 0, marginTop: 0 }}
@@ -383,9 +383,9 @@ export default function UserSettingsPage() {
                       onClick={() => handleGroupSwitch(group.group_id)}
                       disabled={switchingGroup || isCurrentGroup}
                     >
-                      <span className="flex items-center gap-2">
-                        <Users className="w-4 h-4" />
-                        {group.name}
+                      <span className="flex items-center gap-2 min-w-0">
+                        <Users className="w-4 h-4 flex-shrink-0" />
+                        <span className="truncate">{group.name}</span>
                       </span>
                       {isCurrentGroup && <Check className="w-4 h-4" />}
                     </Button>

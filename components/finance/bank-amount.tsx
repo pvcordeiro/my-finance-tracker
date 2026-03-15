@@ -81,7 +81,7 @@ export function BankAmount({
     }
   };
   return (
-    <Card className="bg-gradient-to-r from-primary/5 to-accent/5 border-primary/20">
+    <Card className="bg-primary/5 border-primary/20">
       <CardContent className="p-4 sm:p-6">
         <div className="flex flex-col gap-6">
           <div className="flex items-center gap-3">

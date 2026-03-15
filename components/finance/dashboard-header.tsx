@@ -106,9 +106,9 @@ export function DashboardHeader() {
               </span>
             </div>
             <div>
-              <h1 className="text-lg sm:text-xl font-bold text-primary">
+              <span className="text-lg sm:text-xl font-bold text-primary block">
                 {t("dashboard.title")}
-              </h1>
+              </span>
               <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
                 {t("dashboard.subtitle")}
               </p>
@@ -122,6 +122,11 @@ export function DashboardHeader() {
               onClick={handlePrivacyToggle}
               disabled={privacyLoading}
               className="flex items-center gap-2"
+              aria-label={
+                privacyMode
+                  ? t("settings.disablePrivacy")
+                  : t("settings.enablePrivacy")
+              }
               title={
                 privacyMode
                   ? t("settings.disablePrivacy")

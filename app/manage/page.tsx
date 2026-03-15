@@ -77,6 +77,8 @@ function HomePageContent() {
     setActiveTab(tab === "management" ? "management" : "main");
   }, [searchParams]);
 
+
+
   useEffect(() => {
     const applyGuidedData = async () => {
       if (!pendingGuidedEntryRef.current) return;
@@ -351,7 +353,7 @@ function HomePageContent() {
 
   if (!isOnline) {
     return (
-      <div className="min-h-dvh finance-gradient">
+      <div className="min-h-dvh finance-gradient page-nav-padding">
         <DashboardHeader />
         <OfflineBlockedPage />
       </div>
@@ -359,9 +361,9 @@ function HomePageContent() {
   }
 
   return (
-    <div className="min-h-dvh finance-gradient lg:h-screen lg:overflow-hidden">
+    <div className="min-h-dvh finance-gradient lg:h-screen lg:overflow-hidden page-nav-padding">
       <DashboardHeader />
-      <main className="container mx-auto p-4 pt-0 space-y-6 lg:h-full lg:overflow-hidden">
+      <main className="container mx-auto px-4 pt-0 space-y-6 lg:h-full lg:overflow-hidden">
         <Tabs
           value={activeTab}
           onValueChange={setActiveTab}

@@ -378,7 +378,7 @@ export function AdminDashboard() {
   };
 
   return (
-    <div className="min-h-dvh finance-gradient">
+    <div className="min-h-dvh finance-gradient page-nav-padding">
       <header
         className="bg-background/90 backdrop-blur-sm border-b border-border/50 sticky z-50"
         style={{ top: 0, marginTop: 0 }}

@@ -33,7 +33,7 @@ export default function AdminPage() {
 
   if (!isOnline) {
     return (
-      <div className="min-h-dvh finance-gradient">
+      <div className="min-h-dvh finance-gradient page-nav-padding">
         <MinimalPageHeader
           title={t("admin.title")}
           icon={<Shield className="w-4 h-4 sm:w-5 sm:h-5 text-destructive-foreground" />}

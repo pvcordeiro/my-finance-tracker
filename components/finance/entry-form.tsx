@@ -31,6 +31,12 @@ import { EntryEditDialog } from "./entry-edit-dialog";
 import { PrivacyNumber } from "@/components/ui/privacy-number";
 import { PrivacyText } from "@/components/ui/privacy-text";
 import { useLanguage } from "@/hooks/use-language";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export interface FinanceEntry {
   id: string;
@@ -355,7 +361,7 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
               </CardTitle>
             </CardHeader>
           </CollapsibleTrigger>
-          <CollapsibleContent className="space-y-4 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 overflow-hidden transition-all data-[state=closed]:duration-200 data-[state=open]:duration-300">
+          <CollapsibleContent>
             <CardContent className="space-y-4">
               {/* Search Input */}
               {entries.length > 0 && (
@@ -371,66 +377,74 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
                 </div>
               )}
 
-              {/* Entry Cards */}
+              {/* Entry List */}
+              <ul className="space-y-1">
               {filteredEntries.map((entry) => (
-                <Card
+                <li
                   key={entry.id}
                   ref={(el) => {
-                    if (el) entryCardRefs.current.set(entry.id, el);
+                    if (el) entryCardRefs.current.set(entry.id, el as unknown as HTMLDivElement);
                     else entryCardRefs.current.delete(entry.id);
                   }}
                   className={cn(
-                    "border-muted transition-all cursor-pointer hover:border-primary/50",
+                    "flex items-center justify-between rounded-lg border border-border px-3 py-2.5 cursor-pointer transition-colors",
+                    "hover:border-primary/40 hover:bg-muted/40",
                     flashingEntries.has(entry.id) &&
                       (type === "income" ? "flash-success" : "flash-error")
                   )}
                   onClick={() => handleEntryClick(entry)}
                 >
-                  <CardHeader className="py-3 touch-manipulation">
-                    <div className="flex items-center justify-between">
-                      <div className="flex flex-col pr-2 max-w-[60%] sm:max-w-[70%]">
-                        <span className="font-medium text-sm sm:text-base truncate">
-                          <PrivacyText
-                            value={
-                              entry.description || t("entries.noDescription")
+                  <div className="flex flex-col pr-2 max-w-[60%] sm:max-w-[70%]">
+                    <span className="font-medium text-sm sm:text-base truncate">
+                      <PrivacyText
+                        value={
+                          entry.description || t("entries.noDescription")
+                        }
+                      />
+                    </span>
+                    <span
+                      className={cn(
+                        "mt-0.5 font-semibold text-sm sm:text-base transition-colors",
+                        type === "income"
+                          ? "text-finance-positive"
+                          : "text-finance-negative"
+                      )}
+                    >
+                      <PrivacyNumber
+                        value={calculateTotal(entry.amounts)}
+                      />
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <TooltipProvider delayDuration={400}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => handleResolveCurrentMonth(e, entry)}
+                            className="text-muted-foreground hover:text-foreground hover:bg-muted h-8 w-8 p-0 touch-manipulation"
+                            aria-label={`${t("entries.markCurrentMonth")}: ${
+                              entry.description || t("entries.unnamedEntry")
+                            }`}
+                            disabled={
+                              !entry.amounts.some(
+                                (amount) => amount && amount !== 0
+                              )
                             }
-                          />
-                        </span>
-                        <span
-                          className={cn(
-                            "mt-1 font-semibold text-sm sm:text-base transition-colors",
-                            type === "income"
-                              ? "text-finance-positive"
-                              : "text-finance-negative"
-                          )}
-                        >
-                          <PrivacyNumber
-                            value={calculateTotal(entry.amounts)}
-                          />
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => handleResolveCurrentMonth(e, entry)}
-                          className="text-muted-foreground hover:text-foreground hover:bg-muted h-8 w-8 p-0 touch-manipulation"
-                          aria-label={`${t("entries.markCurrentMonth")}: ${
-                            entry.description || t("entries.unnamedEntry")
-                          }`}
-                          disabled={
-                            !entry.amounts.some(
-                              (amount) => amount && amount !== 0
-                            )
-                          }
-                        >
-                          <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardHeader>
-                </Card>
+                          >
+                            <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="left">
+                          {t("entries.markCurrentMonth")}
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                </li>
               ))}
+              </ul>
 
               {filteredEntries.length === 0 && entries.length > 0 && (
                 <div className="text-center py-8 text-muted-foreground">

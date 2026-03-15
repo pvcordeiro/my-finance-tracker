@@ -24,7 +24,6 @@ export const metadata: Metadata = {
   title: "Finance Tracker - Take Control of Your Finances",
   description:
     "Track income, manage expenses, and budget smarter with this modern finance tracker.",
-  generator: "v0.app",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
@@ -55,6 +54,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <style>{`
 html {
   font-family: ${dmSans.style.fontFamily};
@@ -63,7 +63,7 @@ html {
         `}</style>
       </head>
       <body
-        className={`${dmSans.variable} font-sans antialiased pb-16 md:pb-0 bg-background text-foreground`}
+        className={`${dmSans.variable} font-sans antialiased bg-background text-foreground`}
       >
         <ThemeProvider
           attribute="class"

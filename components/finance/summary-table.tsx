@@ -1,6 +1,5 @@
 "use client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { FinanceData } from "@/hooks/use-finance-data";
@@ -12,7 +11,22 @@ interface SummaryTableProps {
 }
 
 export function SummaryTable({ data }: SummaryTableProps) {
-  const { t } = useLanguage();
+  const { t, formatCurrency, currencySymbol } = useLanguage();
+
+  function compactNumber(value: number): string {
+    const abs = Math.abs(value);
+    const sign = value < 0 ? "-" : "";
+    const sym = currencySymbol;
+    if (abs >= 1_000_000) {
+      const m = Math.round(abs / 100_000) / 10;
+      return `${sign}${sym}${m % 1 === 0 ? m.toFixed(0) : m.toFixed(1)}M`;
+    }
+    if (abs >= 1_000) {
+      const k = Math.round(abs / 100) / 10;
+      return `${sign}${sym}${k % 1 === 0 ? k.toFixed(0) : k.toFixed(1)}k`;
+    }
+    return formatCurrency(value);
+  }
 
   const MONTHS = [
     t("months.jan"),
@@ -232,20 +246,20 @@ export function SummaryTable({ data }: SummaryTableProps) {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0 sm:p-6 sm:pt-0">
-          <div className="w-full overflow-x-auto">
-            <table className="w-full min-w-[340px] border-collapse text-xs sm:text-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-xs sm:text-sm whitespace-nowrap">
               <thead>
                 <tr className="border-b bg-muted/50">
-                  <th className="text-left px-2 py-2 font-semibold min-w-0 whitespace-nowrap">
+                  <th className="text-left px-3 py-2 font-semibold">
                     {t("dashboard.month")}
                   </th>
-                  <th className="text-right px-2 py-2 font-semibold text-finance-positive min-w-0 whitespace-nowrap">
+                  <th className="text-right px-3 py-2 font-semibold text-finance-positive">
                     {t("dashboard.income")}
                   </th>
-                  <th className="text-right px-2 py-2 font-semibold text-finance-negative min-w-0 whitespace-nowrap">
+                  <th className="text-right px-3 py-2 font-semibold text-finance-negative">
                     {t("dashboard.expenses")}
                   </th>
-                  <th className="text-right px-2 py-2 font-semibold min-w-0 whitespace-nowrap">
+                  <th className="text-right pl-3 pr-4 py-2 font-semibold">
                     {t("dashboard.balance")}
                   </th>
                 </tr>
@@ -259,60 +273,51 @@ export function SummaryTable({ data }: SummaryTableProps) {
                       row.isCurrentMonth && "bg-primary/5 border-primary/20"
                     )}
                   >
-                    <td className="px-2 py-2 font-medium min-w-0">
-                      <div className="flex items-center gap-1 sm:gap-2 min-w-0">
-                        <span className="text-xs sm:text-base min-w-0">
-                          {row.month}
-                        </span>
-                        {row.isCurrentMonth && (
-                          <Badge variant="secondary" className="text-xs px-1">
-                            {t("common.current")}
-                          </Badge>
-                        )}
-                      </div>
+                    <td className={cn("px-3 py-2 font-medium", row.isCurrentMonth && "text-primary")}>
+                      {row.month}
                     </td>
-                    <td className="px-2 py-2 text-right text-finance-positive font-medium min-w-0">
-                      <PrivacyNumber value={row.income} />
+                    <td className="px-3 py-2 text-right text-finance-positive font-medium">
+                      <PrivacyNumber value={row.income} format={compactNumber} />
                     </td>
-                    <td className="px-2 py-2 text-right text-finance-negative font-medium min-w-0">
-                      <PrivacyNumber value={row.expenses} />
+                    <td className="px-3 py-2 text-right text-finance-negative font-medium">
+                      <PrivacyNumber value={row.expenses} format={compactNumber} />
                     </td>
                     <td
                       className={cn(
-                        "px-2 py-2 text-right font-bold min-w-0",
+                        "pl-3 pr-4 py-2 text-right font-bold",
                         row.balance >= 0
                           ? "text-finance-positive"
                           : "text-finance-negative"
                       )}
                     >
-                      <PrivacyNumber value={row.balance} />
+                      <PrivacyNumber value={row.balance} format={compactNumber} />
                     </td>
                   </tr>
                 ))}
               </tbody>
               <tfoot>
                 <tr className="border-t-2 bg-muted/50 font-bold">
-                  <td className="px-2 py-2">Total</td>
-                  <td className="px-2 py-2 text-right text-finance-positive">
-                    <PrivacyNumber value={annualIncome} />
+                  <td className="px-3 py-2">{t("common.total")}</td>
+                  <td className="px-3 py-2 text-right text-finance-positive">
+                    <PrivacyNumber value={annualIncome} format={compactNumber} />
                   </td>
-                  <td className="px-2 py-2 text-right text-finance-negative">
-                    <PrivacyNumber value={annualExpenses} />
+                  <td className="px-3 py-2 text-right text-finance-negative">
+                    <PrivacyNumber value={annualExpenses} format={compactNumber} />
                   </td>
                   <td
                     className={cn(
-                      "px-2 py-2 text-right",
+                      "pl-3 pr-4 py-2 text-right",
                       finalBalance >= 0
                         ? "text-finance-positive"
                         : "text-finance-negative"
                     )}
                   >
-                    <PrivacyNumber value={finalBalance} />
+                    <PrivacyNumber value={finalBalance} format={compactNumber} />
                   </td>
                 </tr>
               </tfoot>
             </table>
-          </div>
+            </div>
         </CardContent>
       </Card>
     </div>

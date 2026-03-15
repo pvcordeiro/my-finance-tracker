@@ -1,6 +1,5 @@
 "use client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { TrendingUp, TrendingDown, Maximize2, Minimize2 } from "lucide-react";
 import { useState, useRef, useCallback, useEffect } from "react";
 import { cn } from "@/lib/utils";
@@ -170,6 +169,11 @@ export function DetailsTable({ data }: DetailsTableProps) {
           </div>
         </CardHeader>
         <CardContent>
+          <div className="relative">
+            {/* Right-edge scroll affordance — only visible on mobile when not fullscreen */}
+            {fullscreenState !== "income" && (
+              <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-card to-transparent z-30 md:hidden" />
+            )}
           <div
             ref={incomeWrapperRef}
             className={cn(
@@ -226,20 +230,10 @@ export function DetailsTable({ data }: DetailsTableProps) {
                         key={month.label}
                         className={cn(
                           "text-center px-2 py-2 font-semibold min-w-[70px] relative text-soft-shadow",
-                          isCurrent && "text-primary"
+                          isCurrent && "text-primary bg-primary/5"
                         )}
                       >
-                        <div className="flex flex-col items-center gap-0.5">
-                          <span>{month.label}</span>
-                          {isCurrent && (
-                            <Badge
-                              variant="secondary"
-                              className="text-[10px] px-1.5 py-0 h-4 leading-4"
-                            >
-                              {t("entries.now")}
-                            </Badge>
-                          )}
-                        </div>
+                        {month.label}
                       </th>
                     );
                   })}
@@ -333,6 +327,7 @@ export function DetailsTable({ data }: DetailsTableProps) {
               </tbody>
             </table>
           </div>
+          </div>
         </CardContent>
       </Card>
 
@@ -372,6 +367,11 @@ export function DetailsTable({ data }: DetailsTableProps) {
           </div>
         </CardHeader>
         <CardContent>
+          <div className="relative">
+            {/* Right-edge scroll affordance — only visible on mobile when not fullscreen */}
+            {fullscreenState !== "expense" && (
+              <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-card to-transparent z-30 md:hidden" />
+            )}
           <div
             ref={expenseWrapperRef}
             className={cn(
@@ -428,20 +428,10 @@ export function DetailsTable({ data }: DetailsTableProps) {
                         key={month.label}
                         className={cn(
                           "text-center px-2 py-2 font-semibold min-w-[70px] relative text-soft-shadow",
-                          isCurrent && "text-primary"
+                          isCurrent && "text-primary bg-primary/5"
                         )}
                       >
-                        <div className="flex flex-col items-center gap-0.5">
-                          <span>{month.label}</span>
-                          {isCurrent && (
-                            <Badge
-                              variant="secondary"
-                              className="text-[10px] px-1.5 py-0 h-4 leading-4"
-                            >
-                              {t("entries.now")}
-                            </Badge>
-                          )}
-                        </div>
+                        {month.label}
                       </th>
                     );
                   })}
@@ -501,6 +491,7 @@ export function DetailsTable({ data }: DetailsTableProps) {
                 )}
               </tbody>
             </table>
+          </div>
           </div>
         </CardContent>
       </Card>
