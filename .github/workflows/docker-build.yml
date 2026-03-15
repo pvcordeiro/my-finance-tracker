@@ -12,13 +12,6 @@ on:
       - "DOCKER.md"
       - ".github/workflows/**"
       - "!.github/workflows/docker-build.yml"
-  pull_request:
-    branches:
-      - main
-    paths-ignore:
-      - "**.md"
-      - "README.md"
-      - "DOCKER.md"
   workflow_dispatch:
 
 env:

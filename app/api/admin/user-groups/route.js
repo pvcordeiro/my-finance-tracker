@@ -5,41 +5,32 @@ import {
   getSessionFromRequest,
 } from "../../../../lib/session.js";
 
-async function verifyAdmin(request) {
+function verifyAdmin(request) {
   const sessionToken = getSessionFromRequest(request);
-  const userSession = await validateSession(sessionToken);
+  const userSession = validateSession(sessionToken);
   return userSession && userSession.is_admin == true;
 }
 
 export async function GET(request) {
   try {
-    if (!(await verifyAdmin(request))) {
+    if (!verifyAdmin(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const db = await getDatabase();
-    const userGroups = await new Promise((resolve, reject) => {
-      db.all(
-        `
-          SELECT
-            ug.id,
-            ug.user_id,
-            ug.group_id,
-            ug.joined_at,
-            u.username,
-            g.name as group_name
-          FROM user_groups ug
-          JOIN users u ON ug.user_id = u.id
-          JOIN groups g ON ug.group_id = g.id
-          ORDER BY ug.joined_at DESC
-        `,
-        [],
-        (err, rows) => {
-          if (err) reject(err);
-          else resolve(rows);
-        }
-      );
-    });
+    const db = getDatabase();
+    const userGroups = db.prepare(`
+      SELECT
+        ug.id,
+        ug.user_id,
+        ug.group_id,
+        ug.joined_at,
+        u.username,
+        g.name as group_name
+      FROM user_groups ug
+      JOIN users u ON ug.user_id = u.id
+      JOIN groups g ON ug.group_id = g.id
+      ORDER BY ug.joined_at DESC
+    `).all() ?? [];
 
     return NextResponse.json({ userGroups });
   } catch (error) {
@@ -53,7 +44,7 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
-    if (!(await verifyAdmin(request))) {
+    if (!verifyAdmin(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -89,40 +80,25 @@ export async function POST(request) {
       );
     }
 
-    const db = await getDatabase();
+    const db = getDatabase();
 
-    const user = await new Promise((resolve, reject) => {
-      db.get("SELECT id FROM users WHERE id = ?", [userId], (err, row) => {
-        if (err) reject(err);
-        else resolve(row);
-      });
-    });
-
+    const user = db.prepare(
+      "SELECT id FROM users WHERE id = ?"
+    ).get(userId);
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const group = await new Promise((resolve, reject) => {
-      db.get("SELECT id FROM groups WHERE id = ?", [groupId], (err, row) => {
-        if (err) reject(err);
-        else resolve(row);
-      });
-    });
-
+    const group = db.prepare(
+      "SELECT id FROM groups WHERE id = ?"
+    ).get(groupId);
     if (!group) {
       return NextResponse.json({ error: "Group not found" }, { status: 404 });
     }
 
-    const existing = await new Promise((resolve, reject) => {
-      db.get(
-        "SELECT id FROM user_groups WHERE user_id = ? AND group_id = ?",
-        [numericUserId, numericGroupId],
-        (err, row) => {
-          if (err) reject(err);
-          else resolve(row);
-        }
-      );
-    });
+    const existing = db.prepare(
+      "SELECT id FROM user_groups WHERE user_id = ? AND group_id = ?"
+    ).get(numericUserId, numericGroupId);
 
     if (existing) {
       return NextResponse.json(
@@ -131,16 +107,10 @@ export async function POST(request) {
       );
     }
 
-    await new Promise((resolve, reject) => {
-      db.run(
-        `INSERT INTO user_groups (user_id, group_id, joined_at) VALUES (?, ?, CURRENT_TIMESTAMP)`,
-        [numericUserId, numericGroupId],
-        function (err) {
-          if (err) reject(err);
-          else resolve();
-        }
-      );
-    });
+    db.prepare(
+      `INSERT INTO user_groups (user_id, group_id, joined_at) VALUES (?, ?, CURRENT_TIMESTAMP)`
+    ).run(numericUserId, numericGroupId);
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Assign user to group error:", error);
@@ -153,7 +123,7 @@ export async function POST(request) {
 
 export async function DELETE(request) {
   try {
-    if (!(await verifyAdmin(request))) {
+    if (!verifyAdmin(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -168,18 +138,11 @@ export async function DELETE(request) {
       );
     }
 
-    const db = await getDatabase();
+    const db = getDatabase();
 
-    const result = await new Promise((resolve, reject) => {
-      db.run(
-        "DELETE FROM user_groups WHERE user_id = ? AND group_id = ?",
-        [userId, groupId],
-        function (err) {
-          if (err) reject(err);
-          else resolve({ changes: this.changes });
-        }
-      );
-    });
+    const result = db.prepare(
+      "DELETE FROM user_groups WHERE user_id = ? AND group_id = ?"
+    ).run(userId, groupId);
 
     if (result.changes === 0) {
       return NextResponse.json(
@@ -188,16 +151,9 @@ export async function DELETE(request) {
       );
     }
 
-    await new Promise((resolve, reject) => {
-      db.run(
-        "UPDATE users SET last_selected_group_id = NULL WHERE id = ? AND last_selected_group_id = ?",
-        [userId, groupId],
-        function (err) {
-          if (err) reject(err);
-          else resolve();
-        }
-      );
-    });
+    db.prepare(
+      "UPDATE users SET last_selected_group_id = NULL WHERE id = ? AND last_selected_group_id = ?"
+    ).run(userId, groupId);
 
     return NextResponse.json({ success: true });
   } catch (error) {

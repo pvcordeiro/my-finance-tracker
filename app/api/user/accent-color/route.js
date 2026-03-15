@@ -21,36 +21,18 @@ export async function GET(request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const session = await validateSession(sessionToken);
+    const session = validateSession(sessionToken);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const db = await getDatabase();
+    const db = getDatabase();
+    const row = db.prepare(
+      `SELECT accent_color FROM users WHERE id = ?`
+    ).get(session.id);
 
-    return new Promise((resolve) => {
-      db.get(
-        `SELECT accent_color FROM users WHERE id = ?`,
-        [session.id],
-        (err, row) => {
-          if (err) {
-            console.error("Database error:", err);
-            resolve(
-              NextResponse.json(
-                { error: "Failed to fetch accent color" },
-                { status: 500 }
-              )
-            );
-            return;
-          }
-
-          resolve(
-            NextResponse.json({
-              accentColor: row?.accent_color || "blue",
-            })
-          );
-        }
-      );
+    return NextResponse.json({
+      accentColor: row?.accent_color || "blue",
     });
   } catch (error) {
     console.error("Error fetching accent color:", error);
@@ -68,7 +50,7 @@ export async function POST(request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const session = await validateSession(sessionToken);
+    const session = validateSession(sessionToken);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -82,33 +64,12 @@ export async function POST(request) {
       );
     }
 
-    const db = await getDatabase();
+    const db = getDatabase();
+    db.prepare(
+      `UPDATE users SET accent_color = ? WHERE id = ?`
+    ).run(accentColor, session.id);
 
-    return new Promise((resolve) => {
-      db.run(
-        `UPDATE users SET accent_color = ? WHERE id = ?`,
-        [accentColor, session.id],
-        function (err) {
-          if (err) {
-            console.error("Database error:", err);
-            resolve(
-              NextResponse.json(
-                { error: "Failed to update accent color" },
-                { status: 500 }
-              )
-            );
-            return;
-          }
-
-          resolve(
-            NextResponse.json({
-              success: true,
-              accentColor,
-            })
-          );
-        }
-      );
-    });
+    return NextResponse.json({ success: true, accentColor });
   } catch (error) {
     console.error("Error updating accent color:", error);
     return NextResponse.json(

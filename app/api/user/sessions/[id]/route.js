@@ -9,75 +9,38 @@ export async function DELETE(request, { params }) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const session = await validateSession(sessionToken);
+    const session = validateSession(sessionToken);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { id } = params;
-    const db = await getDatabase();
+    const db = getDatabase();
 
-    return new Promise((resolve) => {
-      db.get(
-        `SELECT id, user_id, token FROM sessions WHERE id = ?`,
-        [id],
-        (err, row) => {
-          if (err) {
-            console.error("Database error:", err);
-            resolve(
-              NextResponse.json(
-                { error: "Failed to revoke session" },
-                { status: 500 }
-              )
-            );
-            return;
-          }
+    const row = db.prepare(
+      `SELECT id, user_id, token FROM sessions WHERE id = ?`
+    ).get(id);
 
-          if (!row) {
-            resolve(
-              NextResponse.json({ error: "Session not found" }, { status: 404 })
-            );
-            return;
-          }
+    if (!row) {
+      return NextResponse.json({ error: "Session not found" }, { status: 404 });
+    }
 
-          if (row.user_id !== session.id) {
-            resolve(
-              NextResponse.json({ error: "Unauthorized" }, { status: 403 })
-            );
-            return;
-          }
+    if (row.user_id !== session.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
 
-          if (row.token === sessionToken) {
-            resolve(
-              NextResponse.json(
-                { error: "Cannot revoke current session" },
-                { status: 400 }
-              )
-            );
-            return;
-          }
-
-          db.run(`DELETE FROM sessions WHERE id = ?`, [id], (err) => {
-            if (err) {
-              console.error("Database error:", err);
-              resolve(
-                NextResponse.json(
-                  { error: "Failed to revoke session" },
-                  { status: 500 }
-                )
-              );
-              return;
-            }
-
-            resolve(
-              NextResponse.json({
-                success: true,
-                message: "Session revoked successfully",
-              })
-            );
-          });
-        }
+    if (row.token === sessionToken) {
+      return NextResponse.json(
+        { error: "Cannot revoke current session" },
+        { status: 400 }
       );
+    }
+
+    db.prepare(`DELETE FROM sessions WHERE id = ?`).run(id);
+
+    return NextResponse.json({
+      success: true,
+      message: "Session revoked successfully",
     });
   } catch (error) {
     console.error("Error revoking session:", error);

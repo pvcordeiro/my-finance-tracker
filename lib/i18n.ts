@@ -427,6 +427,14 @@ export const translations = {
       settings: "Settings",
       admin: "Admin",
     },
+    pwa: {
+      title: "Finance Tracker",
+      subtitle: "Add to Home Screen",
+      description: "Install for quick access and offline use — works even without internet.",
+      notNow: "Not now",
+      install: "Install app",
+      dismiss: "Dismiss",
+    },
     months: {
       jan: "Jan",
       feb: "Feb",
@@ -886,6 +894,14 @@ export const translations = {
       details: "Detalhes",
       settings: "Configurações",
       admin: "Admin",
+    },
+    pwa: {
+      title: "Controle Financeiro",
+      subtitle: "Adicionar à Tela Inicial",
+      description: "Instale para acesso rápido e uso offline — funciona mesmo sem internet.",
+      notNow: "Agora não",
+      install: "Instalar app",
+      dismiss: "Dispensar",
     },
     months: {
       jan: "Jan",

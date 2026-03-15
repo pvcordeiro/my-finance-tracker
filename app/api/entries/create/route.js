@@ -24,18 +24,12 @@ export const POST = withAuth(async (request) => {
         { status: 400 }
       );
     }
-    const db = await getDatabase();
-    const entryId = await new Promise((resolve, reject) => {
-      db.run(
-        `INSERT INTO entries (group_id, user_id, name, type, created_at, updated_at)
-         VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-        [groupId, user.id, name, type],
-        function (err) {
-          if (err) reject(err);
-          else resolve(this.lastID);
-        }
-      );
-    });
+    const db = getDatabase();
+    const result = db.prepare(
+      `INSERT INTO entries (group_id, user_id, name, type, created_at, updated_at)
+       VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
+    ).run(groupId, user.id, name, type);
+    const entryId = result.lastInsertRowid;
 
     notifyEntryChange(groupId, "create", {
       entryId,

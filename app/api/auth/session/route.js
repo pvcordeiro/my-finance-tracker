@@ -12,7 +12,7 @@ export async function GET(request) {
       return NextResponse.json({ error: "No session found" }, { status: 401 });
     }
 
-    const user = await validateSession(sessionToken);
+    const user = validateSession(sessionToken);
 
     if (!user) {
       return NextResponse.json(

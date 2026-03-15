@@ -6,25 +6,20 @@ import {
   getSessionFromRequest,
 } from "../../../../lib/session.js";
 
-async function verifyAdmin(request) {
+function verifyAdmin(request) {
   const sessionToken = getSessionFromRequest(request);
-  const userSession = await validateSession(sessionToken);
+  const userSession = validateSession(sessionToken);
   return userSession && userSession.is_admin == true;
 }
 
 export async function GET(request) {
   try {
-    if (!(await verifyAdmin(request))) {
+    if (!verifyAdmin(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const db = await getDatabase();
-    const settings = await new Promise((resolve, reject) => {
-      db.all("SELECT key, value FROM settings", [], (err, rows) => {
-        if (err) reject(err);
-        else resolve(rows);
-      });
-    });
+    const db = getDatabase();
+    const settings = db.prepare("SELECT key, value FROM settings").all() ?? [];
 
     const settingsObj = {};
     settings.forEach((setting) => {
@@ -43,7 +38,7 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
-    if (!(await verifyAdmin(request))) {
+    if (!verifyAdmin(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -66,22 +61,13 @@ export async function POST(request) {
       );
     }
 
-    const db = await getDatabase();
+    const db = getDatabase();
 
     for (const [key, value] of Object.entries(validation.data)) {
-      await new Promise((resolve, reject) => {
-        db.run(
-          `
-            INSERT OR REPLACE INTO settings (key, value, updated_at) 
-            VALUES (?, ?, CURRENT_TIMESTAMP)
-          `,
-          [key, value.toString()],
-          function (err) {
-            if (err) reject(err);
-            else resolve();
-          }
-        );
-      });
+      db.prepare(
+        `INSERT OR REPLACE INTO settings (key, value, updated_at) 
+         VALUES (?, ?, CURRENT_TIMESTAMP)`
+      ).run(key, value.toString());
     }
 
     return NextResponse.json({

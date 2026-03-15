@@ -16,26 +16,17 @@ export const GET = withAuth(async (request) => {
       return NextResponse.json({ entries: [], code: "no_group" });
     }
 
-    const db = await getDatabase();
+    const db = getDatabase();
 
-    const entriesWithAmounts = await new Promise((resolve, reject) => {
-      db.all(
-        `
-        SELECT 
-          e.id, e.name, e.type, e.created_at, e.updated_at,
-          ea.month, ea.amount
-        FROM entries e
-        LEFT JOIN entry_amounts ea ON e.id = ea.entry_id
-        WHERE e.group_id = ?
-        ORDER BY e.created_at DESC, ea.month ASC
-      `,
-        [groupId],
-        (err, rows) => {
-          if (err) reject(err);
-          else resolve(rows);
-        }
-      );
-    });
+    const entriesWithAmounts = db.prepare(`
+      SELECT 
+        e.id, e.name, e.type, e.created_at, e.updated_at,
+        ea.month, ea.amount
+      FROM entries e
+      LEFT JOIN entry_amounts ea ON e.id = ea.entry_id
+      WHERE e.group_id = ?
+      ORDER BY e.created_at DESC, ea.month ASC
+    `).all(groupId) ?? [];
 
     const entriesMap = new Map();
 
@@ -59,16 +50,9 @@ export const GET = withAuth(async (request) => {
 
     const entries = Array.from(entriesMap.values());
 
-    const lastUpdatedInfo = await new Promise((resolve, reject) => {
-      db.get(
-        "SELECT MAX(updated_at) as last_updated, user_id as last_updated_user_id FROM entries WHERE group_id = ?",
-        [groupId],
-        (err, row) => {
-          if (err) reject(err);
-          else resolve(row);
-        }
-      );
-    });
+    const lastUpdatedInfo = db.prepare(
+      "SELECT MAX(updated_at) as last_updated, user_id as last_updated_user_id FROM entries WHERE group_id = ?"
+    ).get(groupId);
 
     return NextResponse.json({
       entries,
@@ -95,8 +79,6 @@ export const POST = withAuth(async (request) => {
         { status: 403 }
       );
     }
-
-    const currentYear = new Date().getFullYear();
 
     const rawBody = await request.text();
     if (rawBody.length > 200_000) {
@@ -142,54 +124,25 @@ export const POST = withAuth(async (request) => {
       }
     }
 
-    const db = await getDatabase();
+    const db = getDatabase();
 
-    await new Promise((resolve, reject) => {
-      db.run("BEGIN TRANSACTION", (err) => {
-        if (err) reject(err);
-        else resolve();
-      });
-    });
+    const doTransaction = db.transaction(() => {
+      db.prepare(
+        `DELETE FROM entry_amounts WHERE entry_id IN (SELECT id FROM entries WHERE group_id = ?)`
+      ).run(groupId);
 
-    try {
-      await new Promise((resolve, reject) => {
-        db.run(
-          `
-          DELETE FROM entry_amounts 
-          WHERE entry_id IN (SELECT id FROM entries WHERE group_id = ?)
-        `,
-          [groupId],
-          (err) => {
-            if (err) reject(err);
-            else resolve();
-          }
-        );
-      });
-
-      await new Promise((resolve, reject) => {
-        db.run("DELETE FROM entries WHERE group_id = ?", [groupId], (err) => {
-          if (err) reject(err);
-          else resolve();
-        });
-      });
+      db.prepare("DELETE FROM entries WHERE group_id = ?").run(groupId);
 
       let insertedCount = 0;
       for (const entry of entries) {
         if (entry.name && entry.type && entry.amounts) {
-          const entryId = await new Promise((resolve, reject) => {
-            db.run(
-              `INSERT INTO entries (group_id, user_id, name, type, created_at, updated_at) 
-               VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-              [groupId, user.id, entry.name, entry.type],
-              function (err) {
-                if (err) reject(err);
-                else resolve(this.lastID);
-              }
-            );
-          });
+          const entryResult = db.prepare(
+            `INSERT INTO entries (group_id, user_id, name, type, created_at, updated_at) 
+             VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
+          ).run(groupId, user.id, entry.name, entry.type);
+          const entryId = entryResult.lastInsertRowid;
 
           let amounts = entry.amounts;
-
           if (typeof amounts === "string") {
             try {
               amounts = JSON.parse(amounts);
@@ -200,25 +153,13 @@ export const POST = withAuth(async (request) => {
           }
 
           if (Array.isArray(amounts)) {
-            for (
-              let monthIndex = 0;
-              monthIndex < amounts.length;
-              monthIndex++
-            ) {
+            for (let monthIndex = 0; monthIndex < amounts.length; monthIndex++) {
               const month = monthIndex + 1;
               const amount = parseFloat(amounts[monthIndex]) || 0;
-
-              await new Promise((resolve, reject) => {
-                db.run(
-                  `INSERT OR REPLACE INTO entry_amounts (entry_id, month, amount, created_at, updated_at) 
-                   VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-                  [entryId, month, amount],
-                  function (err) {
-                    if (err) reject(err);
-                    else resolve();
-                  }
-                );
-              });
+              db.prepare(
+                `INSERT OR REPLACE INTO entry_amounts (entry_id, month, amount, created_at, updated_at) 
+                 VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
+              ).run(entryId, month, amount);
             }
           }
 
@@ -226,22 +167,14 @@ export const POST = withAuth(async (request) => {
         }
       }
 
-      await new Promise((resolve, reject) => {
-        db.run("COMMIT", (err) => {
-          if (err) reject(err);
-          else resolve();
-        });
-      });
+      return insertedCount;
+    });
 
-      notifyEntryChange(groupId, "bulk-update", { timestamp: Date.now() });
+    const insertedCount = doTransaction();
 
-      return NextResponse.json({ success: true, count: insertedCount });
-    } catch (error) {
-      await new Promise((resolve) => {
-        db.run("ROLLBACK", () => resolve());
-      });
-      throw error;
-    }
+    notifyEntryChange(groupId, "bulk-update", { timestamp: Date.now() });
+
+    return NextResponse.json({ success: true, count: insertedCount });
   } catch (error) {
     console.error("Save entries error:", error);
     return NextResponse.json(
@@ -266,18 +199,11 @@ export const DELETE = withAuth(async (request) => {
       );
     }
 
-    const db = await getDatabase();
+    const db = getDatabase();
 
-    const entry = await new Promise((resolve, reject) => {
-      db.get(
-        "SELECT id FROM entries WHERE id = ? AND group_id = ?",
-        [entryId, groupId],
-        (err, row) => {
-          if (err) reject(err);
-          else resolve(row);
-        }
-      );
-    });
+    const entry = db.prepare(
+      "SELECT id FROM entries WHERE id = ? AND group_id = ?"
+    ).get(entryId, groupId);
 
     if (!entry) {
       return NextResponse.json(
@@ -286,16 +212,9 @@ export const DELETE = withAuth(async (request) => {
       );
     }
 
-    const result = await new Promise((resolve, reject) => {
-      db.run(
-        "DELETE FROM entries WHERE id = ? AND group_id = ?",
-        [entryId, groupId],
-        function (err) {
-          if (err) reject(err);
-          else resolve({ changes: this.changes });
-        }
-      );
-    });
+    const result = db.prepare(
+      "DELETE FROM entries WHERE id = ? AND group_id = ?"
+    ).run(entryId, groupId);
 
     if (result.changes === 0) {
       return NextResponse.json({ error: "Entry not found" }, { status: 404 });
@@ -334,34 +253,21 @@ export const PATCH = withAuth(async (request) => {
         { status: 400 }
       );
     }
-    const db = await getDatabase();
+    const db = getDatabase();
 
-    const entry = await new Promise((resolve, reject) => {
-      db.get(
-        "SELECT id FROM entries WHERE id = ? AND group_id = ?",
-        [id, groupId],
-        (err, row) => {
-          if (err) reject(err);
-          else resolve(row);
-        }
-      );
-    });
+    const entry = db.prepare(
+      "SELECT id FROM entries WHERE id = ? AND group_id = ?"
+    ).get(id, groupId);
+
     if (!entry) {
       return NextResponse.json({ error: "Entry not found" }, { status: 404 });
     }
 
     const updates = {};
     if (name !== undefined) {
-      await new Promise((resolve, reject) => {
-        db.run(
-          `UPDATE entries SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-          [name, id],
-          function (err) {
-            if (err) reject(err);
-            else resolve();
-          }
-        );
-      });
+      db.prepare(
+        `UPDATE entries SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`
+      ).run(name, id);
       updates.name = name;
     }
 
@@ -369,17 +275,10 @@ export const PATCH = withAuth(async (request) => {
       const numericMonth = Number(month);
       const numericAmount = Number(amount) || 0;
 
-      await new Promise((resolve, reject) => {
-        db.run(
-          `INSERT OR REPLACE INTO entry_amounts (entry_id, month, amount, created_at, updated_at) 
-           VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-          [id, numericMonth, numericAmount],
-          function (err) {
-            if (err) reject(err);
-            else resolve();
-          }
-        );
-      });
+      db.prepare(
+        `INSERT OR REPLACE INTO entry_amounts (entry_id, month, amount, created_at, updated_at) 
+         VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
+      ).run(id, numericMonth, numericAmount);
 
       updates.month = numericMonth;
       updates.amount = numericAmount;

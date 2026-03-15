@@ -7,13 +7,13 @@ import {
 } from "../../../../lib/session.js";
 
 const adminFailMap = new Map();
-async function verifyAdmin(request) {
+function verifyAdmin(request) {
   const ip =
     request.headers.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
   const rec = adminFailMap.get(ip);
   if (rec && rec.blockUntil && rec.blockUntil > Date.now()) return false;
   const sessionToken = getSessionFromRequest(request);
-  const userSession = await validateSession(sessionToken);
+  const userSession = validateSession(sessionToken);
   const ok = !!(userSession && userSession.is_admin == true);
   if (!ok) {
     const now = Date.now();
@@ -29,33 +29,24 @@ async function verifyAdmin(request) {
 
 export async function GET(request) {
   try {
-    if (!(await verifyAdmin(request))) {
+    if (!verifyAdmin(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const db = await getDatabase();
-    const userRows = await new Promise((resolve, reject) => {
-      db.all(
-        `
-          SELECT 
-            u.id, 
-            u.username, 
-            u.is_admin,
-            u.created_at,
-            g.name as group_name,
-            g.id as group_id
-          FROM users u 
-          LEFT JOIN user_groups ug ON u.id = ug.user_id
-          LEFT JOIN groups g ON ug.group_id = g.id
-          ORDER BY u.created_at DESC, ug.joined_at ASC
-        `,
-        [],
-        (err, rows) => {
-          if (err) reject(err);
-          else resolve(rows);
-        }
-      );
-    });
+    const db = getDatabase();
+    const userRows = db.prepare(`
+      SELECT 
+        u.id, 
+        u.username, 
+        u.is_admin,
+        u.created_at,
+        g.name as group_name,
+        g.id as group_id
+      FROM users u 
+      LEFT JOIN user_groups ug ON u.id = ug.user_id
+      LEFT JOIN groups g ON ug.group_id = g.id
+      ORDER BY u.created_at DESC, ug.joined_at ASC
+    `).all() ?? [];
 
     const usersMap = new Map();
     userRows.forEach((row) => {
@@ -92,7 +83,7 @@ export async function GET(request) {
 
 export async function DELETE(request) {
   try {
-    if (!(await verifyAdmin(request))) {
+    if (!verifyAdmin(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -111,35 +102,19 @@ export async function DELETE(request) {
       );
     }
 
-    const db = await getDatabase();
+    const db = getDatabase();
 
-    await new Promise((resolve, reject) => {
-      db.run(
-        `
-        DELETE FROM groups
-        WHERE created_by = ? AND id NOT IN (
-          SELECT DISTINCT group_id FROM user_groups WHERE user_id != ?
-        )
-      `,
-        [validation.data.userId, validation.data.userId],
-        function (err) {
-          if (err) reject(err);
-          else resolve();
-        }
-      );
-    });
+    db.prepare(
+      `DELETE FROM groups
+       WHERE created_by = ? AND id NOT IN (
+         SELECT DISTINCT group_id FROM user_groups WHERE user_id != ?
+       )`
+    ).run(validation.data.userId, validation.data.userId);
 
     try {
-      await new Promise((resolve, reject) => {
-        db.run(
-          "UPDATE groups SET created_by = NULL WHERE created_by = ?",
-          [validation.data.userId],
-          function (err) {
-            if (err) reject(err);
-            else resolve();
-          }
-        );
-      });
+      db.prepare(
+        "UPDATE groups SET created_by = NULL WHERE created_by = ?"
+      ).run(validation.data.userId);
     } catch {
       return NextResponse.json(
         {
@@ -150,16 +125,9 @@ export async function DELETE(request) {
       );
     }
 
-    const result = await new Promise((resolve, reject) => {
-      db.run(
-        "DELETE FROM users WHERE id = ?",
-        [validation.data.userId],
-        function (err) {
-          if (err) reject(err);
-          else resolve({ changes: this.changes });
-        }
-      );
-    });
+    const result = db.prepare(
+      "DELETE FROM users WHERE id = ?"
+    ).run(validation.data.userId);
 
     if (result.changes === 0) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
@@ -180,7 +148,7 @@ export async function DELETE(request) {
 
 export async function PATCH(request) {
   try {
-    if (!(await verifyAdmin(request))) {
+    if (!verifyAdmin(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -199,18 +167,11 @@ export async function PATCH(request) {
       );
     }
 
-    const db = await getDatabase();
+    const db = getDatabase();
 
-    const currentUser = await new Promise((resolve, reject) => {
-      db.get(
-        "SELECT is_admin FROM users WHERE id = ?",
-        [validation.data.userId],
-        (err, row) => {
-          if (err) reject(err);
-          else resolve(row);
-        }
-      );
-    });
+    const currentUser = db.prepare(
+      "SELECT is_admin FROM users WHERE id = ?"
+    ).get(validation.data.userId);
 
     if (!currentUser) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
@@ -218,16 +179,9 @@ export async function PATCH(request) {
 
     const newAdminStatus = currentUser.is_admin == true ? 0 : 1;
 
-    await new Promise((resolve, reject) => {
-      db.run(
-        "UPDATE users SET is_admin = ? WHERE id = ?",
-        [newAdminStatus, validation.data.userId],
-        function (err) {
-          if (err) reject(err);
-          else resolve({ changes: this.changes });
-        }
-      );
-    });
+    db.prepare(
+      "UPDATE users SET is_admin = ? WHERE id = ?"
+    ).run(newAdminStatus, validation.data.userId);
 
     return NextResponse.json({
       success: true,

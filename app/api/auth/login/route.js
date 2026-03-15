@@ -33,17 +33,10 @@ export async function POST(request) {
 
     const { username, password } = validation.data;
 
-    const db = await getDatabase();
-    const user = await new Promise((resolve, reject) => {
-      db.get(
-        "SELECT * FROM users WHERE username = ?",
-        [username],
-        (err, row) => {
-          if (err) reject(err);
-          else resolve(row);
-        }
-      );
-    });
+    const db = getDatabase();
+    const user = db.prepare(
+      "SELECT * FROM users WHERE username = ?"
+    ).get(username);
 
     if (!user) {
       return NextResponse.json(
@@ -62,22 +55,15 @@ export async function POST(request) {
     }
 
     const deviceInfo = getDeviceInfo(request);
-    const sessionToken = await createSession(user.id, deviceInfo);
+    const sessionToken = createSession(user.id, deviceInfo);
 
-    const groups = await new Promise((resolve, reject) => {
-      db.all(
-        `SELECT ug.group_id, g.name
-         FROM user_groups ug
-         JOIN groups g ON ug.group_id = g.id
-         WHERE ug.user_id = ?
-         ORDER BY ug.joined_at ASC`,
-        [user.id],
-        (err, rows) => {
-          if (err) reject(err);
-          else resolve(rows || []);
-        }
-      );
-    });
+    const groups = db.prepare(
+      `SELECT ug.group_id, g.name
+       FROM user_groups ug
+       JOIN groups g ON ug.group_id = g.id
+       WHERE ug.user_id = ?
+       ORDER BY ug.joined_at ASC`
+    ).all(user.id) ?? [];
     const current_group_id = groups.length > 0 ? groups[0].group_id : null;
 
     const response = NextResponse.json({

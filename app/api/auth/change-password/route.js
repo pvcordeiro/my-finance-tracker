@@ -17,7 +17,7 @@ export async function POST(request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const sessionUser = await validateSession(sessionToken);
+    const sessionUser = validateSession(sessionToken);
     if (!sessionUser) {
       return NextResponse.json({ error: "Invalid session" }, { status: 401 });
     }
@@ -33,17 +33,10 @@ export async function POST(request) {
 
     const { current_password, new_password } = validation.data;
 
-    const db = await getDatabase();
-    const userRow = await new Promise((resolve, reject) => {
-      db.get(
-        "SELECT id, password_hash FROM users WHERE id = ?",
-        [sessionUser.id],
-        (err, row) => {
-          if (err) reject(err);
-          else resolve(row);
-        }
-      );
-    });
+    const db = getDatabase();
+    const userRow = db.prepare(
+      "SELECT id, password_hash FROM users WHERE id = ?"
+    ).get(sessionUser.id);
 
     if (!userRow) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
@@ -59,16 +52,9 @@ export async function POST(request) {
 
     const newHash = hashPassword(new_password);
 
-    await new Promise((resolve, reject) => {
-      db.run(
-        "UPDATE users SET password_hash = ? WHERE id = ?",
-        [newHash, sessionUser.id],
-        function (err) {
-          if (err) reject(err);
-          else resolve();
-        }
-      );
-    });
+    db.prepare(
+      "UPDATE users SET password_hash = ? WHERE id = ?"
+    ).run(newHash, sessionUser.id);
 
     return NextResponse.json({ message: "Password updated successfully" });
   } catch (error) {
