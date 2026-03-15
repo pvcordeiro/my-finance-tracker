@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle } from "lucide-react";
+import { useLanguage } from "@/hooks/use-language";
 
 interface ConflictConfirmationDialogProps {
   isOpen: boolean;
@@ -28,6 +29,8 @@ export function ConflictConfirmationDialog({
   onCancel,
   conflictType,
 }: ConflictConfirmationDialogProps) {
+  const { t } = useLanguage();
+
   if (!conflictingData) return null;
 
   const getConflictingFields = () => {
@@ -52,18 +55,8 @@ export function ConflictConfirmationDialog({
         for (let month = 0; month < 12; month++) {
           if (serverIncome.amounts[month] !== income.amounts[month]) {
             const monthNames = [
-              "Jan",
-              "Feb",
-              "Mar",
-              "Apr",
-              "May",
-              "Jun",
-              "Jul",
-              "Aug",
-              "Sep",
-              "Oct",
-              "Nov",
-              "Dec",
+              "Jan","Feb","Mar","Apr","May","Jun",
+              "Jul","Aug","Sep","Oct","Nov","Dec",
             ];
             conflicts.push(
               `Income "${serverIncome.description}" ${monthNames[month]}: Current ${serverIncome.amounts[month]}, Your change: ${income.amounts[month]}`
@@ -86,18 +79,8 @@ export function ConflictConfirmationDialog({
         for (let month = 0; month < 12; month++) {
           if (serverExpense.amounts[month] !== expense.amounts[month]) {
             const monthNames = [
-              "Jan",
-              "Feb",
-              "Mar",
-              "Apr",
-              "May",
-              "Jun",
-              "Jul",
-              "Aug",
-              "Sep",
-              "Oct",
-              "Nov",
-              "Dec",
+              "Jan","Feb","Mar","Apr","May","Jun",
+              "Jul","Aug","Sep","Oct","Nov","Dec",
             ];
             conflicts.push(
               `Expense "${serverExpense.description}" ${monthNames[month]}: Current ${serverExpense.amounts[month]}, Your change: ${expense.amounts[month]}`
@@ -112,54 +95,53 @@ export function ConflictConfirmationDialog({
 
   const conflicts = getConflictingFields();
 
-  const titleMap: Record<string, string> = {
-    bank: "Bank Amount Conflict",
-    entries: "Entries Conflict",
-    all: "Data Conflict Detected",
-  };
-  const dialogTitle = conflictType
-    ? titleMap[conflictType] || titleMap.all
-    : "Data Conflict Detected";
+  const dialogTitle =
+    conflictType === "bank"
+      ? t("entries.conflictBankTitle")
+      : conflictType === "entries"
+      ? t("entries.conflictEntriesTitle")
+      : t("entries.conflictAllTitle");
+
   const introText =
     conflictType === "bank"
-      ? "Another user has updated the bank amount since you last loaded it."
+      ? t("entries.conflictBankIntro")
       : conflictType === "entries"
-      ? "Another user has updated one or more entries since you last loaded them."
-      : "Another user has modified the data since you last loaded it.";
+      ? t("entries.conflictEntriesIntro")
+      : t("entries.conflictAllIntro");
 
   return (
     <Dialog open={isOpen} onOpenChange={onCancel}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 text-yellow-500" />
+            <AlertTriangle className="w-5 h-5 text-amber-500" />
             {dialogTitle}
           </DialogTitle>
         </DialogHeader>
         <div className="py-4">
           <p className="mb-4">
-            {introText} The following changes conflict with your modifications:
+            {introText} {t("entries.conflictFollowing")}
           </p>
           <div className="space-y-2 max-h-60 overflow-y-auto">
             {conflicts.map((conflict) => (
               <div
                 key={conflict}
-                className="p-3 bg-yellow-50 border border-yellow-200 rounded-md text-sm text-black font-bold"
+                className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-md text-sm text-amber-900 dark:text-amber-100 font-medium"
               >
                 {conflict}
               </div>
             ))}
           </div>
-          <p className="mt-4 text-sm text-gray-600">
-            Do you want to overwrite these changes with your modifications?
+          <p className="mt-4 text-sm text-muted-foreground">
+            {t("entries.conflictOverwriteQuestion")}
           </p>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onCancel}>
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button variant="destructive" onClick={onConfirm}>
-            Overwrite Changes
+            {t("entries.overwriteChanges")}
           </Button>
         </DialogFooter>
       </DialogContent>

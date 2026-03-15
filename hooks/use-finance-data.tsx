@@ -18,6 +18,31 @@ const defaultData: FinanceData = {
   expenses: [],
 };
 
+const DATA_CACHE_KEY = "finance-tracker-data-cache";
+
+function saveDataToLocalStorage(data: FinanceData) {
+  try {
+    localStorage.setItem(DATA_CACHE_KEY, JSON.stringify(data));
+  } catch {}
+}
+
+function loadDataFromLocalStorage(): FinanceData | null {
+  try {
+    const raw = localStorage.getItem(DATA_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as FinanceData;
+    // Basic validation
+    if (
+      typeof parsed.bankAmount === "number" &&
+      Array.isArray(parsed.incomes) &&
+      Array.isArray(parsed.expenses)
+    ) {
+      return parsed;
+    }
+  } catch {}
+  return null;
+}
+
 function shiftDataForRollingMonths(amounts: number[]): number[] {
   const now = new Date();
   const currentMonth = now.getMonth();
@@ -101,129 +126,154 @@ export function useFinanceData() {
   useEffect(() => {
     if (!user) return;
 
-    const eventSource = new EventSource("/api/entries/stream", {
-      withCredentials: true,
-    });
+    let eventSource: EventSource | null = null;
+    let isDestroyed = false;
 
-    eventSource.onopen = () => {
-      console.log("Entries SSE connection established");
-    };
+    const connect = () => {
+      if (isDestroyed) return;
 
-    eventSource.onmessage = async (event) => {
-      try {
-        const eventData = JSON.parse(event.data);
-        const { changeType } = eventData;
+      eventSource = new EventSource("/api/entries/stream", {
+        withCredentials: true,
+      });
 
-        if (
-          changeType === "create" ||
-          changeType === "update" ||
-          changeType === "delete" ||
-          changeType === "bulk-update"
-        ) {
-          const entriesResponse = await fetch("/api/entries", {
-            credentials: "include",
-            cache: "no-store",
-          });
+      eventSource.onopen = () => {
+        // Refresh data when SSE reconnects (we may have missed updates while offline)
+        loadDataFromServer();
+      };
 
-          if (entriesResponse.ok) {
-            const entriesData = await entriesResponse.json();
-            const entries = entriesData?.entries || [];
+      eventSource.onmessage = async (event) => {
+        try {
+          const eventData = JSON.parse(event.data);
+          const { changeType } = eventData;
 
-            const incomes = entries
-              .filter((entry: any) => entry.type === "income")
-              .map((entry: any) => ({
-                id: entry.id.toString(),
-                description: entry.name,
-                amounts: shiftDataForRollingMonths(entry.amounts),
-              }));
+          if (
+            changeType === "create" ||
+            changeType === "update" ||
+            changeType === "delete" ||
+            changeType === "bulk-update"
+          ) {
+            const entriesResponse = await fetch("/api/entries", {
+              credentials: "include",
+              cache: "no-store",
+            });
 
-            const expenses = entries
-              .filter((entry: any) => entry.type === "expense")
-              .map((entry: any) => ({
-                id: entry.id.toString(),
-                description: entry.name,
-                amounts: shiftDataForRollingMonths(entry.amounts),
-              }));
+            if (entriesResponse.ok) {
+              const entriesData = await entriesResponse.json();
+              const entries = entriesData?.entries || [];
 
-            const newIncomeTotal = incomes.reduce(
-              (sum: number, entry: FinanceEntry) =>
-                sum + entry.amounts.reduce((a: number, b: number) => a + b, 0),
-              0
-            );
-            const newExpenseTotal = expenses.reduce(
-              (sum: number, entry: FinanceEntry) =>
-                sum + entry.amounts.reduce((a: number, b: number) => a + b, 0),
-              0
-            );
+              const incomes = entries
+                .filter((entry: any) => entry.type === "income")
+                .map((entry: any) => ({
+                  id: entry.id.toString(),
+                  description: entry.name,
+                  amounts: shiftDataForRollingMonths(entry.amounts),
+                }));
 
-            if (newIncomeTotal !== prevIncomeTotalRef.current) {
-              setEntryFlashState((prev) => ({
-                ...prev,
-                incomes: {
-                  token: Date.now(),
-                  flashType:
-                    newIncomeTotal > prevIncomeTotalRef.current
-                      ? "increase"
-                      : "decrease",
-                },
-              }));
-              prevIncomeTotalRef.current = newIncomeTotal;
-            }
+              const expenses = entries
+                .filter((entry: any) => entry.type === "expense")
+                .map((entry: any) => ({
+                  id: entry.id.toString(),
+                  description: entry.name,
+                  amounts: shiftDataForRollingMonths(entry.amounts),
+                }));
 
-            if (newExpenseTotal !== prevExpenseTotalRef.current) {
-              setEntryFlashState((prev) => ({
-                ...prev,
-                expenses: {
-                  token: Date.now(),
-                  flashType:
-                    newExpenseTotal > prevExpenseTotalRef.current
-                      ? "increase"
-                      : "decrease",
-                },
-              }));
-              prevExpenseTotalRef.current = newExpenseTotal;
-            }
+              const newIncomeTotal = incomes.reduce(
+                (sum: number, entry: FinanceEntry) =>
+                  sum +
+                  entry.amounts.reduce((a: number, b: number) => a + b, 0),
+                0
+              );
+              const newExpenseTotal = expenses.reduce(
+                (sum: number, entry: FinanceEntry) =>
+                  sum +
+                  entry.amounts.reduce((a: number, b: number) => a + b, 0),
+                0
+              );
 
-            setData((prev) => {
-              return {
+              if (newIncomeTotal !== prevIncomeTotalRef.current) {
+                setEntryFlashState((prev) => ({
+                  ...prev,
+                  incomes: {
+                    token: Date.now(),
+                    flashType:
+                      newIncomeTotal > prevIncomeTotalRef.current
+                        ? "increase"
+                        : "decrease",
+                  },
+                }));
+                prevIncomeTotalRef.current = newIncomeTotal;
+              }
+
+              if (newExpenseTotal !== prevExpenseTotalRef.current) {
+                setEntryFlashState((prev) => ({
+                  ...prev,
+                  expenses: {
+                    token: Date.now(),
+                    flashType:
+                      newExpenseTotal > prevExpenseTotalRef.current
+                        ? "increase"
+                        : "decrease",
+                  },
+                }));
+                prevExpenseTotalRef.current = newExpenseTotal;
+              }
+
+              setData((prev) => {
+                return {
+                  ...prev,
+                  incomes,
+                  expenses,
+                };
+              });
+
+              setOriginalData((prev) => ({
                 ...prev,
                 incomes,
                 expenses,
-              };
-            });
+              }));
 
-            setOriginalData((prev) => ({
-              ...prev,
-              incomes,
-              expenses,
-            }));
-
-            setHasEntryChanges(false);
+              setHasEntryChanges(false);
+            }
           }
+        } catch (error) {
+          console.error("Error parsing entries SSE message:", error);
         }
-      } catch (error) {
-        console.error("Error parsing entries SSE message:", error);
+      };
+
+      eventSource.onerror = () => {
+        // When offline, close the connection silently — don't spam retries
+        if (!navigator.onLine) {
+          eventSource?.close();
+          eventSource = null;
+        }
+        // When online, EventSource will auto-retry — let it
+      };
+    };
+
+    // Reconnect SSE and refresh data when connectivity is restored
+    const handleOnline = () => {
+      if (!eventSource || eventSource.readyState === EventSource.CLOSED) {
+        connect();
       }
     };
 
-    eventSource.onerror = (error) => {
-      console.error("Entries SSE error:", {
-        readyState: eventSource.readyState,
-        url: eventSource.url,
-        error: error,
-      });
-
-      if (eventSource.readyState === EventSource.CLOSED) {
-        console.log(
-          "Entries SSE connection closed, will reconnect on next render"
-        );
-      }
-    };
+    window.addEventListener("online", handleOnline);
+    connect();
 
     return () => {
-      eventSource.close();
+      isDestroyed = true;
+      window.removeEventListener("online", handleOnline);
+      eventSource?.close();
     };
   }, [user]);
+
+  const guardOffline = (): boolean => {
+    if (!navigator.onLine) {
+      toast.warning("You're offline — changes are disabled.");
+      return true;
+    }
+    return false;
+  };
 
   const loadDataFromServer = async () => {
     if (!user) {
@@ -289,6 +339,9 @@ export function useFinanceData() {
       setData(loadedData);
       setOriginalData(loadedData);
 
+      // Persist to localStorage so offline mode can show real data
+      saveDataToLocalStorage(loadedData);
+
       prevIncomeTotalRef.current = incomes.reduce(
         (sum: number, entry: FinanceEntry) =>
           sum + entry.amounts.reduce((a: number, b: number) => a + b, 0),
@@ -314,6 +367,24 @@ export function useFinanceData() {
       });
     } catch (error) {
       console.error("Error loading data from server:", error);
+      // When offline, fall back to the last known data from localStorage
+      if (!navigator.onLine) {
+        const cached = loadDataFromLocalStorage();
+        if (cached) {
+          setData(cached);
+          setOriginalData(cached);
+          prevIncomeTotalRef.current = cached.incomes.reduce(
+            (sum: number, entry: FinanceEntry) =>
+              sum + entry.amounts.reduce((a: number, b: number) => a + b, 0),
+            0
+          );
+          prevExpenseTotalRef.current = cached.expenses.reduce(
+            (sum: number, entry: FinanceEntry) =>
+              sum + entry.amounts.reduce((a: number, b: number) => a + b, 0),
+            0
+          );
+        }
+      }
     } finally {
       setIsLoading(false);
     }
@@ -323,6 +394,7 @@ export function useFinanceData() {
     dataToSave?: FinanceData,
     onSessionExpired?: () => void
   ) => {
+    if (guardOffline()) return { success: false } as const;
     try {
       const currentData = dataToSave || data;
 
@@ -375,6 +447,7 @@ export function useFinanceData() {
     id: string,
     newDescription: string
   ): Promise<CommitResult> => {
+    if (guardOffline()) return { success: false };
     const originalEntry = originalData[entryType].find((e) => e.id === id);
     if (originalEntry && originalEntry.description === newDescription) {
       return { success: false };
@@ -421,6 +494,7 @@ export function useFinanceData() {
     monthIndex: number,
     amount: number
   ): Promise<CommitResult> => {
+    if (guardOffline()) return { success: false };
     const originalEntry = originalData[entryType].find((e) => e.id === id);
     if (originalEntry && originalEntry.amounts[monthIndex] === amount) {
       return { success: false };
@@ -484,6 +558,7 @@ export function useFinanceData() {
   };
 
   const addEntry = (type: "incomes" | "expenses") => {
+    if (guardOffline()) return;
     (async () => {
       try {
         const res = await fetch("/api/entries/create", {
@@ -583,6 +658,7 @@ export function useFinanceData() {
   };
 
   const removeEntry = async (type: "incomes" | "expenses", id: string) => {
+    if (guardOffline()) return;
     try {
       const response = await fetch(`/api/entries?id=${id}`, {
         method: "DELETE",
@@ -617,6 +693,7 @@ export function useFinanceData() {
     dataToSave?: FinanceData,
     onSessionExpired?: () => void
   ) => {
+    if (guardOffline()) return { success: false } as const;
     try {
       const currentData = dataToSave || data;
 
@@ -720,6 +797,7 @@ export function useFinanceData() {
   };
 
   const addToBankAmount = async (delta: number, note?: string) => {
+    if (guardOffline()) return;
     if (delta <= 0) return;
 
     try {
@@ -758,6 +836,7 @@ export function useFinanceData() {
   };
 
   const subtractFromBankAmount = async (delta: number, note?: string) => {
+    if (guardOffline()) return;
     if (delta <= 0) return;
 
     try {

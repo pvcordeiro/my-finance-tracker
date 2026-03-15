@@ -39,6 +39,42 @@ export function GuidedEntryDialog({
   const [amounts, setAmounts] = useState<string[]>(Array(12).fill(""));
   const [currentMonthIndex, setCurrentMonthIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  // On iOS, the keyboard doesn't resize the layout viewport — it shrinks the
+  // visualViewport. We listen to visualViewport resize/scroll and shift the
+  // dialog so it stays centered in the visible area above the keyboard.
+  useEffect(() => {
+    if (!open) return;
+    const vv = window.visualViewport;
+    if (!vv) return;
+
+    const reposition = () => {
+      const el = dialogRef.current;
+      if (!el) return;
+      const visibleTop = vv.offsetTop;
+      const visibleHeight = vv.height;
+      const center = visibleTop + visibleHeight / 2;
+      el.style.top = `${center}px`;
+      el.style.transform = `translateX(-50%) translateY(-50%)`;
+      el.style.maxHeight = `${visibleHeight * 0.92}px`;
+    };
+
+    vv.addEventListener("resize", reposition);
+    vv.addEventListener("scroll", reposition);
+    reposition();
+
+    return () => {
+      vv.removeEventListener("resize", reposition);
+      vv.removeEventListener("scroll", reposition);
+      // Reset when dialog closes
+      if (dialogRef.current) {
+        dialogRef.current.style.top = "";
+        dialogRef.current.style.transform = "";
+        dialogRef.current.style.maxHeight = "";
+      }
+    };
+  }, [open]);
 
   const getMonthLabel = (monthIndex: number): string => {
     const monthKeys = [
@@ -86,15 +122,12 @@ export function GuidedEntryDialog({
 
   useEffect(() => {
     if (open && inputRef.current) {
+      const el = inputRef.current;
       setTimeout(() => {
-        inputRef.current?.focus();
-        inputRef.current?.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-        });
+        el.focus();
       }, 100);
     }
-  }, [step, open, currentMonthIndex]);
+  }, [step, open]);
 
   const handleNext = () => {
     if (step === "description") {
@@ -176,7 +209,7 @@ export function GuidedEntryDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] max-h-[85dvh] overflow-y-auto flex flex-col">
+      <DialogContent ref={dialogRef} className="sm:max-w-[500px] max-h-[85dvh] overflow-y-auto flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 pr-8">
             <span
@@ -198,7 +231,7 @@ export function GuidedEntryDialog({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="py-6 px-1 pb-1 flex-1 overflow-y-auto">
+        <div className="py-6 px-1 pb-1">
           {step === "description" && (
             <div className="space-y-4">
               <div className="space-y-2">
@@ -210,14 +243,6 @@ export function GuidedEntryDialog({
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  onFocus={(e) => {
-                    setTimeout(() => {
-                      e.target.scrollIntoView({
-                        behavior: "smooth",
-                        block: "center",
-                      });
-                    }, 300);
-                  }}
                   className="text-base"
                 />
               </div>
@@ -272,14 +297,6 @@ export function GuidedEntryDialog({
                       }
                     }}
                     onKeyDown={handleKeyDown}
-                    onFocus={(e) => {
-                      setTimeout(() => {
-                        e.target.scrollIntoView({
-                          behavior: "smooth",
-                          block: "center",
-                        });
-                      }, 300);
-                    }}
                     className="text-2xl font-semibold text-center"
                   />
                   <p className="text-sm text-muted-foreground text-center">
@@ -330,14 +347,6 @@ export function GuidedEntryDialog({
                         }
                       }}
                       onKeyDown={handleKeyDown}
-                      onFocus={(e) => {
-                        setTimeout(() => {
-                          e.target.scrollIntoView({
-                            behavior: "smooth",
-                            block: "center",
-                          });
-                        }, 300);
-                      }}
                       className="text-2xl font-semibold text-center"
                     />
                   </div>
@@ -369,6 +378,7 @@ export function GuidedEntryDialog({
               type="button"
               variant="outline"
               onClick={handleBack}
+              onPointerDown={step === "amounts" ? (e) => e.preventDefault() : undefined}
               className="flex-1 sm:flex-1"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -389,6 +399,7 @@ export function GuidedEntryDialog({
             <Button
               type="button"
               onClick={handleNextMonth}
+              onPointerDown={(e) => e.preventDefault()}
               disabled={!canProceed()}
               className="flex-1 sm:flex-1"
             >

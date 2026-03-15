@@ -81,17 +81,16 @@ export function BankAmount({
     }
   };
   return (
-    <Card className="bg-gradient-to-r from-primary/5 to-accent/5 border-primary/20">
+    <Card className="bg-primary/5 border-primary/20">
       <CardContent className="p-4 sm:p-6">
         <div className="flex flex-col gap-6">
-          <div className="flex items-center gap-3">
-            <Banknote className="w-5 h-5 sm:w-6 sm:h-6 text-primary flex-shrink-0" />
-            <div className="flex flex-col gap-1">
-              <Label className="font-semibold text-primary text-sm sm:text-base">
+          <div className="flex items-end justify-between">
+            <div className="flex flex-col gap-0.5">
+              <Label className="text-xs font-semibold uppercase tracking-wider text-primary/70">
                 {t("dashboard.currentBalance")}
               </Label>
               <span
-                className={`text-2xl sm:text-3xl font-bold text-primary transition-all duration-300 ${
+                className={`text-3xl sm:text-4xl font-bold text-primary transition-all duration-300 ${
                   flashActive
                     ? currentFlashType === "add"
                       ? "flash-success"
@@ -101,10 +100,11 @@ export function BankAmount({
               >
                 <PrivacyNumber
                   value={amount}
-                  className="text-2xl sm:text-3xl font-bold"
+                  className="text-3xl sm:text-4xl font-bold"
                 />
               </span>
             </div>
+            <Banknote className="w-5 h-5 text-primary/40 flex-shrink-0 mb-1" />
           </div>
 
           <div className="border-t pt-4">

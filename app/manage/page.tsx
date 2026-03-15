@@ -14,7 +14,6 @@ import { Button } from "@/components/ui/button";
 import { DataManagement } from "@/components/finance/data-management";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Plus } from "lucide-react";
 
 import { Dialog } from "@/components/ui/dialog";
 import {
@@ -25,9 +24,12 @@ import {
 } from "@/components/ui/dialog";
 import type { FinanceData, CommitResult } from "@/hooks/use-finance-data";
 import { useLanguage } from "@/hooks/use-language";
+import { useOnline } from "@/hooks/use-online";
+import { OfflineBlockedPage } from "@/components/pwa/offline-blocked-page";
 
 function HomePageContent() {
   const { currencySymbol, t } = useLanguage();
+  const isOnline = useOnline();
   const { user } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -73,6 +75,8 @@ function HomePageContent() {
     const tab = searchParams.get("tab");
     setActiveTab(tab === "management" ? "management" : "main");
   }, [searchParams]);
+
+
 
   useEffect(() => {
     const applyGuidedData = async () => {
@@ -209,15 +213,15 @@ function HomePageContent() {
 
     eventSource.onmessage = (event) => {
       try {
-        const data = JSON.parse(event.data);
-        const serverAmount = data.amount;
-        const operationType = data.operationType;
+        const msg = JSON.parse(event.data);
+        const serverAmount = msg.amount;
+        const operationType = msg.operationType;
 
         if (
           serverAmount !== undefined &&
-          serverAmount !== data.bankAmount &&
           serverAmount !== lastKnownBankAmountRef.current
         ) {
+          const prev = lastKnownBankAmountRef.current;
           lastKnownBankAmountRef.current = serverAmount;
 
           updateBankAmount(serverAmount);
@@ -226,7 +230,7 @@ function HomePageContent() {
           if (operationType === "add" || operationType === "subtract") {
             flashType = operationType;
           } else {
-            flashType = serverAmount > data.bankAmount ? "add" : "subtract";
+            flashType = serverAmount > prev ? "add" : "subtract";
           }
 
           flashCounterRef.current += 1;
@@ -259,10 +263,12 @@ function HomePageContent() {
         eventSourceRef.current = null;
       }
     };
-  }, [user, data.bankAmount, updateBankAmount]);
+  }, [user, updateBankAmount]);
 
   const handleAddToBankAmount = async (delta: number, note?: string) => {
     await addToBankAmount(delta, note);
+    // Don't flash when offline — the mutation was blocked by the hook guard
+    if (!isOnline) return;
     flashCounterRef.current += 1;
     setLastSaved({
       kind: "bank",
@@ -273,6 +279,8 @@ function HomePageContent() {
 
   const handleSubtractFromBankAmount = async (delta: number, note?: string) => {
     await subtractFromBankAmount(delta, note);
+    // Don't flash when offline — the mutation was blocked by the hook guard
+    if (!isOnline) return;
     flashCounterRef.current += 1;
     setLastSaved({
       kind: "bank",
@@ -289,20 +297,6 @@ function HomePageContent() {
     };
 
     setIncomeOpen(true);
-
-    setTimeout(() => {
-      if (incomeSectionRef.current) {
-        const offset = 120;
-        const elementTop =
-          incomeSectionRef.current.getBoundingClientRect().top +
-          window.pageYOffset;
-        window.scrollTo({
-          top: elementTop - offset,
-          behavior: "smooth",
-        });
-      }
-    }, 100);
-
     addEntry("incomes");
   };
 
@@ -314,20 +308,6 @@ function HomePageContent() {
     };
 
     setExpenseOpen(true);
-
-    setTimeout(() => {
-      if (expenseSectionRef.current) {
-        const offset = 120;
-        const elementTop =
-          expenseSectionRef.current.getBoundingClientRect().top +
-          window.pageYOffset;
-        window.scrollTo({
-          top: elementTop - offset,
-          behavior: "smooth",
-        });
-      }
-    }, 100);
-
     addEntry("expenses");
   };
 
@@ -370,10 +350,19 @@ function HomePageContent() {
 
   if (!user) return null;
 
+  if (!isOnline) {
+    return (
+      <div className="min-h-dvh finance-gradient page-nav-padding">
+        <DashboardHeader />
+        <OfflineBlockedPage />
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen finance-gradient lg:h-screen lg:overflow-hidden">
+    <div className="min-h-dvh finance-gradient lg:h-screen lg:overflow-hidden page-nav-padding">
       <DashboardHeader />
-      <main className="container mx-auto p-4 pt-0 space-y-6 lg:h-full lg:overflow-hidden">
+      <main className="container mx-auto px-4 pt-0 space-y-6 lg:h-full lg:overflow-hidden">
         <Tabs
           value={activeTab}
           onValueChange={setActiveTab}
@@ -401,34 +390,8 @@ function HomePageContent() {
                   }
                 />
               </div>
-              {/* Right Column - Add Buttons + Income and Expenses */}
+              {/* Right Column - Income and Expenses */}
               <div className="space-y-4 pt-2 lg:overflow-y-auto lg:pl-1 lg:h-full lg:pb-36">
-                {/* Add Entry Buttons */}
-                <div className="space-y-3 pt-3 border-t lg:border-t-0 lg:pt-0 lg:space-y-0">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <Button
-                      onClick={() => {
-                        setIncomeGuidedDialogOpen(true);
-                      }}
-                      variant="outline"
-                      className="w-full transition-all duration-200 active:scale-[0.98] touch-manipulation py-4 sm:py-3 border-finance-positive/30 hover:bg-card"
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      {t("entries.addIncome")}
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        setExpenseGuidedDialogOpen(true);
-                      }}
-                      variant="outline"
-                      className="w-full transition-all duration-200 active:scale-[0.98] touch-manipulation py-4 sm:py-3 border-finance-negative/30 hover:bg-card"
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      {t("entries.addExpense")}
-                    </Button>
-                  </div>
-                </div>
-
                 <EntryForm
                   ref={incomeSectionRef}
                   title={t("entries.income")}
@@ -476,6 +439,7 @@ function HomePageContent() {
                   isOpen={incomeOpen}
                   onToggle={() => setIncomeOpen(!incomeOpen)}
                   hideAddButton={true}
+                  onHeaderAdd={isOnline ? () => setIncomeGuidedDialogOpen(true) : undefined}
                   guidedDialogOpen={incomeGuidedDialogOpen}
                   onGuidedDialogOpenChange={setIncomeGuidedDialogOpen}
                   flashEntryId={
@@ -575,6 +539,7 @@ function HomePageContent() {
                   isOpen={expenseOpen}
                   onToggle={() => setExpenseOpen(!expenseOpen)}
                   hideAddButton={true}
+                  onHeaderAdd={isOnline ? () => setExpenseGuidedDialogOpen(true) : undefined}
                   guidedDialogOpen={expenseGuidedDialogOpen}
                   onGuidedDialogOpenChange={setExpenseGuidedDialogOpen}
                   flashEntryId={

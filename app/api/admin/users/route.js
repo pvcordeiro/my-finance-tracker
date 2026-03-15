@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getDatabase } from "../../../../lib/database.js";
-import { deleteUserSchema } from "../../../../lib/validations.ts";
+import { userIdSchema } from "../../../../lib/validations.ts";
 import {
   validateSession,
   getSessionFromRequest,
@@ -99,7 +99,7 @@ export async function DELETE(request) {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get("userId");
 
-    const validation = deleteUserSchema.safeParse({ userId });
+    const validation = userIdSchema.safeParse({ userId });
     if (!validation.success) {
       return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
     }
@@ -187,7 +187,7 @@ export async function PATCH(request) {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get("userId");
 
-    const validation = deleteUserSchema.safeParse({ userId });
+    const validation = userIdSchema.safeParse({ userId });
     if (!validation.success) {
       return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
     }

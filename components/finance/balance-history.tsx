@@ -80,7 +80,7 @@ export function BalanceHistory({
   const dateLocale = language === "pt" ? ptBR : enUS;
 
   return (
-    <Card className="bg-gradient-to-r from-primary/5 to-accent/5 border-primary/20">
+    <Card className="bg-primary/5 border-primary/20">
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <CardHeader className="p-3 sm:p-6">
           <CollapsibleTrigger asChild>
@@ -93,9 +93,14 @@ export function BalanceHistory({
                 <span className="font-semibold text-primary">
                   {t("dashboard.recentBalanceChanges")}
                 </span>
+                {!isOpen && (
+                  <span className="text-xs font-normal text-muted-foreground ml-1">
+                    ({history.length})
+                  </span>
+                )}
               </CardTitle>
               <ChevronDown
-                className={`w-4 h-4 text-primary transition-transform ${
+                className={`w-4 h-4 text-primary transition-transform duration-280 ${
                   isOpen ? "rotate-180" : ""
                 }`}
               />

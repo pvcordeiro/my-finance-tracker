@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/use-auth";
 import { useLanguage } from "@/hooks/use-language";
+import { useOnline } from "@/hooks/use-online";
 
 export function MobileBottomNav() {
   const isMobile = useIsMobile();
@@ -14,20 +15,22 @@ export function MobileBottomNav() {
   const { t } = useLanguage();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const isOnline = useOnline();
 
   const navItems = [
-    { href: "/manage", label: t("navigation.manage"), icon: Edit },
-    { href: "/", label: t("dashboard.summary"), icon: BarChart3 },
-    { href: "/details", label: t("navigation.details"), icon: FileSpreadsheet },
+    { href: "/manage", label: t("navigation.manage"), icon: Edit, offlineDisabled: true },
+    { href: "/", label: t("dashboard.summary"), icon: BarChart3, offlineDisabled: false },
+    { href: "/details", label: t("navigation.details"), icon: FileSpreadsheet, offlineDisabled: false },
   ];
 
   if (!isMobile || !user || pathname === "/login" || pathname === "/admin")
     return null;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border shadow-lg">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border shadow-lg" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
       <div className="flex justify-around items-center h-16 px-4">
-        {navItems.map(({ href, label, icon: Icon }) => {
+        {navItems.map(({ href, label, icon: Icon, offlineDisabled }) => {
+          const isDisabled = offlineDisabled && !isOnline;
           const isActive =
             href === "/manage"
               ? pathname === href && searchParams.get("tab") !== "management"
@@ -35,14 +38,21 @@ export function MobileBottomNav() {
           return (
             <Link
               key={href}
-              href={href}
+              href={isDisabled ? "#" : href}
+              onClick={isDisabled ? (e) => e.preventDefault() : undefined}
+              aria-disabled={isDisabled}
               className={cn(
-                "flex flex-col items-center justify-center flex-1 py-2 px-1 text-xs font-medium transition-colors min-h-[44px]",
-                isActive
+                "relative flex flex-col items-center justify-center flex-1 py-2 px-1 text-xs font-medium transition-colors min-h-[44px]",
+                isDisabled
+                  ? "text-muted-foreground/40 pointer-events-none"
+                  : isActive
                   ? "text-primary"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
+              {isActive && !isDisabled && (
+                <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-primary" />
+              )}
               <Icon className="w-5 h-5 mb-1" />
               <span>{label}</span>
             </Link>

@@ -31,6 +31,12 @@ import { EntryEditDialog } from "./entry-edit-dialog";
 import { PrivacyNumber } from "@/components/ui/privacy-number";
 import { PrivacyText } from "@/components/ui/privacy-text";
 import { useLanguage } from "@/hooks/use-language";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export interface FinanceEntry {
   id: string;
@@ -70,6 +76,7 @@ interface EntryFormProps {
   flashEntryId?: string;
   flashToken?: number;
   hideAddButton?: boolean;
+  onHeaderAdd?: () => void;
   guidedDialogOpen?: boolean;
   onGuidedDialogOpenChange?: (open: boolean) => void;
   totalFlashToken?: number;
@@ -93,14 +100,13 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
       flashEntryId,
       flashToken,
       hideAddButton = false,
+      onHeaderAdd,
       guidedDialogOpen: externalGuidedDialogOpen,
       onGuidedDialogOpenChange,
       totalFlashToken,
     },
     ref
   ) {
-    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-    const [entryToDelete, setEntryToDelete] = useState<string | null>(null);
     const [resolveDialogOpen, setResolveDialogOpen] = useState(false);
     const [entryToResolve, setEntryToResolve] = useState<{
       entry: FinanceEntry;
@@ -112,6 +118,7 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
     const [flashingEntries, setFlashingEntries] = useState<Set<string>>(
       new Set()
     );
+    const entryCardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
     const [editDialogOpen, setEditDialogOpen] = useState(false);
     const [selectedEntry, setSelectedEntry] = useState<FinanceEntry | null>(
       null
@@ -168,14 +175,32 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
 
     useEffect(() => {
       if (flashEntryId && flashToken) {
-        setFlashingEntries((prev) => new Set(prev).add(flashEntryId));
-        setTimeout(() => {
-          setFlashingEntries((prev) => {
-            const ns = new Set(prev);
-            ns.delete(flashEntryId);
-            return ns;
-          });
-        }, 650);
+        // Poll for the card to appear in the DOM (it may not exist yet if the
+        // server round-trip hasn't completed). Scroll first, flash after scroll.
+        const startTime = Date.now();
+        const tryScroll = () => {
+          const card = entryCardRefs.current.get(flashEntryId);
+          if (card) {
+            const rect = card.getBoundingClientRect();
+            const absoluteTop = rect.top + window.scrollY;
+            const offset = 80;
+            window.scrollTo({ top: absoluteTop - offset, behavior: "smooth" });
+            // Flash after smooth scroll has had time to finish (~400ms)
+            setTimeout(() => {
+              setFlashingEntries((prev) => new Set(prev).add(flashEntryId));
+              setTimeout(() => {
+                setFlashingEntries((prev) => {
+                  const ns = new Set(prev);
+                  ns.delete(flashEntryId);
+                  return ns;
+                });
+              }, 650);
+            }, 400);
+          } else if (Date.now() - startTime < 3000) {
+            setTimeout(tryScroll, 100);
+          }
+        };
+        setTimeout(tryScroll, 300);
       }
     }, [flashEntryId, flashToken, isOpen]);
 
@@ -217,7 +242,7 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
             if (isMobile) {
               const elementTop =
                 sectionRef.current.getBoundingClientRect().top +
-                window.pageYOffset;
+                window.scrollY;
               window.scrollTo({
                 top: elementTop - 80,
                 behavior: "smooth",
@@ -296,12 +321,14 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
         }}
         className={cn(
           "transition-all duration-200",
-          type === "income" ? "income-card" : "expense-card"
+          type === "income" ? "income-card bg-finance-positive/5" : "expense-card bg-finance-negative/5"
         )}
       >
         <Collapsible open={isOpen} onOpenChange={handleSectionToggle}>
           <CollapsibleTrigger asChild>
-            <CardHeader className="cursor-pointer touch-manipulation">
+            <CardHeader className={cn(
+              "cursor-pointer touch-manipulation rounded-t-lg",
+            )}>
               <CardTitle
                 className={cn(
                   "flex items-center justify-between text-lg sm:text-xl",
@@ -311,7 +338,7 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
                 )}
               >
                 <span>{title}</span>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <span
                     className={cn(
                       "font-semibold text-base sm:text-lg tracking-tight transition-all duration-300",
@@ -329,16 +356,34 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
                       )}
                     />
                   </span>
+                  {onHeaderAdd && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onHeaderAdd();
+                      }}
+                      className={cn(
+                        "flex items-center justify-center h-8 w-8 rounded-full transition-colors touch-manipulation",
+                        type === "income"
+                          ? "text-finance-positive hover:bg-finance-positive/15"
+                          : "text-finance-negative hover:bg-finance-negative/15"
+                      )}
+                      aria-label={type === "income" ? "Add income" : "Add expense"}
+                    >
+                      <Plus className="w-5 h-5" />
+                    </button>
+                  )}
                   {isOpen ? (
-                    <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                   ) : (
-                    <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                   )}
                 </div>
               </CardTitle>
             </CardHeader>
           </CollapsibleTrigger>
-          <CollapsibleContent className="space-y-4 data-[state=open]:animate-in data-[state=open]:slide-in-from-top-5 data-[state=open]:fade-in-5 data-[state=closed]:animate-out data-[state=closed]:slide-out-to-top-5 data-[state=closed]:fade-out-5">
+          <CollapsibleContent>
             <CardContent className="space-y-4">
               {/* Search Input */}
               {entries.length > 0 && (
@@ -354,62 +399,74 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
                 </div>
               )}
 
-              {/* Entry Cards */}
+              {/* Entry List */}
+              <ul className="space-y-1">
               {filteredEntries.map((entry) => (
-                <Card
+                <li
                   key={entry.id}
+                  ref={(el) => {
+                    if (el) entryCardRefs.current.set(entry.id, el as unknown as HTMLDivElement);
+                    else entryCardRefs.current.delete(entry.id);
+                  }}
                   className={cn(
-                    "border-muted cursor-pointer hover:border-primary/50 transition-all",
+                    "flex items-center justify-between rounded-lg border border-border px-3 py-2.5 cursor-pointer transition-colors",
+                    "hover:border-primary/40 hover:bg-muted/40",
                     flashingEntries.has(entry.id) &&
                       (type === "income" ? "flash-success" : "flash-error")
                   )}
                   onClick={() => handleEntryClick(entry)}
                 >
-                  <CardHeader className="py-3 touch-manipulation">
-                    <div className="flex items-center justify-between">
-                      <div className="flex flex-col pr-2 max-w-[60%] sm:max-w-[70%]">
-                        <span className="font-medium text-sm sm:text-base truncate">
-                          <PrivacyText
-                            value={
-                              entry.description || t("entries.noDescription")
+                  <div className="flex flex-col pr-2 max-w-[60%] sm:max-w-[70%]">
+                    <span className="font-medium text-sm sm:text-base truncate">
+                      <PrivacyText
+                        value={
+                          entry.description || t("entries.noDescription")
+                        }
+                      />
+                    </span>
+                    <span
+                      className={cn(
+                        "mt-0.5 font-semibold text-sm sm:text-base transition-colors",
+                        type === "income"
+                          ? "text-finance-positive"
+                          : "text-finance-negative"
+                      )}
+                    >
+                      <PrivacyNumber
+                        value={calculateTotal(entry.amounts)}
+                      />
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <TooltipProvider delayDuration={400}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => handleResolveCurrentMonth(e, entry)}
+                            className="text-muted-foreground hover:text-foreground hover:bg-muted h-8 w-8 p-0 touch-manipulation"
+                            aria-label={`${t("entries.markCurrentMonth")}: ${
+                              entry.description || t("entries.unnamedEntry")
+                            }`}
+                            disabled={
+                              !entry.amounts.some(
+                                (amount) => amount && amount !== 0
+                              )
                             }
-                          />
-                        </span>
-                        <span
-                          className={cn(
-                            "mt-1 font-semibold text-sm sm:text-base transition-colors",
-                            type === "income"
-                              ? "text-finance-positive"
-                              : "text-finance-negative"
-                          )}
-                        >
-                          <PrivacyNumber
-                            value={calculateTotal(entry.amounts)}
-                          />
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => handleResolveCurrentMonth(e, entry)}
-                          className="text-muted-foreground hover:text-foreground hover:bg-muted h-8 w-8 p-0 touch-manipulation"
-                          aria-label={`${t("entries.markCurrentMonth")}: ${
-                            entry.description || t("entries.unnamedEntry")
-                          }`}
-                          disabled={
-                            !entry.amounts.some(
-                              (amount) => amount && amount !== 0
-                            )
-                          }
-                        >
-                          <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardHeader>
-                </Card>
+                          >
+                            <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="left">
+                          {t("entries.markCurrentMonth")}
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                </li>
               ))}
+              </ul>
 
               {filteredEntries.length === 0 && entries.length > 0 && (
                 <div className="text-center py-8 text-muted-foreground">
@@ -441,37 +498,6 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
             </CardContent>
           </CollapsibleContent>
         </Collapsible>
-        {/* Delete Entry Confirmation Dialog */}
-        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>{t("entries.deleteEntry")}</AlertDialogTitle>
-              <AlertDialogDescription>
-                {t("entries.deleteConfirm")}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={async () => {
-                  if (entryToDelete) {
-                    try {
-                      await onRemoveEntry(entryToDelete);
-
-                      setEntryToDelete(null);
-                    } catch (error) {
-                      console.error("Failed to delete entry:", error);
-                    }
-                  }
-                  setDeleteDialogOpen(false);
-                }}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              >
-                {t("entries.deleteEntry")}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
 
         {/* Resolve Value Confirmation Dialog */}
         <AlertDialog

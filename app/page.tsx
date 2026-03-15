@@ -22,7 +22,7 @@ function SummaryPageContent() {
   const { t } = useLanguage();
 
   return (
-    <div className="min-h-screen finance-gradient">
+    <div className="min-h-dvh finance-gradient page-nav-padding">
       <DashboardHeader />
       <main className="container mx-auto p-4 space-y-6">
         <div className="flex items-center justify-between gap-2">
@@ -30,9 +30,6 @@ function SummaryPageContent() {
             <h1 className="text-3xl font-bold text-primary">
               {t("common.financialSummary")}
             </h1>
-            <p className="text-muted-foreground">
-              {t("common.completeFinancialOverview")}
-            </p>
           </div>
         </div>
         <SummaryTable data={data} />

@@ -238,7 +238,6 @@ export function AdminDashboard() {
 
   const createGroup = async () => {
     if (!newGroupName.trim()) return;
-
     try {
       const response = await fetch("/api/admin/groups", {
         method: "POST",
@@ -314,7 +313,6 @@ export function AdminDashboard() {
 
   const confirmDeleteGroup = async () => {
     if (!groupToDelete) return;
-
     try {
       const response = await fetch(
         `/api/admin/groups?groupId=${groupToDelete}`,
@@ -347,7 +345,6 @@ export function AdminDashboard() {
 
   const confirmRenameGroup = async () => {
     if (!groupToRename || !renameGroupName.trim()) return;
-
     try {
       const response = await fetch(
         `/api/admin/groups?groupId=${groupToRename.id}`,
@@ -381,8 +378,11 @@ export function AdminDashboard() {
   };
 
   return (
-    <div className="min-h-screen finance-gradient">
-      <header className="bg-background/90 backdrop-blur-sm border-b border-border/50 sticky top-0 z-50">
+    <div className="min-h-dvh finance-gradient page-nav-padding">
+      <header
+        className="bg-background/90 backdrop-blur-sm border-b border-border/50 sticky z-50"
+        style={{ top: 0, marginTop: 0 }}
+      >
         <div className="container mx-auto px-4 py-3 sm:py-4">
           <div className="flex items-center justify-between">
             <div
@@ -550,7 +550,7 @@ export function AdminDashboard() {
                                         <Button
                                           variant="ghost"
                                           size="sm"
-                                          className="h-8 w-8 p-0"
+                                           className="h-8 w-8 p-0"
                                           aria-label={`Actions for ${userItem.username}`}
                                         >
                                           <MoreHorizontal className="w-4 h-4" />
@@ -803,14 +803,14 @@ export function AdminDashboard() {
                                     {group.member_count}
                                   </Badge>
                                 </div>
-                                <div className="flex">
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                      <Button variant="outline" size="sm">
-                                        <MoreHorizontal className="w-3 h-3 mr-1" />
-                                        {t("admin.manage")}
-                                      </Button>
-                                    </DropdownMenuTrigger>
+                                 <div className="flex">
+                                   <DropdownMenu>
+                                     <DropdownMenuTrigger asChild>
+                                        <Button variant="outline" size="sm">
+                                         <MoreHorizontal className="w-3 h-3 mr-1" />
+                                         {t("admin.manage")}
+                                       </Button>
+                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent className="max-h-80 overflow-y-auto">
                                       <DropdownMenuItem
                                         disabled
@@ -944,17 +944,17 @@ export function AdminDashboard() {
                                   {formatDate(group.created_at)}
                                 </td>
                                 <td className="p-4 text-right">
-                                  <div className="flex justify-end">
-                                    <DropdownMenu>
-                                      <DropdownMenuTrigger asChild>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          className="h-8 w-8 p-0 hover:bg-muted"
-                                        >
-                                          <MoreHorizontal className="w-4 h-4" />
-                                        </Button>
-                                      </DropdownMenuTrigger>
+                                   <div className="flex justify-end">
+                                     <DropdownMenu>
+                                       <DropdownMenuTrigger asChild>
+                                         <Button
+                                           variant="ghost"
+                                           size="sm"
+                                           className="h-8 w-8 p-0 hover:bg-muted"
+                                         >
+                                           <MoreHorizontal className="w-4 h-4" />
+                                         </Button>
+                                       </DropdownMenuTrigger>
                                       <DropdownMenuContent
                                         align="end"
                                         className="max-h-80 overflow-y-auto"

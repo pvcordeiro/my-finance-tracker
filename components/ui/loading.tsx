@@ -11,14 +11,14 @@ export function LoadingSpinner({
   className = "",
 }: LoadingSpinnerProps) {
   const sizeClasses = {
-    sm: "w-4 h-4",
-    md: "w-8 h-8",
-    lg: "w-12 h-12",
+    sm: "w-4 h-4 border-2",
+    md: "w-8 h-8 border-4",
+    lg: "w-12 h-12 border-4",
   };
 
   return (
     <div
-      className={`border-4 border-primary border-t-transparent rounded-full animate-spin ${sizeClasses[size]} ${className}`}
+      className={`border-primary/20 border-t-primary rounded-full animate-spin ${sizeClasses[size]} ${className}`}
     />
   );
 }
@@ -47,7 +47,7 @@ export function FullPageLoader({ message }: { message?: string }) {
   const displayMessage = message || t("common.loading");
 
   return (
-    <div className="flex items-center justify-center p-4 min-h-screen">
+    <div className="flex items-center justify-center p-4 min-h-dvh">
       <LoadingState message={displayMessage} />
     </div>
   );
