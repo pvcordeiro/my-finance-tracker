@@ -309,7 +309,7 @@ export function EntryEditDialog({
                         inputMode="decimal"
                         step="0.01"
                         placeholder="0"
-                      value={localEntry.resolved?.[index] || localEntry.dismissed?.[index] ? "" : localEntry.amounts[index] || ""}
+                      value={localEntry.amounts[index] || ""}
                         onChange={(e) => {
                           const value = e.target.value;
                           const regex = /^\d*\.?\d{0,2}$/;

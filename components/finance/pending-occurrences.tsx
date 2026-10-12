@@ -35,7 +35,20 @@ export function PendingOccurrences({
 
   return (
     <Card className="overflow-hidden border-amber-500/30 bg-card shadow-none">
-      <CardHeader className="flex-row items-center justify-between gap-3 bg-amber-500/[0.07] px-4 py-3 sm:px-5">
+      <CardHeader
+        role="button"
+        tabIndex={0}
+        aria-expanded={expanded}
+        aria-label={expanded ? t("common.collapse") : t("common.expand")}
+        onClick={() => setExpanded(!expanded)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            setExpanded(!expanded);
+          }
+        }}
+        className="flex-row cursor-pointer items-center justify-between gap-3 bg-amber-500/[0.07] px-4 py-3 transition-colors hover:bg-amber-500/[0.12] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:px-5"
+      >
         <div className="flex min-w-0 items-center gap-3">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300">
             <Clock3 className="h-4 w-4" />
@@ -47,7 +60,7 @@ export function PendingOccurrences({
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <Badge variant="secondary">{occurrences.length}</Badge>
-          <Button type="button" size="icon" variant="ghost" className="h-9 w-9" aria-label={expanded ? t("common.collapse") : t("common.expand")} aria-expanded={expanded} onClick={() => setExpanded(!expanded)}>
+          <Button type="button" size="icon" variant="ghost" className="pointer-events-none h-9 w-9" tabIndex={-1} aria-hidden="true">
             <ChevronDown className={`h-4 w-4 transition-transform ${expanded ? "rotate-180" : ""}`} />
           </Button>
         </div>

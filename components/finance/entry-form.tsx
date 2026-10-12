@@ -87,9 +87,6 @@ interface EntryFormProps {
   onGuidedDialogOpenChange?: (open: boolean) => void;
   totalFlashToken?: number;
   totalFlashType?: "increase" | "decrease";
-  onResolvePendingOccurrence?: (entry: FinanceEntry, monthIndex: number) => Promise<void>;
-  onResolveCurrentOccurrence?: (entry: FinanceEntry, monthIndex: number) => Promise<void>;
-  onResolveOccurrence?: (entry: FinanceEntry, monthIndex: number) => Promise<void>;
   onCommitRecurrence?: (id: string, recurrent: boolean, recurrenceAmount: number) => Promise<boolean>;
 }
 
@@ -114,9 +111,6 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
       guidedDialogOpen: externalGuidedDialogOpen,
       onGuidedDialogOpenChange,
       totalFlashToken,
-      onResolvePendingOccurrence,
-      onResolveCurrentOccurrence,
-      onResolveOccurrence,
       onCommitRecurrence,
     },
     ref
@@ -370,7 +364,7 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
                   >
                     <PrivacyNumber
                       value={entries.reduce(
-                        (sum, entry) => sum + calculateTotal(entry.amounts.map((amount, index) => entry.resolved?.[index] || entry.dismissed?.[index] ? 0 : amount)),
+                        (sum, entry) => sum + calculateTotal(entry.amounts),
                         0
                       )}
                     />
@@ -452,7 +446,7 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
                       )}
                     >
                       <PrivacyNumber
-                         value={calculateTotal(entry.amounts.map((amount, index) => entry.resolved?.[index] || entry.dismissed?.[index] ? 0 : amount))}
+                          value={calculateTotal(entry.amounts)}
                       />
                       {entry.recurrent && <span className="ml-2 inline-flex rounded-full bg-primary/10 px-2 py-0.5 align-middle text-[10px] font-medium text-primary">{t("entries.recurrentBadge")}</span>}
                     </span>
@@ -466,16 +460,8 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
                             size="sm"
                             onClick={(e) => {
                               e.stopPropagation();
-                              const index = entry.amounts.findIndex((amount, monthIndex) => amount && !entry.resolved?.[monthIndex]);
-                              if (index >= 0 && onResolveOccurrence) {
-                                void onResolveOccurrence(entry, index);
-                              } else if (index >= 0 && onResolveCurrentOccurrence) {
-                                void onResolveCurrentOccurrence(entry, index);
-                              } else if (index >= 0 && onResolvePendingOccurrence) {
-                                void onResolvePendingOccurrence(entry, index);
-                              } else {
-                                handleResolveCurrentMonth(e, entry);
-                              }
+                              const index = entry.amounts.findIndex((amount, monthIndex) => amount && !entry.resolved?.[monthIndex] && !entry.dismissed?.[monthIndex]);
+                              if (index >= 0) handleResolveCurrentMonth(e, entry);
                             }}
                             className="text-muted-foreground hover:text-foreground hover:bg-muted h-8 w-8 p-0 touch-manipulation"
                             aria-label={`${t("entries.markCurrentMonth")}: ${

@@ -6,6 +6,7 @@ import {
   getAuthenticatedUser,
 } from "../../../lib/auth-middleware.js";
 import { notifyEntryChange } from "../../../lib/sse-notifications.js";
+import { backfillLegacyRollingAmounts } from "../../../lib/rolling-months.js";
 
 export const GET = withAuth(async (request) => {
   try {
@@ -70,6 +71,7 @@ export const GET = withAuth(async (request) => {
     `).all(groupId) ?? [];
 
     const occurrenceIds = new Map();
+    const matchedRollingSlots = new Map();
     rowsWithSlots.forEach((row) => {
       if (!entriesMap.has(row.id)) {
         entriesMap.set(row.id, {
@@ -85,6 +87,7 @@ export const GET = withAuth(async (request) => {
           dismissed: new Array(12).fill(false),
           occurrenceIds: new Array(12).fill(null),
         });
+        matchedRollingSlots.set(row.id, new Array(12).fill(false));
       }
       if (!row.year || !row.month) return;
       const index = nextMonths.findIndex(
@@ -92,6 +95,7 @@ export const GET = withAuth(async (request) => {
       );
       if (index >= 0) {
         const entry = entriesMap.get(row.id);
+        matchedRollingSlots.get(row.id)[index] = true;
         entry.resolved[index] = Boolean(row.is_resolved);
         entry.dismissed[index] = Boolean(row.is_dismissed);
         if (row.occurrence_id) {
@@ -101,6 +105,28 @@ export const GET = withAuth(async (request) => {
         entry.amounts[index] = Number(amount) || 0;
       }
     });
+
+    // Older versions stored a rolling 12-month window as calendar-month slots
+    // and the year migration assigned every legacy row the same year. For
+    // slots whose target year has no exact occurrence yet, fall back to the
+    // preserved calendar-month amount. This keeps the old values visible in
+    // the rolling window without rewriting historical rows.
+    const legacyAmounts = db.prepare(`
+      SELECT ea.entry_id, ea.month, ea.amount
+      FROM entry_amounts ea
+      JOIN entries e ON e.id = ea.entry_id
+      WHERE e.group_id = ?
+      ORDER BY ea.year DESC, ea.updated_at DESC
+    `).all(groupId) ?? [];
+    for (const [entryId, entry] of entriesMap) {
+      const matched = matchedRollingSlots.get(entryId) || [];
+      entry.amounts = backfillLegacyRollingAmounts(
+        entry.amounts,
+        matched,
+        legacyAmounts.filter((row) => row.entry_id === entryId),
+        nextMonths
+      );
+    }
 
     const occurrenceRows = db.prepare(`
       SELECT o.id AS occurrence_id, o.entry_id, o.year, o.month

@@ -473,12 +473,6 @@ function HomePageContent() {
                   }
                   totalFlashToken={entryFlashState.incomes?.token}
     totalFlashType={entryFlashState.incomes?.flashType}
-                  onResolvePendingOccurrence={async (_entry, monthIndex) => resolveEntryMonth(_entry.id, monthIndex)}
-                  onResolveCurrentOccurrence={async (_entry, monthIndex) => resolveEntryMonth(_entry.id, monthIndex)}
-                  onResolveOccurrence={async (_entry, monthIndex) => {
-                    const occurrenceId = _entry.occurrenceIds?.[monthIndex];
-                    if (occurrenceId) await resolveOccurrence({ entryId: _entry.id, description: _entry.description, type: "income", isIncome: true, occurrenceId, year: new Date(new Date().getFullYear(), new Date().getMonth() + monthIndex, 1).getFullYear(), month: new Date(new Date().getFullYear(), new Date().getMonth() + monthIndex, 1).getMonth() + 1, amount: _entry.amounts[monthIndex] });
-                  }}
                   onCommitRecurrence={async (id, recurrent, amount) => (await commitEntryRecurrence("incomes", id, recurrent, amount)).success}
                   onCommitDescription={async (id, desc) => {
                     const res: CommitResult = await commitEntryDescription(
@@ -580,12 +574,6 @@ function HomePageContent() {
                   }
                   totalFlashToken={entryFlashState.expenses?.token}
     totalFlashType={entryFlashState.expenses?.flashType}
-                  onResolvePendingOccurrence={async (_entry, monthIndex) => resolveEntryMonth(_entry.id, monthIndex)}
-                  onResolveCurrentOccurrence={async (_entry, monthIndex) => resolveEntryMonth(_entry.id, monthIndex)}
-                  onResolveOccurrence={async (_entry, monthIndex) => {
-                    const occurrenceId = _entry.occurrenceIds?.[monthIndex];
-                    if (occurrenceId) await resolveOccurrence({ entryId: _entry.id, description: _entry.description, type: "expense", isIncome: false, occurrenceId, year: new Date(new Date().getFullYear(), new Date().getMonth() + monthIndex, 1).getFullYear(), month: new Date(new Date().getFullYear(), new Date().getMonth() + monthIndex, 1).getMonth() + 1, amount: _entry.amounts[monthIndex] });
-                  }}
                   onCommitRecurrence={async (id, recurrent, amount) => (await commitEntryRecurrence("expenses", id, recurrent, amount)).success}
                   onCommitDescription={async (id, desc) => {
                     const res: CommitResult = await commitEntryDescription(
