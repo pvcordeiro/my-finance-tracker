@@ -65,7 +65,7 @@ export function PendingOccurrences({
           </Button>
         </div>
       </CardHeader>
-      {expanded && <CardContent className="max-h-[42vh] space-y-2 overflow-y-auto p-3 sm:p-4">
+      {expanded && <CardContent className="space-y-2 p-3 sm:p-4">
         {occurrences.map((occurrence) => {
           const monthLabel = t(`months.${monthKeys[occurrence.month - 1]}`);
           const resolveLabel = occurrence.isIncome ? t("entries.markReceived") : t("entries.markPaid");

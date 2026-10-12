@@ -388,12 +388,10 @@ function HomePageContent() {
           className="space-y-6 lg:h-full"
         >
           <TabsContent value="main" className="lg:h-full">
-            <div className="mb-4">
-              <PendingOccurrences occurrences={data.pending || []} onResolve={resolveOccurrence} onDismiss={dismissOccurrence} isOpen={pendingOpen} onOpenChange={setPendingOpen} />
-            </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:h-full">
               {/* Left Column - Bank Amount */}
               <div className="space-y-4 pt-2 lg:overflow-y-auto lg:pr-1 lg:h-full lg:pb-36">
+                <PendingOccurrences occurrences={data.pending || []} onResolve={resolveOccurrence} onDismiss={dismissOccurrence} isOpen={pendingOpen} onOpenChange={setPendingOpen} />
                 <BankAmount
                   amount={data.bankAmount}
                   onAdd={handleAddToBankAmount}

@@ -45,6 +45,7 @@ export interface FinanceEntry {
   description: string;
   amounts: number[];
   resolved?: boolean[];
+  pendingAmounts?: number[];
   recurrent?: boolean;
   recurrenceAmount?: number;
   occurrenceIds?: (number | null)[];
@@ -284,7 +285,7 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
     ) => {
       e.stopPropagation();
 
-      const target = getNextUnresolvedOccurrence(entry);
+      const target = getNextUnresolvedOccurrence({ ...entry, amounts: entry.pendingAmounts || entry.amounts });
       if (!target) return;
 
       setEntryToResolve({

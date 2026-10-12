@@ -8,6 +8,7 @@ import {
 import { notifyEntryChange } from "../../../lib/sse-notifications.js";
 import { notifyBankAmountChange } from "../../../lib/sse-notifications.js";
 import { applyOccurrenceToBalance, backfillLegacyRollingAmounts } from "../../../lib/rolling-months.js";
+import { buildResolutionResponse } from "../../../lib/rolling-months.js";
 
 export const GET = withAuth(async (request) => {
   try {
@@ -100,6 +101,7 @@ export const GET = withAuth(async (request) => {
           recurrent: Boolean(row.recurrent),
           recurrence_amount: Number(row.recurrence_amount) || 0,
           amounts: new Array(12).fill(0),
+          pendingAmounts: new Array(12).fill(0),
           resolved: new Array(12).fill(false),
           dismissed: new Array(12).fill(false),
           occurrenceIds: new Array(12).fill(null),
@@ -119,7 +121,8 @@ export const GET = withAuth(async (request) => {
           entry.occurrenceIds[index] = row.occurrence_id;
         }
         const amount = row.amount ?? row.legacy_amount ?? 0;
-        entry.amounts[index] = row.is_resolved || row.is_dismissed ? 0 : Number(amount) || 0;
+        entry.amounts[index] = Number(amount) || 0;
+        entry.pendingAmounts[index] = row.is_resolved || row.is_dismissed ? 0 : Number(amount) || 0;
       }
     });
 
@@ -172,7 +175,8 @@ export const GET = withAuth(async (request) => {
         entry.occurrenceIds[index] = occurrence?.id ?? null;
         entry.resolved[index] = Boolean(occurrence?.is_resolved);
         entry.dismissed[index] = Boolean(occurrence?.is_dismissed);
-        entry.amounts[index] = occurrence?.is_resolved || occurrence?.is_dismissed ? 0 : Number(occurrence?.amount ?? amount) || 0;
+        entry.amounts[index] = Number(occurrence?.amount ?? amount) || 0;
+        entry.pendingAmounts[index] = occurrence?.is_resolved || occurrence?.is_dismissed ? 0 : Number(occurrence?.amount ?? amount) || 0;
       }
     }
 
@@ -436,6 +440,7 @@ export const PATCH = withAuth(async (request) => {
     }
 
     const updates = {};
+    let bankUpdate = null;
     if (name !== undefined) {
       db.prepare(
         `UPDATE entries SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`
@@ -520,7 +525,6 @@ export const PATCH = withAuth(async (request) => {
       if (!Number.isInteger(numericMonth) || numericMonth < 1 || numericMonth > 12 || !Number.isInteger(numericYear)) {
         return NextResponse.json({ error: "Valid month and year are required" }, { status: 400 });
       }
-      let bankUpdate = null;
       if (is_resolved) {
         const applyResolution = db.transaction(() => {
           const target = occurrence_id !== undefined
@@ -611,7 +615,7 @@ export const PATCH = withAuth(async (request) => {
       timestamp: Date.now(),
     });
 
-    return NextResponse.json({ success: true, updates, ...(is_resolved && bankUpdate ? { bankAmount: bankUpdate.bankAmount, alreadyResolved: bankUpdate.alreadyResolved } : {}) });
+    return NextResponse.json({ ...buildResolutionResponse(is_resolved, bankUpdate), updates });
   } catch (error) {
     console.error("Patch entry error:", error);
     return NextResponse.json(
