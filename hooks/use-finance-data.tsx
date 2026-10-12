@@ -21,6 +21,7 @@ export interface PendingOccurrence {
   month: number;
   amount: number;
   occurrenceId?: number;
+  isIncome: boolean;
 }
 
 const defaultData: FinanceData = {
@@ -31,6 +32,12 @@ const defaultData: FinanceData = {
 };
 
 const DATA_CACHE_KEY = "finance-tracker-data-cache";
+
+function getRollingMonthIndex(year: number, month: number): number {
+  const today = new Date();
+  const difference = (year - today.getFullYear()) * 12 + month - (today.getMonth() + 1);
+  return difference >= 0 && difference < 12 ? difference : -1;
+}
 
 function saveDataToLocalStorage(data: FinanceData) {
   try {
@@ -138,6 +145,16 @@ export function useFinanceData() {
   useEffect(() => {
     if (!user) return;
 
+    const handleGroupChanged = () => {
+      setData(defaultData);
+      setOriginalData(defaultData);
+      setHasBankChanges(false);
+      setHasEntryChanges(false);
+      setIsLoading(true);
+      void loadDataFromServer();
+    };
+    window.addEventListener("userGroupChanged", handleGroupChanged);
+
     let eventSource: EventSource | null = null;
     let isDestroyed = false;
 
@@ -183,6 +200,7 @@ export function useFinanceData() {
                   recurrent: entry.recurrent,
                   recurrenceAmount: entry.recurrence_amount,
                   occurrenceIds: entry.occurrenceIds,
+                  dismissed: entry.dismissed,
                 }));
 
               const expenses = entries
@@ -195,6 +213,7 @@ export function useFinanceData() {
                   recurrent: entry.recurrent,
                   recurrenceAmount: entry.recurrence_amount,
                   occurrenceIds: entry.occurrenceIds,
+                  dismissed: entry.dismissed,
                 }));
 
               const newIncomeTotal = incomes.reduce(
@@ -283,6 +302,7 @@ export function useFinanceData() {
 
     return () => {
       isDestroyed = true;
+      window.removeEventListener("userGroupChanged", handleGroupChanged);
       window.removeEventListener("online", handleOnline);
       eventSource?.close();
     };
@@ -345,6 +365,7 @@ export function useFinanceData() {
           recurrent: entry.recurrent,
           recurrenceAmount: entry.recurrence_amount,
           occurrenceIds: entry.occurrenceIds,
+          dismissed: entry.dismissed,
         }));
 
       const expenses = entries
@@ -357,6 +378,7 @@ export function useFinanceData() {
           recurrent: entry.recurrent,
           recurrenceAmount: entry.recurrence_amount,
           occurrenceIds: entry.occurrenceIds,
+          dismissed: entry.dismissed,
         }));
 
       const loadedData = {
@@ -620,12 +642,22 @@ export function useFinanceData() {
         credentials: "include",
       });
       if (!response.ok) throw new Error("Failed to resolve occurrence");
+      const updateList = (items: FinanceEntry[]) => items.map((entry: any) => {
+        if (entry.id !== occurrence.entryId) return entry;
+        const resolved = [...(entry.resolved || Array(12).fill(false))];
+        const slot = getRollingMonthIndex(occurrence.year, occurrence.month);
+        if (slot >= 0) resolved[slot] = true;
+        return { ...entry, resolved };
+      });
       setData((previous) => ({
         ...previous,
+        incomes: updateList(previous.incomes),
+        expenses: updateList(previous.expenses),
         pending: (previous.pending || []).filter((item) =>
           !(item.entryId === occurrence.entryId && item.year === occurrence.year && item.month === occurrence.month)
         ),
       }));
+      setOriginalData((previous) => ({ ...previous, incomes: updateList(previous.incomes), expenses: updateList(previous.expenses) }));
     } catch (error) {
       console.error("Failed to resolve pending occurrence:", error);
       toast.error("Could not update this pending item.");
@@ -638,14 +670,24 @@ export function useFinanceData() {
       const response = await fetch("/api/entries", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: occurrence.entryId, month: occurrence.month, year: occurrence.year, is_resolved: true }),
+        body: JSON.stringify({ id: occurrence.entryId, month: occurrence.month, year: occurrence.year, occurrence_id: occurrence.occurrenceId, is_dismissed: true }),
         credentials: "include",
       });
       if (!response.ok) throw new Error("Failed to dismiss occurrence");
+      const updateList = (items: FinanceEntry[]) => items.map((entry: any) => {
+        if (entry.id !== occurrence.entryId) return entry;
+        const dismissed = [...(entry.dismissed || Array(12).fill(false))];
+        const slot = getRollingMonthIndex(occurrence.year, occurrence.month);
+        if (slot >= 0) dismissed[slot] = true;
+        return { ...entry, dismissed };
+      });
       setData((previous) => ({
         ...previous,
+        incomes: updateList(previous.incomes),
+        expenses: updateList(previous.expenses),
         pending: (previous.pending || []).filter((item) => !(item.entryId === occurrence.entryId && item.year === occurrence.year && item.month === occurrence.month)),
       }));
+      setOriginalData((previous) => ({ ...previous, incomes: updateList(previous.incomes), expenses: updateList(previous.expenses) }));
     } catch (error) {
       console.error("Failed to dismiss occurrence:", error);
       toast.error("Could not dismiss this pending item.");

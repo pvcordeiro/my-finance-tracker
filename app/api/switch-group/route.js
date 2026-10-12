@@ -4,6 +4,7 @@ import {
   withAuth,
   getAuthenticatedUser,
 } from "../../../lib/auth-middleware.js";
+import { notifyUserAccountChange } from "../../../lib/sse-notifications.js";
 
 export const POST = withAuth(async (request) => {
   try {
@@ -44,8 +45,9 @@ export const POST = withAuth(async (request) => {
     }
 
     switchGroup(sessionToken, numericGroupId);
+    notifyUserAccountChange(user.id, { type: "group-changed", currentGroupId: numericGroupId });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, currentGroupId: numericGroupId });
   } catch (error) {
     console.error("Switch group error:", error);
     return NextResponse.json(

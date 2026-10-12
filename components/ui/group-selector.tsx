@@ -11,8 +11,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
+import { useLanguage } from "@/hooks/use-language";
 
 export function GroupSelector() {
+  const { t } = useLanguage();
   const { user, refreshUser } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -89,7 +91,6 @@ export function GroupSelector() {
               "selected group")
         );
 
-        window.location.reload();
       } else {
         toast.error("Failed to switch group");
       }
@@ -106,6 +107,7 @@ export function GroupSelector() {
         <Button
           variant="outline"
           size="sm"
+          aria-label={`${currentGroupName}. ${t("common.groupSwitchInfo")}`}
           className="flex items-center gap-2"
           disabled={isLoading}
         >

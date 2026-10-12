@@ -108,7 +108,6 @@ export default function UserSettingsPage() {
           user?.groups?.find((g) => g.group_id === groupId)?.name ||
           "selected group";
         toast.success(t("settings.switchedTo") + " " + groupName);
-        window.location.reload();
       } else {
         toast.error(t("settings.failedToSwitch"));
       }
@@ -372,6 +371,7 @@ export default function UserSettingsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
+              <p className="mb-3 text-xs text-muted-foreground">{t("common.groupSwitchInfo")}</p>
               <div className="space-y-2">
                 {user.groups.map((group) => {
                   const isCurrentGroup =

@@ -118,13 +118,13 @@ export function FinancialChart({ data }: FinancialChartProps) {
 
     if (data.incomes) {
       data.incomes.forEach((incomeEntry) => {
-        income += incomeEntry.resolved?.[idx] ? 0 : incomeEntry.amounts[idx] || 0;
+        income += incomeEntry.resolved?.[idx] || incomeEntry.dismissed?.[idx] ? 0 : incomeEntry.amounts[idx] || 0;
       });
     }
 
     if (data.expenses) {
       data.expenses.forEach((expenseEntry) => {
-        expenses += expenseEntry.resolved?.[idx] ? 0 : expenseEntry.amounts[idx] || 0;
+        expenses += expenseEntry.resolved?.[idx] || expenseEntry.dismissed?.[idx] ? 0 : expenseEntry.amounts[idx] || 0;
       });
     }
 

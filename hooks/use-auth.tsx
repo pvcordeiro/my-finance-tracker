@@ -40,6 +40,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (!user || typeof window === "undefined") return;
+    const source = new EventSource("/api/auth/session/stream", { withCredentials: true });
+    source.onmessage = (event) => {
+      try {
+        const payload = JSON.parse(event.data);
+        if (payload.type === "group-changed") {
+          void refreshUser();
+          window.dispatchEvent(new CustomEvent("userGroupChanged", { detail: payload }));
+        }
+      } catch (error) {
+        console.error("Failed to process account update:", error);
+      }
+    };
+    return () => source.close();
+  }, [user?.id]);
+
+  useEffect(() => {
     let isMounted = true;
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 2000);
@@ -207,6 +224,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (response.ok) {
         const data = await response.json();
         setUser(data.user);
+        try { localStorage.setItem("finance-tracker-user", JSON.stringify(data.user)); } catch {}
       }
     } catch (error) {
       console.error("Refresh user error:", error);

@@ -47,6 +47,7 @@ export interface FinanceEntry {
   recurrent?: boolean;
   recurrenceAmount?: number;
   occurrenceIds?: (number | null)[];
+  dismissed?: boolean[];
 }
 
 interface EntryFormProps {
@@ -286,7 +287,7 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
       let firstNonZeroAmount = 0;
 
       for (let i = 0; i < entry.amounts.length; i++) {
-        if (entry.amounts[i] && entry.amounts[i] !== 0 && !entry.resolved?.[i]) {
+        if (entry.amounts[i] && entry.amounts[i] !== 0 && !entry.resolved?.[i] && !entry.dismissed?.[i]) {
           firstNonZeroMonthIndex = i;
           firstNonZeroAmount = entry.amounts[i];
           break;
@@ -369,7 +370,7 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
                   >
                     <PrivacyNumber
                       value={entries.reduce(
-                        (sum, entry) => sum + calculateTotal(entry.amounts),
+                        (sum, entry) => sum + calculateTotal(entry.amounts.map((amount, index) => entry.resolved?.[index] || entry.dismissed?.[index] ? 0 : amount)),
                         0
                       )}
                     />
@@ -451,7 +452,7 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
                       )}
                     >
                       <PrivacyNumber
-                        value={calculateTotal(entry.amounts.map((amount, index) => entry.resolved?.[index] ? 0 : amount))}
+                         value={calculateTotal(entry.amounts.map((amount, index) => entry.resolved?.[index] || entry.dismissed?.[index] ? 0 : amount))}
                       />
                       {entry.recurrent && <span className="ml-2 inline-flex rounded-full bg-primary/10 px-2 py-0.5 align-middle text-[10px] font-medium text-primary">{t("entries.recurrentBadge")}</span>}
                     </span>
@@ -482,7 +483,7 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
                             }`}
                             disabled={
                               !entry.amounts.some(
-                                (amount, index) => amount && amount !== 0 && !entry.resolved?.[index]
+                                 (amount, index) => amount && amount !== 0 && !entry.resolved?.[index] && !entry.dismissed?.[index]
                               )
                             }
                           >

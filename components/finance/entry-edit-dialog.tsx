@@ -29,6 +29,8 @@ interface FinanceEntry {
   id: string;
   description: string;
   amounts: number[];
+  resolved?: boolean[];
+  dismissed?: boolean[];
 }
 
 interface EntryEditDialogProps {
@@ -307,7 +309,7 @@ export function EntryEditDialog({
                         inputMode="decimal"
                         step="0.01"
                         placeholder="0"
-                        value={localEntry.amounts[index] || ""}
+                      value={localEntry.resolved?.[index] || localEntry.dismissed?.[index] ? "" : localEntry.amounts[index] || ""}
                         onChange={(e) => {
                           const value = e.target.value;
                           const regex = /^\d*\.?\d{0,2}$/;

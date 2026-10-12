@@ -5,53 +5,84 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PrivacyNumber } from "@/components/ui/privacy-number";
 import { useLanguage } from "@/hooks/use-language";
 import type { PendingOccurrence } from "@/hooks/use-finance-data";
-import { Check } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Check, ChevronDown, Clock3 } from "lucide-react";
+import { useState } from "react";
 
 export function PendingOccurrences({
   occurrences,
   onResolve,
   onDismiss,
+  isOpen: controlledIsOpen,
+  onOpenChange,
 }: {
   occurrences: PendingOccurrence[];
   onResolve: (occurrence: PendingOccurrence) => void;
   onDismiss?: (occurrence: PendingOccurrence) => void;
+  isOpen?: boolean;
+  onOpenChange?: (isOpen: boolean) => void;
 }) {
   const { t } = useLanguage();
+  const [localOpen, setLocalOpen] = useState(false);
+  const expanded = controlledIsOpen ?? localOpen;
+  const setExpanded = (next: boolean) => {
+    if (controlledIsOpen === undefined) setLocalOpen(next);
+    onOpenChange?.(next);
+  };
   if (!occurrences.length) return null;
 
   const monthKeys = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
 
   return (
-    <Card className="border-amber-500/30 bg-amber-500/[0.035] shadow-none max-h-[24vh] overflow-y-auto">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base sm:text-lg">
-          {t("entries.pendingOccurrences")}
-          <span className="ml-2 text-sm font-normal text-muted-foreground">{occurrences.length}</span>
-        </CardTitle>
+    <Card className="overflow-hidden border-amber-500/30 bg-card shadow-none">
+      <CardHeader className="flex-row items-center justify-between gap-3 bg-amber-500/[0.07] px-4 py-3 sm:px-5">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300">
+            <Clock3 className="h-4 w-4" />
+          </span>
+          <div className="min-w-0">
+            <CardTitle className="text-sm font-semibold sm:text-base">{t("entries.pendingOccurrences")}</CardTitle>
+            <p className="mt-0.5 text-xs leading-snug text-muted-foreground">{t("entries.pendingOccurrencesHelp")}</p>
+          </div>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          <Badge variant="secondary">{occurrences.length}</Badge>
+          <Button type="button" size="icon" variant="ghost" className="h-9 w-9" aria-label={expanded ? t("common.collapse") : t("common.expand")} aria-expanded={expanded} onClick={() => setExpanded(!expanded)}>
+            <ChevronDown className={`h-4 w-4 transition-transform ${expanded ? "rotate-180" : ""}`} />
+          </Button>
+        </div>
       </CardHeader>
-      <CardContent className="space-y-2">
+      {expanded && <CardContent className="max-h-[42vh] space-y-2 overflow-y-auto p-3 sm:p-4">
         {occurrences.map((occurrence) => {
           const monthLabel = t(`months.${monthKeys[occurrence.month - 1]}`);
+          const resolveLabel = occurrence.isIncome ? t("entries.markReceived") : t("entries.markPaid");
           return (
-            <div key={`${occurrence.entryId}-${occurrence.year}-${occurrence.month}`} className="flex items-center gap-3 rounded-lg border border-border/70 bg-card px-3 py-2.5">
+            <div key={`${occurrence.entryId}-${occurrence.year}-${occurrence.month}`} className="flex flex-col gap-3 rounded-lg border border-border/70 bg-background px-3 py-3 sm:flex-row sm:items-center sm:gap-3 sm:px-4">
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">{occurrence.description}</p>
-                <p className="text-xs text-muted-foreground">
+                <div className="flex min-w-0 items-center gap-2">
+                  <p className="truncate text-sm font-medium">{occurrence.description}</p>
+                  <Badge variant="outline" className={`shrink-0 text-[10px] ${occurrence.isIncome ? "border-finance-positive/30 text-finance-positive" : "border-finance-negative/30 text-finance-negative"}`}>
+                    {occurrence.isIncome ? t("entries.income") : t("entries.expenses")}
+                  </Badge>
+                </div>
+                <p className="mt-0.5 text-xs text-muted-foreground">
                   {t("entries.pendingMonth").replace("{month}", monthLabel).replace("{year}", String(occurrence.year))}
                 </p>
               </div>
-              <span className={`shrink-0 text-sm font-semibold tabular-nums ${occurrence.type === "income" ? "text-finance-positive" : "text-finance-negative"}`}>
+              <span className={`self-start text-sm font-semibold tabular-nums sm:ml-auto sm:self-auto sm:shrink-0 ${occurrence.isIncome ? "text-finance-positive" : "text-finance-negative"}`}>
                 <PrivacyNumber value={occurrence.amount} />
               </span>
-              {onDismiss && <Button size="sm" variant="ghost" className="h-9 shrink-0 px-2.5 sm:px-3" onClick={() => onDismiss(occurrence)}>{t("entries.dismissPending")}</Button>}
-              <Button size="sm" variant="outline" className="h-9 shrink-0 px-2.5 sm:px-3" onClick={() => onResolve(occurrence)} aria-label={`${t("entries.markPendingResolved")}: ${occurrence.description}`}>
-                <Check className="h-4 w-4 sm:mr-1.5" />
-                <span className="hidden sm:inline">{t("entries.markPendingResolved")}</span>
-              </Button>
+              <div className="flex w-full items-center justify-end gap-2 sm:w-auto">
+                {onDismiss && <Button size="sm" variant="ghost" className="h-9 px-2.5 text-xs sm:px-3 sm:text-sm" onClick={() => onDismiss(occurrence)}>{occurrence.isIncome ? t("entries.dismissPendingIncome") : t("entries.dismissPendingExpense")}</Button>}
+                <Button size="sm" variant="outline" className="h-9 border-finance-positive/35 px-2.5 text-xs text-finance-positive hover:bg-finance-positive/10 hover:text-finance-positive sm:px-3 sm:text-sm" onClick={() => onResolve(occurrence)} aria-label={`${resolveLabel}: ${occurrence.description}`}>
+                  <Check className="h-4 w-4 sm:mr-1.5" />
+                  <span>{resolveLabel}</span>
+                </Button>
+              </div>
             </div>
           );
         })}
-      </CardContent>
+      </CardContent>}
     </Card>
   );
 }

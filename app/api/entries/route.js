@@ -50,8 +50,8 @@ export const GET = withAuth(async (request) => {
     ensureRecurringOccurrences();
 
     db.prepare(`
-      INSERT OR IGNORE INTO entry_occurrences (entry_id, year, month, amount, is_resolved)
-      SELECT e.id, ea.year, ea.month, ea.amount, 1
+      INSERT OR IGNORE INTO entry_occurrences (entry_id, year, month, amount, is_resolved, is_dismissed)
+      SELECT e.id, ea.year, ea.month, ea.amount, 1, 0
       FROM entries e JOIN entry_amounts ea ON ea.entry_id = e.id
       WHERE e.group_id = ?
     `).run(groupId);
@@ -60,7 +60,7 @@ export const GET = withAuth(async (request) => {
     const rowsWithSlots = db.prepare(`
       SELECT e.id, e.name, e.type, e.created_at, e.updated_at,
         e.recurrent, e.recurrence_amount,
-        o.id AS occurrence_id, o.year, o.month, o.amount, o.is_resolved,
+            o.id AS occurrence_id, o.year, o.month, o.amount, o.is_resolved, o.is_dismissed,
         ea.amount AS legacy_amount
       FROM entries e
       LEFT JOIN entry_occurrences o ON e.id = o.entry_id
@@ -82,6 +82,7 @@ export const GET = withAuth(async (request) => {
           recurrence_amount: Number(row.recurrence_amount) || 0,
           amounts: new Array(12).fill(0),
           resolved: new Array(12).fill(false),
+          dismissed: new Array(12).fill(false),
           occurrenceIds: new Array(12).fill(null),
         });
       }
@@ -92,6 +93,7 @@ export const GET = withAuth(async (request) => {
       if (index >= 0) {
         const entry = entriesMap.get(row.id);
         entry.resolved[index] = Boolean(row.is_resolved);
+        entry.dismissed[index] = Boolean(row.is_dismissed);
         if (row.occurrence_id) {
           entry.occurrenceIds[index] = row.occurrence_id;
         }
@@ -116,7 +118,7 @@ export const GET = withAuth(async (request) => {
       SELECT e.id AS entry_id, e.name, e.type, o.id AS occurrence_id, o.year, o.month, o.amount
       FROM entry_occurrences o
       JOIN entries e ON e.id = o.entry_id
-      WHERE e.group_id = ? AND o.is_resolved = 0 AND o.amount != 0
+      WHERE e.group_id = ? AND o.is_resolved = 0 AND o.is_dismissed = 0 AND o.amount != 0
         AND (o.year < ? OR (o.year = ? AND o.month < ?))
       ORDER BY o.year ASC, o.month ASC, e.name COLLATE NOCASE ASC
     `).all(groupId, currentYear, currentYear, currentMonth) ?? [];
@@ -135,6 +137,7 @@ export const GET = withAuth(async (request) => {
         month: row.month,
         amount: Number(row.amount) || 0,
         occurrenceId: row.occurrence_id,
+        isIncome: row.type === "income",
       })),
       last_updated: lastUpdatedInfo?.last_updated || null,
       last_updated_user_id: lastUpdatedInfo?.last_updated_user_id || null,
@@ -467,6 +470,25 @@ export const PATCH = withAuth(async (request) => {
         `).run(id, numericYear, numericMonth, id);
       }
       updates.is_resolved = Boolean(is_resolved);
+      updates.month = numericMonth;
+      updates.year = numericYear;
+    }
+
+    if (body?.is_dismissed !== undefined) {
+      const numericMonth = Number(month);
+      const numericYear = Number(year);
+      if (!Number.isInteger(numericMonth) || numericMonth < 1 || numericMonth > 12 || !Number.isInteger(numericYear)) {
+        return NextResponse.json({ error: "Valid month and year are required" }, { status: 400 });
+      }
+      const occurrenceId = body.occurrence_id;
+      if (occurrenceId !== undefined) {
+        const occurrence = db.prepare(`SELECT id FROM entry_occurrences WHERE id = ? AND entry_id = ?`).get(occurrenceId, id);
+        if (!occurrence) return NextResponse.json({ error: "Occurrence not found" }, { status: 404 });
+        db.prepare("UPDATE entry_occurrences SET is_dismissed = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(body.is_dismissed ? 1 : 0, occurrenceId);
+      } else {
+        db.prepare("UPDATE entry_occurrences SET is_dismissed = ?, updated_at = CURRENT_TIMESTAMP WHERE entry_id = ? AND year = ? AND month = ?").run(body.is_dismissed ? 1 : 0, id, numericYear, numericMonth);
+      }
+      updates.is_dismissed = Boolean(body.is_dismissed);
       updates.month = numericMonth;
       updates.year = numericYear;
     }
