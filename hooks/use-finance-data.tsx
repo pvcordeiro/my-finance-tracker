@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { useAuth } from "./use-auth";
 import { useLanguage } from "@/hooks/use-language";
 import type { FinanceEntry } from "@/components/finance/entry-form";
+import { resolveRollingOccurrence } from "@/lib/rolling-months";
 
 export interface FinanceData {
   bankAmount: number;
@@ -644,10 +645,9 @@ export function useFinanceData() {
       if (!response.ok) throw new Error("Failed to resolve occurrence");
       const updateList = (items: FinanceEntry[]) => items.map((entry: any) => {
         if (entry.id !== occurrence.entryId) return entry;
-        const resolved = [...(entry.resolved || Array(12).fill(false))];
         const slot = getRollingMonthIndex(occurrence.year, occurrence.month);
-        if (slot >= 0) resolved[slot] = true;
-        return { ...entry, resolved };
+        if (slot < 0) return entry;
+        return resolveRollingOccurrence(entry, slot, occurrence.year, occurrence.month);
       });
       setData((previous) => ({
         ...previous,
@@ -694,23 +694,27 @@ export function useFinanceData() {
     }
   };
 
-  const resolveEntryMonth = async (entryId: string, monthIndex: number) => {
+  const resolveEntryMonth = async (
+    entryId: string,
+    monthIndex: number,
+    targetYear: number,
+    targetMonth: number,
+    occurrenceId?: number | null
+  ) => {
     if (guardOffline()) return;
-    const today = new Date();
-    const date = new Date(today.getFullYear(), today.getMonth() + monthIndex, 1);
+    const year = targetYear;
+    const month = targetMonth;
     try {
       const response = await fetch("/api/entries", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: entryId, month: date.getMonth() + 1, year: date.getFullYear(), is_resolved: true }),
+        body: JSON.stringify({ id: entryId, month, year, is_resolved: true, occurrence_id: occurrenceId }),
         credentials: "include",
       });
       if (!response.ok) throw new Error("Failed to resolve this month");
       const updateList = (items: FinanceEntry[]) => items.map((entry: any) => {
         if (entry.id !== entryId) return entry;
-        const resolved = [...(entry.resolved || Array(12).fill(false))];
-        resolved[monthIndex] = true;
-        return { ...entry, resolved };
+        return resolveRollingOccurrence(entry, monthIndex, year, month);
       });
       setData((previous) => ({ ...previous, incomes: updateList(previous.incomes), expenses: updateList(previous.expenses) }));
       setOriginalData((previous) => ({ ...previous, incomes: updateList(previous.incomes), expenses: updateList(previous.expenses) }));

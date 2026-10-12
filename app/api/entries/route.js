@@ -41,7 +41,7 @@ export const GET = withAuth(async (request) => {
           if (insertResult.changes > 0) {
             db.prepare(`
               INSERT OR REPLACE INTO entry_amounts
-                (entry_id, year, month, amount, created_at, updated_at)
+                (entry_id, month, year, amount, created_at, updated_at)
               VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
             `).run(entry.id, slot.month, slot.year, entry.recurrence_amount);
           }
@@ -80,7 +80,7 @@ export const GET = withAuth(async (request) => {
           type: row.type,
           created_at: row.created_at,
           updated_at: row.updated_at,
-        recurrent: Boolean(row.recurrent),
+          recurrent: Boolean(row.recurrent),
           recurrence_amount: Number(row.recurrence_amount) || 0,
           amounts: new Array(12).fill(0),
           resolved: new Array(12).fill(false),
@@ -118,14 +118,39 @@ export const GET = withAuth(async (request) => {
       WHERE e.group_id = ?
       ORDER BY ea.year DESC, ea.updated_at DESC
     `).all(groupId) ?? [];
+    const legacyByEntry = new Map();
+    for (const row of legacyAmounts) {
+      if (!legacyByEntry.has(row.entry_id)) legacyByEntry.set(row.entry_id, new Map());
+      const values = legacyByEntry.get(row.entry_id);
+      if (!values.has(row.month)) values.set(row.month, Number(row.amount) || 0);
+    }
+    const insertBackfilledOccurrence = db.prepare(`
+      INSERT OR IGNORE INTO entry_occurrences
+        (entry_id, year, month, amount, is_resolved, is_dismissed)
+      VALUES (?, ?, ?, ?, 0, 0)
+    `);
+    const insertBackfilledAmount = db.prepare(`
+      INSERT OR IGNORE INTO entry_amounts (entry_id, month, year, amount)
+      VALUES (?, ?, ?, ?)
+    `);
     for (const [entryId, entry] of entriesMap) {
       const matched = matchedRollingSlots.get(entryId) || [];
+      const values = legacyByEntry.get(entryId);
+      if (!values) continue;
       entry.amounts = backfillLegacyRollingAmounts(
         entry.amounts,
         matched,
         legacyAmounts.filter((row) => row.entry_id === entryId),
         nextMonths
       );
+      for (let index = 0; index < 12; index++) {
+        if (matched[index]) continue;
+        const slot = nextMonths[index];
+        if (!values.has(slot.month)) continue;
+        const amount = entry.amounts[index];
+        insertBackfilledOccurrence.run(entryId, slot.year, slot.month, amount);
+        insertBackfilledAmount.run(entryId, slot.month, slot.year, amount);
+      }
     }
 
     const occurrenceRows = db.prepare(`
@@ -480,20 +505,28 @@ export const PATCH = withAuth(async (request) => {
       if (!Number.isInteger(numericMonth) || numericMonth < 1 || numericMonth > 12 || !Number.isInteger(numericYear)) {
         return NextResponse.json({ error: "Valid month and year are required" }, { status: 400 });
       }
-      db.prepare(`
-        INSERT INTO entry_occurrences (entry_id, year, month, amount, is_resolved)
-        SELECT ?, ?, ?, COALESCE((SELECT amount FROM entry_occurrences WHERE entry_id = ? AND year = ? AND month = ?), 0), ?
-        ON CONFLICT(entry_id, year, month) DO UPDATE SET is_resolved = excluded.is_resolved, updated_at = CURRENT_TIMESTAMP
-      `).run(id, numericYear, numericMonth, id, numericYear, numericMonth, is_resolved ? 1 : 0);
-      if (occurrence_id !== undefined) {
-        db.prepare("UPDATE entry_occurrences SET is_resolved = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(is_resolved ? 1 : 0, occurrence_id);
-      }
       if (is_resolved) {
+        const target = occurrence_id !== undefined
+          ? db.prepare("SELECT id, amount FROM entry_occurrences WHERE id = ? AND entry_id = ?").get(occurrence_id, id)
+          : db.prepare("SELECT id, amount FROM entry_occurrences WHERE entry_id = ? AND year = ? AND month = ?").get(id, numericYear, numericMonth);
+        if (!target) return NextResponse.json({ error: "Occurrence not found" }, { status: 404 });
+        db.transaction(() => {
+          db.prepare("UPDATE entry_occurrences SET is_resolved = 1, amount = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(target.id);
+          db.prepare("UPDATE entry_amounts SET amount = 0, updated_at = CURRENT_TIMESTAMP WHERE entry_id = ? AND year = ? AND month = ?").run(id, numericYear, numericMonth);
+        })();
+      } else {
         db.prepare(`
-          INSERT OR REPLACE INTO entry_amounts (entry_id, year, month, amount, created_at, updated_at)
-          SELECT ?, ?, ?, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
-          WHERE EXISTS (SELECT 1 FROM entries WHERE id = ? AND recurrent = 0)
-        `).run(id, numericYear, numericMonth, id);
+          INSERT INTO entry_occurrences (entry_id, year, month, amount, is_resolved)
+          VALUES (?, ?, ?, COALESCE(
+            (SELECT amount FROM entry_occurrences WHERE entry_id = ? AND year = ? AND month = ?),
+            (SELECT amount FROM entry_amounts WHERE entry_id = ? AND year = ? AND month = ?),
+            0
+          ), 0)
+          ON CONFLICT(entry_id, year, month) DO UPDATE SET
+            is_resolved = 0,
+            amount = COALESCE((SELECT amount FROM entry_amounts WHERE entry_id = ? AND year = ? AND month = ?), entry_occurrences.amount),
+            updated_at = CURRENT_TIMESTAMP
+        `).run(id, numericYear, numericMonth, id, numericYear, numericMonth, id, numericYear, numericMonth, id, numericYear, numericMonth);
       }
       updates.is_resolved = Boolean(is_resolved);
       updates.month = numericMonth;
@@ -510,9 +543,11 @@ export const PATCH = withAuth(async (request) => {
       if (occurrenceId !== undefined) {
         const occurrence = db.prepare(`SELECT id FROM entry_occurrences WHERE id = ? AND entry_id = ?`).get(occurrenceId, id);
         if (!occurrence) return NextResponse.json({ error: "Occurrence not found" }, { status: 404 });
-        db.prepare("UPDATE entry_occurrences SET is_dismissed = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(body.is_dismissed ? 1 : 0, occurrenceId);
+        db.prepare("UPDATE entry_occurrences SET is_dismissed = ?, amount = CASE WHEN ? = 1 THEN 0 ELSE COALESCE((SELECT amount FROM entry_amounts WHERE entry_id = ? AND year = ? AND month = ?), amount) END, updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(body.is_dismissed ? 1 : 0, body.is_dismissed ? 1 : 0, id, numericYear, numericMonth, occurrenceId);
+        if (body.is_dismissed) db.prepare("UPDATE entry_amounts SET amount = 0, updated_at = CURRENT_TIMESTAMP WHERE entry_id = ? AND year = ? AND month = ?").run(id, numericYear, numericMonth);
       } else {
-        db.prepare("UPDATE entry_occurrences SET is_dismissed = ?, updated_at = CURRENT_TIMESTAMP WHERE entry_id = ? AND year = ? AND month = ?").run(body.is_dismissed ? 1 : 0, id, numericYear, numericMonth);
+        db.prepare("UPDATE entry_occurrences SET is_dismissed = ?, amount = CASE WHEN ? = 1 THEN 0 ELSE COALESCE((SELECT amount FROM entry_amounts WHERE entry_id = ? AND year = ? AND month = ?), amount) END, updated_at = CURRENT_TIMESTAMP WHERE entry_id = ? AND year = ? AND month = ?").run(body.is_dismissed ? 1 : 0, body.is_dismissed ? 1 : 0, id, numericYear, numericMonth, id, numericYear, numericMonth);
+        if (body.is_dismissed) db.prepare("UPDATE entry_amounts SET amount = 0, updated_at = CURRENT_TIMESTAMP WHERE entry_id = ? AND year = ? AND month = ?").run(id, numericYear, numericMonth);
       }
       updates.is_dismissed = Boolean(body.is_dismissed);
       updates.month = numericMonth;

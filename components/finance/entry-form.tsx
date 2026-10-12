@@ -32,6 +32,7 @@ import { EntryEditDialog } from "./entry-edit-dialog";
 import { PrivacyNumber } from "@/components/ui/privacy-number";
 import { PrivacyText } from "@/components/ui/privacy-text";
 import { useLanguage } from "@/hooks/use-language";
+import { getNextUnresolvedOccurrence } from "@/lib/rolling-months";
 import {
   Tooltip,
   TooltipContent,
@@ -64,7 +65,10 @@ interface EntryFormProps {
   onResolveCurrentMonth: (
     id: string,
     monthIndex: number,
-    amount: number
+    amount: number,
+    year: number,
+    month: number,
+    occurrenceId?: number | null
   ) => Promise<void>;
   type: "income" | "expense";
   isOpen: boolean;
@@ -120,6 +124,9 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
       entry: FinanceEntry;
       monthIndex: number;
       amount: number;
+      year: number;
+      month: number;
+      occurrenceId?: number | null;
     } | null>(null);
     const [internalGuidedDialogOpen, setInternalGuidedDialogOpen] =
       useState(false);
@@ -277,25 +284,12 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
     ) => {
       e.stopPropagation();
 
-      let firstNonZeroMonthIndex = -1;
-      let firstNonZeroAmount = 0;
-
-      for (let i = 0; i < entry.amounts.length; i++) {
-        if (entry.amounts[i] && entry.amounts[i] !== 0 && !entry.resolved?.[i] && !entry.dismissed?.[i]) {
-          firstNonZeroMonthIndex = i;
-          firstNonZeroAmount = entry.amounts[i];
-          break;
-        }
-      }
-
-      if (firstNonZeroMonthIndex === -1 || firstNonZeroAmount === 0) {
-        return;
-      }
+      const target = getNextUnresolvedOccurrence(entry);
+      if (!target) return;
 
       setEntryToResolve({
         entry,
-        monthIndex: firstNonZeroMonthIndex,
-        amount: firstNonZeroAmount,
+        ...target,
       });
       setResolveDialogOpen(true);
     };
@@ -306,7 +300,10 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
       await onResolveCurrentMonth(
         entryToResolve.entry.id,
         entryToResolve.monthIndex,
-        entryToResolve.amount
+        entryToResolve.amount,
+        entryToResolve.year,
+        entryToResolve.month,
+        entryToResolve.occurrenceId
       );
 
       setFlashingEntries((prev) => new Set(prev).add(entryToResolve.entry.id));
@@ -460,7 +457,7 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
                             size="sm"
                             onClick={(e) => {
                               e.stopPropagation();
-                              const index = entry.amounts.findIndex((amount, monthIndex) => amount && !entry.resolved?.[monthIndex] && !entry.dismissed?.[monthIndex]);
+                              const index = getNextUnresolvedOccurrence(entry)?.monthIndex ?? -1;
                               if (index >= 0) handleResolveCurrentMonth(e, entry);
                             }}
                             className="text-muted-foreground hover:text-foreground hover:bg-muted h-8 w-8 p-0 touch-manipulation"

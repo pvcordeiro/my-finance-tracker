@@ -288,7 +288,7 @@ export function EntryEditDialog({
                 >
                   <PrivacyNumber
                     value={localEntry.amounts.reduce(
-                      (sum, amount) => sum + (amount || 0),
+                      (sum, amount, index) => sum + (localEntry.resolved?.[index] || localEntry.dismissed?.[index] ? 0 : amount || 0),
                       0
                     )}
                   />
@@ -298,7 +298,7 @@ export function EntryEditDialog({
                 {rollingMonths.map((month, index) => (
                   <div key={month} className="space-y-2">
                     <label className="text-xs font-medium text-muted-foreground block">
-                      {month}
+                      {month}{(localEntry.resolved?.[index] || localEntry.dismissed?.[index]) && <span className="ml-1.5 text-finance-positive">{t("entries.resolvedShort")}</span>}
                     </label>
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
@@ -309,7 +309,7 @@ export function EntryEditDialog({
                         inputMode="decimal"
                         step="0.01"
                         placeholder="0"
-                      value={localEntry.amounts[index] || ""}
+                      value={localEntry.resolved?.[index] || localEntry.dismissed?.[index] ? "" : localEntry.amounts[index] || ""}
                         onChange={(e) => {
                           const value = e.target.value;
                           const regex = /^\d*\.?\d{0,2}$/;

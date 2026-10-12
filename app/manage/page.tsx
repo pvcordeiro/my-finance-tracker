@@ -332,7 +332,10 @@ function HomePageContent() {
     type: "incomes" | "expenses",
     id: string,
     monthIndex: number,
-    amount: number
+    amount: number,
+    year: number,
+    month: number,
+    occurrenceId?: number | null
   ) => {
     try {
       const entry =
@@ -342,7 +345,7 @@ function HomePageContent() {
 
       const description = entry?.description || t("entries.entry");
 
-      await resolveEntryMonth(id, monthIndex);
+      await resolveEntryMonth(id, monthIndex, year, month, occurrenceId);
 
       toast.success(
         type === "incomes"
@@ -446,12 +449,15 @@ function HomePageContent() {
                       });
                     }
                   }}
-                  onResolveCurrentMonth={async (id, monthIndex, amount) => {
+                  onResolveCurrentMonth={async (id, monthIndex, amount, year, month, occurrenceId) => {
                     await handleResolveCurrentMonth(
                       "incomes",
                       id,
                       monthIndex,
-                      amount
+                      amount,
+                      year,
+                      month,
+                      occurrenceId
                     );
                   }}
                   type="income"
@@ -547,12 +553,15 @@ function HomePageContent() {
                       });
                     }
                   }}
-                  onResolveCurrentMonth={async (id, monthIndex, amount) => {
+                  onResolveCurrentMonth={async (id, monthIndex, amount, year, month, occurrenceId) => {
                     await handleResolveCurrentMonth(
                       "expenses",
                       id,
                       monthIndex,
-                      amount
+                      amount,
+                      year,
+                      month,
+                      occurrenceId
                     );
                   }}
                   type="expense"
