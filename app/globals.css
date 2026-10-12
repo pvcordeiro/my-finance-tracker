@@ -46,6 +46,11 @@
   --finance-negative: 0 84% 60%;      /* Red for expense/negative */
 }
 
+/* Quiet, consistent surfaces: restrained borders, softer canvas, and clearer focus. */
+:root {
+  --radius: 0.75rem;
+}
+
 .dark {
   /* Dark Mode - Layered depth system (lighter as you go deeper) */
   /* Using 210° hue for cool, neutral gray (consistent with light mode) */
@@ -102,6 +107,13 @@
   
   body {
     @apply bg-background text-foreground;
+    min-height: 100%;
+    font-feature-settings: "ss01" on, "cv11" on;
+  }
+
+  ::selection {
+    background: hsl(var(--primary) / 0.2);
+    color: hsl(var(--foreground));
   }
   
   /* Input fields - lighter/darker for contrast in layered design */
@@ -133,18 +145,17 @@
     -ms-overflow-style: none;
   }
   
-  *::-webkit-scrollbar {
-    display: none;
-  }
+  *::-webkit-scrollbar { width: 8px; height: 8px; }
+  *::-webkit-scrollbar-thumb { background: hsl(var(--muted-foreground) / 0.25); border-radius: 999px; }
+  *::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground) / 0.4); }
 
   .finance-gradient {
-  /* Light mode: white → card → subtle primary tint (follows active accent) */
-  background: linear-gradient(135deg, hsl(var(--popover)) 0%, hsl(var(--card)) 50%, hsl(var(--primary) / 0.12) 100%);
+    background: linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--background)) 60%, hsl(var(--primary) / 0.035) 100%);
   }
   
   .dark .finance-gradient {
   /* Dark mode: card → background → subtle primary tint (follows active accent) */
-  background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--background)) 50%, hsl(var(--primary) / 0.10) 100%);
+    background: linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--background)) 60%, hsl(var(--primary) / 0.055) 100%);
   }
   
   .income-card {
@@ -247,6 +258,10 @@
     outline: 2px solid hsl(var(--primary));
     outline-offset: 2px;
   }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }
 
 @media (min-width: 475px) {

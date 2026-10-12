@@ -12,7 +12,7 @@ export async function GET() {
 
     return NextResponse.json({ allowRegistration });
   } catch (error) {
-    console.error("Error checking registration status:", error);
+    console.error("Error checking registration status:", error?.stack || error);
     return NextResponse.json(
       { error: "Failed to check registration status" },
       { status: 500 }

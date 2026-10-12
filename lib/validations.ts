@@ -1,13 +1,15 @@
 import { z } from "zod";
 
 export const loginSchema = z.object({
-  username: z.string().min(1, "Username is required").max(50),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-});
+  identifier: z.string().min(1, "Username or email is required").max(254).optional(),
+  username: z.string().min(1, "Username is required").max(254).optional(),
+  password: z.string().min(1, "Password is required").max(200),
+}).refine((value) => Boolean(value.identifier || value.username), "Username or email is required");
 
 export const registerSchema = z.object({
   username: z.string().min(1, "Username is required").max(50),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  password: z.string().min(8, "Password must be at least 8 characters").max(200),
+  email: z.string().email().max(254),
   language: z.string().optional(),
   currency: z.string().optional(),
 });
@@ -51,8 +53,8 @@ export const settingsSchema = z.object({
 export const changePasswordSchema = z.object({
   current_password: z
     .string()
-    .min(6, "Current password must be at least 6 characters"),
-  new_password: z.string().min(6, "New password must be at least 6 characters"),
+    .min(1, "Current password is required").max(200),
+  new_password: z.string().min(8, "New password must be at least 8 characters").max(200),
 });
 
 export const changeUsernameSchema = z.object({

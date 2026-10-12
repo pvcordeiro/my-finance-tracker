@@ -59,6 +59,7 @@ import { useLanguage } from "@/hooks/use-language";
 import { useOnline } from "@/hooks/use-online";
 import { OfflineBlockedPage } from "@/components/pwa/offline-blocked-page";
 import { MinimalPageHeader } from "@/components/pwa/minimal-page-header";
+import { EmailRecoverySettings } from "@/components/user/email-recovery-settings";
 
 export default function UserSettingsPage() {
   const { user, isLoading, logout, refreshUser } = useAuth();
@@ -484,6 +485,13 @@ export default function UserSettingsPage() {
               </div>
             )}
           </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("auth.recoveryEmail")}</CardTitle>
+            <CardDescription>{t("auth.recoveryEmailDescription")}</CardDescription>
+          </CardHeader>
+          <CardContent><EmailRecoverySettings /></CardContent>
         </Card>
         <Card>
           <CardHeader>

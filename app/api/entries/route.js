@@ -18,19 +18,53 @@ export const GET = withAuth(async (request) => {
 
     const db = getDatabase();
 
-    const entriesWithAmounts = db.prepare(`
-      SELECT 
-        e.id, e.name, e.type, e.created_at, e.updated_at,
-        ea.month, ea.amount
-      FROM entries e
-      LEFT JOIN entry_amounts ea ON e.id = ea.entry_id
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+    const nextMonths = Array.from({ length: 12 }, (_, index) => {
+      const date = new Date(currentYear, currentMonth - 1 + index, 1);
+      return { year: date.getFullYear(), month: date.getMonth() + 1 };
+    });
+
+    const recurrentEntries = db.prepare(
+      "SELECT id, recurrence_amount FROM entries WHERE group_id = ? AND recurrent = 1"
+    ).all(groupId) ?? [];
+    const createOccurrence = db.prepare(`
+      INSERT OR IGNORE INTO entry_occurrences
+        (entry_id, year, month, amount, is_resolved)
+      VALUES (?, ?, ?, ?, 0)
+    `);
+    const ensureRecurringOccurrences = db.transaction(() => {
+      for (const entry of recurrentEntries) {
+        for (const slot of nextMonths) {
+          createOccurrence.run(entry.id, slot.year, slot.month, entry.recurrence_amount);
+        }
+      }
+    });
+    ensureRecurringOccurrences();
+
+    db.prepare(`
+      INSERT OR IGNORE INTO entry_occurrences (entry_id, year, month, amount, is_resolved)
+      SELECT e.id, ea.year, ea.month, ea.amount, 1
+      FROM entries e JOIN entry_amounts ea ON ea.entry_id = e.id
       WHERE e.group_id = ?
-      ORDER BY e.created_at DESC, ea.month ASC
-    `).all(groupId) ?? [];
+    `).run(groupId);
 
     const entriesMap = new Map();
+    const rowsWithSlots = db.prepare(`
+      SELECT e.id, e.name, e.type, e.created_at, e.updated_at,
+        e.recurrent, e.recurrence_amount,
+        o.id AS occurrence_id, o.year, o.month, o.amount, o.is_resolved,
+        ea.amount AS legacy_amount
+      FROM entries e
+      LEFT JOIN entry_occurrences o ON e.id = o.entry_id
+      LEFT JOIN entry_amounts ea ON e.id = ea.entry_id AND ea.year = o.year AND ea.month = o.month
+      WHERE e.group_id = ?
+      ORDER BY e.created_at DESC, o.year ASC, o.month ASC
+    `).all(groupId) ?? [];
 
-    entriesWithAmounts.forEach((row) => {
+    const occurrenceIds = new Map();
+    rowsWithSlots.forEach((row) => {
       if (!entriesMap.has(row.id)) {
         entriesMap.set(row.id, {
           id: row.id,
@@ -38,17 +72,48 @@ export const GET = withAuth(async (request) => {
           type: row.type,
           created_at: row.created_at,
           updated_at: row.updated_at,
+          recurrent: Boolean(row.recurrent),
+          recurrence_amount: Number(row.recurrence_amount) || 0,
           amounts: new Array(12).fill(0),
+          resolved: new Array(12).fill(false),
+          occurrenceIds: new Array(12).fill(null),
         });
       }
-
-      const entry = entriesMap.get(row.id);
-      if (row.month && row.amount !== null) {
-        entry.amounts[row.month - 1] = parseFloat(row.amount);
+      if (!row.year || !row.month) return;
+      const index = nextMonths.findIndex(
+        (slot) => slot.year === row.year && slot.month === row.month
+      );
+      if (index >= 0) {
+        const entry = entriesMap.get(row.id);
+        entry.resolved[index] = Boolean(row.is_resolved);
+        if (row.occurrence_id) {
+          entry.occurrenceIds[index] = row.occurrence_id;
+        }
+        const amount = row.amount ?? row.legacy_amount ?? 0;
+        entry.amounts[index] = Number(amount) || 0;
       }
     });
 
+    const occurrenceRows = db.prepare(`
+      SELECT o.id AS occurrence_id, o.entry_id, o.year, o.month
+      FROM entry_occurrences o JOIN entries e ON e.id = o.entry_id
+      WHERE e.group_id = ?
+    `).all(groupId);
+    occurrenceRows.forEach((row) => {
+      const index = nextMonths.findIndex((slot) => slot.year === row.year && slot.month === row.month);
+      const entry = entriesMap.get(row.entry_id);
+      if (entry && index >= 0) entry.occurrenceIds[index] = row.occurrence_id;
+    });
+
     const entries = Array.from(entriesMap.values());
+    const pending = db.prepare(`
+      SELECT e.id AS entry_id, e.name, e.type, o.id AS occurrence_id, o.year, o.month, o.amount
+      FROM entry_occurrences o
+      JOIN entries e ON e.id = o.entry_id
+      WHERE e.group_id = ? AND o.is_resolved = 0 AND o.amount != 0
+        AND (o.year < ? OR (o.year = ? AND o.month < ?))
+      ORDER BY o.year ASC, o.month ASC, e.name COLLATE NOCASE ASC
+    `).all(groupId, currentYear, currentYear, currentMonth) ?? [];
 
     const lastUpdatedInfo = db.prepare(
       "SELECT MAX(updated_at) as last_updated, user_id as last_updated_user_id FROM entries WHERE group_id = ?"
@@ -56,6 +121,15 @@ export const GET = withAuth(async (request) => {
 
     return NextResponse.json({
       entries,
+      pending: pending.map((row) => ({
+        entryId: String(row.entry_id),
+        description: row.name,
+        type: row.type,
+        year: row.year,
+        month: row.month,
+        amount: Number(row.amount) || 0,
+        occurrenceId: row.occurrence_id,
+      })),
       last_updated: lastUpdatedInfo?.last_updated || null,
       last_updated_user_id: lastUpdatedInfo?.last_updated_user_id || null,
     });
@@ -137,9 +211,17 @@ export const POST = withAuth(async (request) => {
       for (const entry of entries) {
         if (entry.name && entry.type && entry.amounts) {
           const entryResult = db.prepare(
-            `INSERT INTO entries (group_id, user_id, name, type, created_at, updated_at) 
-             VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
-          ).run(groupId, user.id, entry.name, entry.type);
+            `INSERT INTO entries
+              (group_id, user_id, name, type, recurrent, recurrence_amount, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
+          ).run(
+            groupId,
+            user.id,
+            entry.name,
+            entry.type,
+            entry.recurrent ? 1 : 0,
+            Number(entry.recurrenceAmount) || 0
+          );
           const entryId = entryResult.lastInsertRowid;
 
           let amounts = entry.amounts;
@@ -153,13 +235,21 @@ export const POST = withAuth(async (request) => {
           }
 
           if (Array.isArray(amounts)) {
+            const now = new Date();
             for (let monthIndex = 0; monthIndex < amounts.length; monthIndex++) {
-              const month = monthIndex + 1;
               const amount = parseFloat(amounts[monthIndex]) || 0;
+              const date = new Date(now.getFullYear(), now.getMonth() + monthIndex, 1);
+              const year = date.getFullYear();
+              const month = date.getMonth() + 1;
               db.prepare(
-                `INSERT OR REPLACE INTO entry_amounts (entry_id, month, amount, created_at, updated_at) 
-                 VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
-              ).run(entryId, month, amount);
+                `INSERT OR REPLACE INTO entry_amounts (entry_id, month, year, amount, created_at, updated_at)
+                 VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
+              ).run(entryId, month, year, amount);
+              db.prepare(
+                `INSERT OR REPLACE INTO entry_occurrences
+                  (entry_id, year, month, amount, is_resolved, created_at, updated_at)
+                 VALUES (?, ?, ?, ?, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
+              ).run(entryId, year, month, amount);
             }
           }
 
@@ -246,7 +336,7 @@ export const PATCH = withAuth(async (request) => {
       );
     }
     const body = await request.json();
-    const { id, name, month, amount, year } = body || {};
+    const { id, name, month, amount, year, is_resolved, recurrent, recurrence_amount, occurrence_id } = body || {};
     if (!id) {
       return NextResponse.json(
         { error: "Entry id is required" },
@@ -271,17 +361,109 @@ export const PATCH = withAuth(async (request) => {
       updates.name = name;
     }
 
+    if (recurrent !== undefined) {
+      const enabled = recurrent === true;
+      const recurringAmount = Number(recurrence_amount) || 0;
+      db.prepare(
+        `UPDATE entries SET recurrent = ?, recurrence_amount = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`
+      ).run(enabled ? 1 : 0, recurringAmount, id);
+
+      if (enabled) {
+        const today = new Date();
+        const updateExisting = db.prepare(`
+          UPDATE entry_occurrences SET amount = ?, updated_at = CURRENT_TIMESTAMP
+          WHERE entry_id = ? AND year = ? AND month = ? AND is_resolved = 0
+        `);
+        const insertMonthlyAmount = db.prepare(`
+          INSERT OR REPLACE INTO entry_amounts
+            (entry_id, month, year, amount, created_at, updated_at)
+          VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        `);
+        const insert = db.prepare(`
+          INSERT OR IGNORE INTO entry_occurrences
+            (entry_id, year, month, amount, is_resolved)
+          VALUES (?, ?, ?, ?, 0)
+        `);
+        const results = db.transaction(() => {
+          const inserted = [];
+          for (let offset = 0; offset < 12; offset++) {
+            const date = new Date(today.getFullYear(), today.getMonth() + offset, 1);
+            const month = date.getMonth() + 1;
+            const year = date.getFullYear();
+            const insertResult = insert.run(id, year, month, recurringAmount);
+            if (insertResult.changes > 0) {
+              insertMonthlyAmount.run(id, month, year, recurringAmount);
+              inserted.push({ month, year });
+            } else {
+              updateExisting.run(recurringAmount, id, year, month);
+              db.prepare("UPDATE entry_amounts SET amount = ?, updated_at = CURRENT_TIMESTAMP WHERE entry_id = ? AND year = ? AND month = ?").run(recurringAmount, id, year, month);
+            }
+          }
+          return inserted;
+        })();
+        void results;
+      }
+      updates.recurrent = enabled;
+      updates.recurrence_amount = recurringAmount;
+    }
+
     if (month !== undefined && amount !== undefined) {
       const numericMonth = Number(month);
       const numericAmount = Number(amount) || 0;
+      const numericYear = Number(year) || new Date().getFullYear();
+      if (!Number.isInteger(numericMonth) || numericMonth < 1 || numericMonth > 12 || !Number.isInteger(numericYear) || numericYear < 1900 || numericYear > 9999 || !Number.isFinite(numericAmount) || Math.abs(numericAmount) > 1_000_000_000) {
+        return NextResponse.json({ error: "Invalid month, year, or amount" }, { status: 400 });
+      }
 
       db.prepare(
-        `INSERT OR REPLACE INTO entry_amounts (entry_id, month, amount, created_at, updated_at) 
-         VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
-      ).run(id, numericMonth, numericAmount);
+        `INSERT OR REPLACE INTO entry_amounts (entry_id, month, year, amount, created_at, updated_at)
+         VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
+      ).run(id, numericMonth, numericYear, numericAmount);
+      db.prepare(`
+        INSERT INTO entry_occurrences (entry_id, year, month, amount, is_resolved)
+        VALUES (?, ?, ?, ?, 0)
+        ON CONFLICT(entry_id, year, month) DO UPDATE SET
+          amount = excluded.amount,
+          updated_at = CURRENT_TIMESTAMP
+      `).run(id, numericYear, numericMonth, numericAmount);
 
       updates.month = numericMonth;
+      updates.year = numericYear;
       updates.amount = numericAmount;
+    }
+
+    if (is_resolved !== undefined) {
+      if (occurrence_id !== undefined) {
+        const occurrence = db.prepare(`
+          SELECT o.id, o.entry_id FROM entry_occurrences o
+          JOIN entries e ON e.id = o.entry_id
+          WHERE o.id = ? AND o.entry_id = ? AND e.group_id = ?
+        `).get(occurrence_id, id, groupId);
+        if (!occurrence) return NextResponse.json({ error: "Occurrence not found" }, { status: 404 });
+      }
+      const numericMonth = Number(month);
+      const numericYear = Number(year);
+      if (!Number.isInteger(numericMonth) || numericMonth < 1 || numericMonth > 12 || !Number.isInteger(numericYear)) {
+        return NextResponse.json({ error: "Valid month and year are required" }, { status: 400 });
+      }
+      db.prepare(`
+        INSERT INTO entry_occurrences (entry_id, year, month, amount, is_resolved)
+        SELECT ?, ?, ?, COALESCE((SELECT amount FROM entry_occurrences WHERE entry_id = ? AND year = ? AND month = ?), 0), ?
+        ON CONFLICT(entry_id, year, month) DO UPDATE SET is_resolved = excluded.is_resolved, updated_at = CURRENT_TIMESTAMP
+      `).run(id, numericYear, numericMonth, id, numericYear, numericMonth, is_resolved ? 1 : 0);
+      if (occurrence_id !== undefined) {
+        db.prepare("UPDATE entry_occurrences SET is_resolved = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(is_resolved ? 1 : 0, occurrence_id);
+      }
+      if (is_resolved) {
+        db.prepare(`
+          INSERT OR REPLACE INTO entry_amounts (entry_id, year, month, amount, created_at, updated_at)
+          SELECT ?, ?, ?, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+          WHERE EXISTS (SELECT 1 FROM entries WHERE id = ? AND recurrent = 0)
+        `).run(id, numericYear, numericMonth, id);
+      }
+      updates.is_resolved = Boolean(is_resolved);
+      updates.month = numericMonth;
+      updates.year = numericYear;
     }
 
     notifyEntryChange(groupId, "update", {

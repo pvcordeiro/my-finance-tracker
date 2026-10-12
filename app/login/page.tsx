@@ -33,8 +33,8 @@ function LoginPageInner() {
     return success;
   };
 
-  const handleRegister = async (username: string, password: string) => {
-    const success = await register(username, password);
+  const handleRegister = async (username: string, password: string, email: string) => {
+    const success = await register(username, password, email);
     if (success) {
       router.push("/");
     }

@@ -5,22 +5,16 @@ import { loginSchema } from "../../../../lib/validations.ts";
 import { rateLimit, getClientIp } from "../../../../lib/rate-limit.ts";
 import {
   createSession,
-  getSessionCookieOptions,
   SESSION_COOKIE_NAME,
   getDeviceInfo,
-  isPrivateIP,
+  createSecureSessionCookie,
+  verifyRequestOrigin,
 } from "../../../../lib/session.js";
 
 export async function POST(request) {
   try {
+    if (!verifyRequestOrigin(request)) return NextResponse.json({ error: "Invalid request origin" }, { status: 403 });
     const clientIp = getClientIp(request);
-    if (!rateLimit(clientIp, { maxRequests: 5, windowMs: 15 * 60 * 1000 })) {
-      return NextResponse.json(
-        { error: "Too many login attempts. Please try again later." },
-        { status: 429 }
-      );
-    }
-
     const body = await request.json();
 
     const validation = loginSchema.safeParse(body);
@@ -31,12 +25,31 @@ export async function POST(request) {
       );
     }
 
-    const { username, password } = validation.data;
+    const identifier = (validation.data.identifier || validation.data.username).trim();
+    const password = validation.data.password;
+    if (!rateLimit(`login:${clientIp}:${identifier.toLowerCase()}`, { maxRequests: 5, windowMs: 15 * 60 * 1000 })) {
+      return NextResponse.json(
+        { error: "Too many login attempts. Please try again later." },
+        { status: 429 }
+      );
+    }
 
     const db = getDatabase();
+    const accountCollisions = db.prepare(`
+      SELECT COUNT(*) AS count FROM users
+      WHERE (username = ? COLLATE NOCASE AND (pending_email IS NULL OR email_verified_at IS NOT NULL))
+         OR (email = ? COLLATE NOCASE AND email_verified_at IS NOT NULL)
+    `).get(identifier, identifier);
+    if (accountCollisions?.count > 1) {
+      return NextResponse.json({ error: "This sign-in name is ambiguous. Use your exact username." }, { status: 409 });
+    }
     const user = db.prepare(
-      "SELECT * FROM users WHERE username = ?"
-    ).get(username);
+      `SELECT * FROM users
+       WHERE ((username = ? COLLATE NOCASE AND (pending_email IS NULL OR email_verified_at IS NOT NULL))
+         OR (email = ? COLLATE NOCASE AND email_verified_at IS NOT NULL))
+       ORDER BY CASE WHEN email = ? COLLATE NOCASE AND email_verified_at IS NOT NULL THEN 0 ELSE 1 END
+       LIMIT 1`
+    ).get(identifier, identifier, identifier);
 
     if (!user) {
       return NextResponse.json(
@@ -77,13 +90,7 @@ export async function POST(request) {
       message: "Login successful",
     });
 
-    const isSecure =
-      request.nextUrl.protocol === "https:" || !isPrivateIP(clientIp);
-    response.cookies.set(
-      SESSION_COOKIE_NAME,
-      sessionToken,
-      getSessionCookieOptions(isSecure)
-    );
+    createSecureSessionCookie(request, response, sessionToken);
 
     return response;
   } catch (error) {

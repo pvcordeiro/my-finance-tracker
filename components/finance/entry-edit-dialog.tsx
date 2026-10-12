@@ -23,6 +23,7 @@ import { Trash2 } from "lucide-react";
 import { PrivacyNumber } from "@/components/ui/privacy-number";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/hooks/use-language";
+import { Switch } from "@/components/ui/switch";
 
 interface FinanceEntry {
   id: string;
@@ -35,6 +36,9 @@ interface EntryEditDialogProps {
   onOpenChange: (open: boolean) => void;
   entry: FinanceEntry | null;
   type: "income" | "expense";
+  recurrent?: boolean;
+  recurrenceAmount?: number;
+  onCommitRecurrence?: (recurrent: boolean, recurrenceAmount: number) => Promise<boolean>;
   onUpdateEntry: (
     id: string,
     field: string,
@@ -59,6 +63,9 @@ export function EntryEditDialog({
   onOpenChange,
   entry,
   type,
+  recurrent = false,
+  recurrenceAmount = 0,
+  onCommitRecurrence,
   onUpdateEntry,
   onCommitDescription,
   onCommitAmount,
@@ -69,6 +76,8 @@ export function EntryEditDialog({
   const [changedFields, setChangedFields] = useState<Set<string>>(new Set());
   const [savedFields, setSavedFields] = useState<Set<string>>(new Set());
   const [localEntry, setLocalEntry] = useState<FinanceEntry | null>(null);
+  const [isRecurrent, setIsRecurrent] = useState(recurrent);
+  const [recurringValue, setRecurringValue] = useState(String(recurrenceAmount || ""));
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const descriptionInputRef = useRef<HTMLInputElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -108,6 +117,11 @@ export function EntryEditDialog({
       setLocalEntry({ ...entry, amounts: [...entry.amounts] });
     }
   }, [entry, open]);
+
+  useEffect(() => {
+    setIsRecurrent(recurrent);
+    setRecurringValue(String(recurrenceAmount || ""));
+  }, [recurrent, recurrenceAmount, open]);
 
   useEffect(() => {
     if (open && descriptionInputRef.current) {
@@ -226,6 +240,35 @@ export function EntryEditDialog({
                 )}
               />
             </div>
+
+            {/* Monthly Amounts */}
+            <div className="flex items-center justify-between gap-4 rounded-lg border p-3">
+              <div>
+                <p className="text-sm font-medium">{t("entries.recurrentAmount")}</p>
+                <p className="text-xs text-muted-foreground">{t("entries.recurrentDescription")}</p>
+              </div>
+              <Switch
+                checked={isRecurrent}
+                onCheckedChange={async (checked) => {
+                  setIsRecurrent(checked);
+                  if (onCommitRecurrence) await onCommitRecurrence(checked, Number.parseFloat(recurringValue) || 0);
+                }}
+                aria-label={t("entries.recurrentAmount")}
+              />
+            </div>
+            {isRecurrent && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium">{t("entries.recurringMonthlyAmount")}</label>
+                <Input
+                  type="number"
+                  inputMode="decimal"
+                  step="0.01"
+                  value={recurringValue}
+                  onChange={(event) => setRecurringValue(event.target.value)}
+                  onBlur={() => onCommitRecurrence?.(true, Number.parseFloat(recurringValue) || 0)}
+                />
+              </div>
+            )}
 
             {/* Monthly Amounts */}
             <div className="space-y-3">

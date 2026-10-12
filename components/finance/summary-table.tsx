@@ -96,14 +96,14 @@ export function SummaryTable({ data }: SummaryTableProps) {
 
     if (data.incomes) {
       data.incomes.forEach((income) => {
-        const amount = income.amounts[index] || 0;
+        const amount = income.resolved?.[index] ? 0 : income.amounts[index] || 0;
         totalIncome += amount;
       });
     }
 
     if (data.expenses) {
       data.expenses.forEach((expense) => {
-        const amount = expense.amounts[index] || 0;
+        const amount = expense.resolved?.[index] ? 0 : expense.amounts[index] || 0;
         totalExpenses += amount;
       });
     }

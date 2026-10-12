@@ -20,7 +20,7 @@ interface GuidedEntryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   type: "income" | "expense";
-  onSubmit: (description: string, amounts: number[]) => void;
+  onSubmit: (description: string, amounts: number[], recurrent: boolean, recurrenceAmount: number) => void;
 }
 
 export function GuidedEntryDialog({
@@ -34,7 +34,7 @@ export function GuidedEntryDialog({
     "description"
   );
   const [description, setDescription] = useState("");
-  const [isFixed, setIsFixed] = useState(true);
+  const [isRecurrent, setIsRecurrent] = useState(false);
   const [fixedAmount, setFixedAmount] = useState("");
   const [amounts, setAmounts] = useState<string[]>(Array(12).fill(""));
   const [currentMonthIndex, setCurrentMonthIndex] = useState(0);
@@ -113,7 +113,7 @@ export function GuidedEntryDialog({
     if (open) {
       setStep("description");
       setDescription("");
-      setIsFixed(true);
+       setIsRecurrent(false);
       setFixedAmount("");
       setAmounts(Array(12).fill(""));
       setCurrentMonthIndex(0);
@@ -135,7 +135,7 @@ export function GuidedEntryDialog({
       setStep("type");
     } else if (step === "type") {
       setStep("amounts");
-      if (isFixed) {
+      if (isRecurrent) {
         setCurrentMonthIndex(0);
       } else {
         setCurrentMonthIndex(0);
@@ -145,7 +145,7 @@ export function GuidedEntryDialog({
 
   const handleBack = () => {
     if (step === "amounts") {
-      if (!isFixed && currentMonthIndex > 0) {
+      if (!isRecurrent && currentMonthIndex > 0) {
         setCurrentMonthIndex(currentMonthIndex - 1);
       } else {
         setStep("type");
@@ -156,7 +156,7 @@ export function GuidedEntryDialog({
   };
 
   const handleNextMonth = () => {
-    if (isFixed) {
+    if (isRecurrent) {
       handleComplete();
     } else {
       if (currentMonthIndex < 11) {
@@ -173,14 +173,14 @@ export function GuidedEntryDialog({
   const handleComplete = () => {
     let finalAmounts: number[];
 
-    if (isFixed) {
+    if (isRecurrent) {
       const amount = parseFloat(fixedAmount) || 0;
       finalAmounts = Array(12).fill(amount);
     } else {
       finalAmounts = amounts.map((a) => parseFloat(a) || 0);
     }
 
-    onSubmit(description, finalAmounts);
+    onSubmit(description, finalAmounts, isRecurrent, isRecurrent ? parseFloat(fixedAmount) || 0 : 0);
     onOpenChange(false);
   };
 
@@ -201,7 +201,7 @@ export function GuidedEntryDialog({
     if (step === "description") return description.trim() !== "";
     if (step === "type") return true;
     if (step === "amounts") {
-      if (isFixed) return fixedAmount !== "";
+      if (isRecurrent) return fixedAmount !== "";
       return true;
     }
     return false;
@@ -254,20 +254,20 @@ export function GuidedEntryDialog({
               <div className="flex items-center justify-between p-4 border rounded-lg">
                 <div className="space-y-0.5">
                   <Label htmlFor="fixed-toggle" className="text-base">
-                    {t("entries.fixedAmountAllMonths")}
+                    {t("entries.recurrentAmount")}
                   </Label>
                   <p className="text-sm text-muted-foreground">
-                    {t("entries.sameValueAllMonths")}
+                    {t("entries.recurrentDescription")}
                   </p>
                 </div>
                 <Switch
                   id="fixed-toggle"
-                  checked={isFixed}
-                  onCheckedChange={setIsFixed}
+                  checked={isRecurrent}
+                  onCheckedChange={setIsRecurrent}
                 />
               </div>
               <div className="text-sm text-muted-foreground text-center">
-                {isFixed
+                {isRecurrent
                   ? t("entries.enterOneAmount")
                   : t("entries.enterAmountsMonthly")}
               </div>
@@ -276,7 +276,7 @@ export function GuidedEntryDialog({
 
           {step === "amounts" && (
             <div className="space-y-4">
-              {isFixed ? (
+              {isRecurrent ? (
                 <div className="space-y-2">
                   <Label htmlFor="fixed-amount" className="text-base">
                     {t("entries.amount")} ({currencySymbol})
@@ -300,7 +300,7 @@ export function GuidedEntryDialog({
                     className="text-2xl font-semibold text-center"
                   />
                   <p className="text-sm text-muted-foreground text-center">
-                    {t("entries.thisWillApplyToAllMonths")}
+                    {t("entries.recurrentFutureMonths")}
                   </p>
                 </div>
               ) : (
@@ -403,7 +403,7 @@ export function GuidedEntryDialog({
               disabled={!canProceed()}
               className="flex-1 sm:flex-1"
             >
-              {isFixed ? (
+              {isRecurrent ? (
                 <>
                   <Check className="w-4 h-4 mr-2" />
                   {t("entries.complete")}

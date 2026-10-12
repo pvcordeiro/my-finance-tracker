@@ -20,10 +20,11 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
-  login: (username: string, password: string) => Promise<boolean>;
+  login: (identifier: string, password: string) => Promise<boolean>;
   register: (
     username: string,
     password: string,
+    email: string,
     language?: string,
     currency?: string
   ) => Promise<boolean>;
@@ -107,7 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (
-    username: string,
+    identifier: string,
     password: string
   ): Promise<boolean> => {
     try {
@@ -116,7 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ identifier, password }),
         credentials: "include",
       });
 
@@ -144,6 +145,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register = async (
     username: string,
     password: string,
+    email: string,
     language: string = "en",
     currency: string = "EUR"
   ): Promise<boolean> => {
@@ -153,12 +155,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ username, password, language, currency }),
+        body: JSON.stringify({ username, password, email, language, currency }),
         credentials: "include",
       });
 
       if (response.ok) {
-        return login(username, password);
+        const result = await response.json();
+        if (result.user) {
+          return login(username, password);
+        }
+        return false;
       } else {
         const data = await response.json();
         throw new Error(data.error || "Registration failed");

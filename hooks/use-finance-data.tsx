@@ -10,12 +10,24 @@ export interface FinanceData {
   bankAmount: number;
   incomes: FinanceEntry[];
   expenses: FinanceEntry[];
+  pending?: PendingOccurrence[];
+}
+
+export interface PendingOccurrence {
+  entryId: string;
+  description: string;
+  type: "income" | "expense";
+  year: number;
+  month: number;
+  amount: number;
+  occurrenceId?: number;
 }
 
 const defaultData: FinanceData = {
   bankAmount: 0,
   incomes: [],
   expenses: [],
+  pending: [],
 };
 
 const DATA_CACHE_KEY = "finance-tracker-data-cache";
@@ -166,7 +178,11 @@ export function useFinanceData() {
                 .map((entry: any) => ({
                   id: entry.id.toString(),
                   description: entry.name,
-                  amounts: shiftDataForRollingMonths(entry.amounts),
+                  amounts: entry.amounts,
+                  resolved: entry.resolved,
+                  recurrent: entry.recurrent,
+                  recurrenceAmount: entry.recurrence_amount,
+                  occurrenceIds: entry.occurrenceIds,
                 }));
 
               const expenses = entries
@@ -174,7 +190,11 @@ export function useFinanceData() {
                 .map((entry: any) => ({
                   id: entry.id.toString(),
                   description: entry.name,
-                  amounts: shiftDataForRollingMonths(entry.amounts),
+                  amounts: entry.amounts,
+                  resolved: entry.resolved,
+                  recurrent: entry.recurrent,
+                  recurrenceAmount: entry.recurrence_amount,
+                  occurrenceIds: entry.occurrenceIds,
                 }));
 
               const newIncomeTotal = incomes.reduce(
@@ -223,6 +243,7 @@ export function useFinanceData() {
                   ...prev,
                   incomes,
                   expenses,
+                  pending: eventData.pending || prev.pending,
                 };
               });
 
@@ -319,7 +340,11 @@ export function useFinanceData() {
         .map((entry: any) => ({
           id: entry.id.toString(),
           description: entry.name,
-          amounts: shiftDataForRollingMonths(entry.amounts),
+          amounts: entry.amounts,
+          resolved: entry.resolved,
+          recurrent: entry.recurrent,
+          recurrenceAmount: entry.recurrence_amount,
+          occurrenceIds: entry.occurrenceIds,
         }));
 
       const expenses = entries
@@ -327,13 +352,18 @@ export function useFinanceData() {
         .map((entry: any) => ({
           id: entry.id.toString(),
           description: entry.name,
-          amounts: shiftDataForRollingMonths(entry.amounts),
+          amounts: entry.amounts,
+          resolved: entry.resolved,
+          recurrent: entry.recurrent,
+          recurrenceAmount: entry.recurrence_amount,
+          occurrenceIds: entry.occurrenceIds,
         }));
 
       const loadedData = {
         bankAmount: bankData.amount || 0,
         incomes,
         expenses,
+        pending: entriesData?.pending || [],
       };
 
       setData(loadedData);
@@ -501,9 +531,8 @@ export function useFinanceData() {
     }
     try {
       const now = new Date();
-      const currentMonth = now.getMonth();
-
-      const actualMonth = ((currentMonth + monthIndex) % 12) + 1;
+      const targetDate = new Date(now.getFullYear(), now.getMonth() + monthIndex, 1);
+      const actualMonth = targetDate.getMonth() + 1;
 
       const res = await fetch("/api/entries", {
         method: "PATCH",
@@ -511,6 +540,7 @@ export function useFinanceData() {
         body: JSON.stringify({
           id,
           month: actualMonth,
+          year: targetDate.getFullYear(),
           amount,
         }),
         credentials: "include",
@@ -544,6 +574,107 @@ export function useFinanceData() {
     } catch (e) {
       console.error("Amount commit failed", e);
       return { success: false, error: (e as Error).message };
+    }
+  };
+
+  const commitEntryRecurrence = async (
+    entryType: "incomes" | "expenses",
+    id: string,
+    recurrent: boolean,
+    recurrenceAmount: number
+  ): Promise<CommitResult> => {
+    if (guardOffline()) return { success: false };
+    try {
+      const response = await fetch("/api/entries", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, recurrent, recurrence_amount: recurrenceAmount }),
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error("Failed to update recurrence");
+      const updateEntries = (entries: FinanceEntry[]) => entries.map((entry: any) =>
+        entry.id === id ? { ...entry, recurrent, recurrenceAmount } : entry
+      );
+      setData((previous) => ({ ...previous, [entryType]: updateEntries(previous[entryType]) }));
+      setOriginalData((previous) => ({ ...previous, [entryType]: updateEntries(previous[entryType]) }));
+      return { success: true };
+    } catch (error) {
+      console.error("Recurrence update failed:", error);
+      return { success: false, error: (error as Error).message };
+    }
+  };
+
+  const resolveOccurrence = async (occurrence: PendingOccurrence) => {
+    if (guardOffline()) return;
+    try {
+      const response = await fetch("/api/entries", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: occurrence.entryId,
+          month: occurrence.month,
+          year: occurrence.year,
+          is_resolved: true,
+          occurrence_id: occurrence.occurrenceId,
+        }),
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error("Failed to resolve occurrence");
+      setData((previous) => ({
+        ...previous,
+        pending: (previous.pending || []).filter((item) =>
+          !(item.entryId === occurrence.entryId && item.year === occurrence.year && item.month === occurrence.month)
+        ),
+      }));
+    } catch (error) {
+      console.error("Failed to resolve pending occurrence:", error);
+      toast.error("Could not update this pending item.");
+    }
+  };
+
+  const dismissOccurrence = async (occurrence: PendingOccurrence) => {
+    if (guardOffline()) return;
+    try {
+      const response = await fetch("/api/entries", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: occurrence.entryId, month: occurrence.month, year: occurrence.year, is_resolved: true }),
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error("Failed to dismiss occurrence");
+      setData((previous) => ({
+        ...previous,
+        pending: (previous.pending || []).filter((item) => !(item.entryId === occurrence.entryId && item.year === occurrence.year && item.month === occurrence.month)),
+      }));
+    } catch (error) {
+      console.error("Failed to dismiss occurrence:", error);
+      toast.error("Could not dismiss this pending item.");
+    }
+  };
+
+  const resolveEntryMonth = async (entryId: string, monthIndex: number) => {
+    if (guardOffline()) return;
+    const today = new Date();
+    const date = new Date(today.getFullYear(), today.getMonth() + monthIndex, 1);
+    try {
+      const response = await fetch("/api/entries", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: entryId, month: date.getMonth() + 1, year: date.getFullYear(), is_resolved: true }),
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error("Failed to resolve this month");
+      const updateList = (items: FinanceEntry[]) => items.map((entry: any) => {
+        if (entry.id !== entryId) return entry;
+        const resolved = [...(entry.resolved || Array(12).fill(false))];
+        resolved[monthIndex] = true;
+        return { ...entry, resolved };
+      });
+      setData((previous) => ({ ...previous, incomes: updateList(previous.incomes), expenses: updateList(previous.expenses) }));
+      setOriginalData((previous) => ({ ...previous, incomes: updateList(previous.incomes), expenses: updateList(previous.expenses) }));
+    } catch (error) {
+      console.error("Failed to resolve month:", error);
+      toast.error("Could not update this month.");
     }
   };
 
@@ -735,14 +866,18 @@ export function useFinanceData() {
           .map((entry) => ({
             name: entry.description,
             type: "income",
-            amounts: unshiftDataForStorage(entry.amounts),
+            amounts: entry.amounts,
+            recurrent: Boolean((entry as any).recurrent),
+            recurrenceAmount: Number((entry as any).recurrenceAmount) || 0,
           })),
         ...currentData.expenses
           .filter((entry) => entry.description.trim() !== "")
           .map((entry) => ({
             name: entry.description,
             type: "expense",
-            amounts: unshiftDataForStorage(entry.amounts),
+            amounts: entry.amounts,
+            recurrent: Boolean((entry as any).recurrent),
+            recurrenceAmount: Number((entry as any).recurrenceAmount) || 0,
           })),
       ];
 
@@ -884,6 +1019,10 @@ export function useFinanceData() {
     saveBankAmount,
     commitEntryDescription,
     commitEntryAmount,
+    commitEntryRecurrence,
+    resolveOccurrence,
+    dismissOccurrence,
+    resolveEntryMonth,
     forceSaveData,
     updateBankAmount,
     addEntry,

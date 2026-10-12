@@ -4,10 +4,12 @@ import { changeUsernameSchema } from "../../../../lib/validations.ts";
 import {
   getSessionFromRequest,
   validateSession,
+  verifyRequestOrigin,
 } from "../../../../lib/session.js";
 
 export async function POST(request) {
   try {
+    if (!verifyRequestOrigin(request)) return NextResponse.json({ error: "Invalid request origin" }, { status: 403 });
     const sessionToken = getSessionFromRequest(request);
     if (!sessionToken) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

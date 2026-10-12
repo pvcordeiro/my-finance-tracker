@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { GuidedEntryDialog } from "./guided-entry-dialog";
+import { Switch } from "@/components/ui/switch";
 import { EntryEditDialog } from "./entry-edit-dialog";
 import { PrivacyNumber } from "@/components/ui/privacy-number";
 import { PrivacyText } from "@/components/ui/privacy-text";
@@ -42,6 +43,10 @@ export interface FinanceEntry {
   id: string;
   description: string;
   amounts: number[];
+  resolved?: boolean[];
+  recurrent?: boolean;
+  recurrenceAmount?: number;
+  occurrenceIds?: (number | null)[];
 }
 
 interface EntryFormProps {
@@ -72,7 +77,7 @@ interface EntryFormProps {
     monthIndex: number,
     amount: number
   ) => Promise<boolean> | boolean;
-  onGuidedAddEntry: (description: string, amounts: number[]) => void;
+  onGuidedAddEntry: (description: string, amounts: number[], recurrent?: boolean, recurrenceAmount?: number) => void;
   flashEntryId?: string;
   flashToken?: number;
   hideAddButton?: boolean;
@@ -81,6 +86,10 @@ interface EntryFormProps {
   onGuidedDialogOpenChange?: (open: boolean) => void;
   totalFlashToken?: number;
   totalFlashType?: "increase" | "decrease";
+  onResolvePendingOccurrence?: (entry: FinanceEntry, monthIndex: number) => Promise<void>;
+  onResolveCurrentOccurrence?: (entry: FinanceEntry, monthIndex: number) => Promise<void>;
+  onResolveOccurrence?: (entry: FinanceEntry, monthIndex: number) => Promise<void>;
+  onCommitRecurrence?: (id: string, recurrent: boolean, recurrenceAmount: number) => Promise<boolean>;
 }
 
 export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
@@ -104,6 +113,10 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
       guidedDialogOpen: externalGuidedDialogOpen,
       onGuidedDialogOpenChange,
       totalFlashToken,
+      onResolvePendingOccurrence,
+      onResolveCurrentOccurrence,
+      onResolveOccurrence,
+      onCommitRecurrence,
     },
     ref
   ) {
@@ -227,8 +240,13 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
       setGuidedDialogOpen(true);
     };
 
-    const handleGuidedSubmit = (description: string, amounts: number[]) => {
-      onGuidedAddEntry(description, amounts);
+    const handleGuidedSubmit = (
+      description: string,
+      amounts: number[],
+      recurrent: boolean,
+      recurrenceAmount: number
+    ) => {
+      onGuidedAddEntry(description, amounts, recurrent, recurrenceAmount);
     };
 
     const handleSectionToggle = () => {
@@ -268,7 +286,7 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
       let firstNonZeroAmount = 0;
 
       for (let i = 0; i < entry.amounts.length; i++) {
-        if (entry.amounts[i] && entry.amounts[i] !== 0) {
+        if (entry.amounts[i] && entry.amounts[i] !== 0 && !entry.resolved?.[i]) {
           firstNonZeroMonthIndex = i;
           firstNonZeroAmount = entry.amounts[i];
           break;
@@ -433,8 +451,9 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
                       )}
                     >
                       <PrivacyNumber
-                        value={calculateTotal(entry.amounts)}
+                        value={calculateTotal(entry.amounts.map((amount, index) => entry.resolved?.[index] ? 0 : amount))}
                       />
+                      {entry.recurrent && <span className="ml-2 inline-flex rounded-full bg-primary/10 px-2 py-0.5 align-middle text-[10px] font-medium text-primary">{t("entries.recurrentBadge")}</span>}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
@@ -444,14 +463,26 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={(e) => handleResolveCurrentMonth(e, entry)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const index = entry.amounts.findIndex((amount, monthIndex) => amount && !entry.resolved?.[monthIndex]);
+                              if (index >= 0 && onResolveOccurrence) {
+                                void onResolveOccurrence(entry, index);
+                              } else if (index >= 0 && onResolveCurrentOccurrence) {
+                                void onResolveCurrentOccurrence(entry, index);
+                              } else if (index >= 0 && onResolvePendingOccurrence) {
+                                void onResolvePendingOccurrence(entry, index);
+                              } else {
+                                handleResolveCurrentMonth(e, entry);
+                              }
+                            }}
                             className="text-muted-foreground hover:text-foreground hover:bg-muted h-8 w-8 p-0 touch-manipulation"
                             aria-label={`${t("entries.markCurrentMonth")}: ${
                               entry.description || t("entries.unnamedEntry")
                             }`}
                             disabled={
                               !entry.amounts.some(
-                                (amount) => amount && amount !== 0
+                                (amount, index) => amount && amount !== 0 && !entry.resolved?.[index]
                               )
                             }
                           >
@@ -558,6 +589,12 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
           onOpenChange={setEditDialogOpen}
           entry={selectedEntry}
           type={type}
+          recurrent={Boolean(selectedEntry?.recurrent)}
+          recurrenceAmount={selectedEntry?.recurrenceAmount || 0}
+          onCommitRecurrence={async (recurrent, recurrenceAmount) => {
+            if (!selectedEntry || !onCommitRecurrence) return false;
+            return onCommitRecurrence(selectedEntry.id, recurrent, recurrenceAmount);
+          }}
           onUpdateEntry={onUpdateEntry}
           onCommitDescription={onCommitDescription}
           onCommitAmount={onCommitAmount}

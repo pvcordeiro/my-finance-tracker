@@ -26,6 +26,7 @@ import type { FinanceData, CommitResult } from "@/hooks/use-finance-data";
 import { useLanguage } from "@/hooks/use-language";
 import { useOnline } from "@/hooks/use-online";
 import { OfflineBlockedPage } from "@/components/pwa/offline-blocked-page";
+import { PendingOccurrences } from "@/components/finance/pending-occurrences";
 
 function HomePageContent() {
   const { currencySymbol, t } = useLanguage();
@@ -38,6 +39,10 @@ function HomePageContent() {
     hasChanges,
     commitEntryDescription,
     commitEntryAmount,
+    commitEntryRecurrence,
+    resolveOccurrence,
+    dismissOccurrence,
+    resolveEntryMonth,
     updateBankAmount,
     addEntry,
     updateEntry,
@@ -60,6 +65,8 @@ function HomePageContent() {
     type: "incomes" | "expenses";
     description: string;
     amounts: number[];
+    recurrent: boolean;
+    recurrenceAmount: number;
   } | null>(null);
   const prevIncomeCountRef = useRef(data.incomes.length);
   const prevExpenseCountRef = useRef(data.expenses.length);
@@ -82,7 +89,7 @@ function HomePageContent() {
     const applyGuidedData = async () => {
       if (!pendingGuidedEntryRef.current) return;
 
-      const { type, description, amounts } = pendingGuidedEntryRef.current;
+      const { type, description, amounts, recurrent, recurrenceAmount } = pendingGuidedEntryRef.current;
 
       const currentCount =
         type === "incomes" ? data.incomes.length : data.expenses.length;
@@ -99,8 +106,11 @@ function HomePageContent() {
           updateEntry(type, newEntry.id, "description", description);
           await commitEntryDescription(type, newEntry.id, description);
 
+          if (recurrent) {
+            await commitEntryRecurrence(type, newEntry.id, true, recurrenceAmount);
+          }
           for (let i = 0; i < 12; i++) {
-            if (amounts[i] !== 0) {
+            if (amounts[i] !== 0 && !(recurrent && i > 0)) {
               updateEntry(type, newEntry.id, "amount", amounts[i], i);
               await commitEntryAmount(type, newEntry.id, i, amounts[i]);
             }
@@ -144,6 +154,7 @@ function HomePageContent() {
     data.expenses,
     commitEntryAmount,
     commitEntryDescription,
+    commitEntryRecurrence,
     updateEntry,
     t,
   ]);
@@ -183,6 +194,7 @@ function HomePageContent() {
       bankAmount: 0,
       incomes: [],
       expenses: [],
+      pending: [],
     };
     await setData(emptyData, true);
   };
@@ -289,22 +301,26 @@ function HomePageContent() {
     });
   };
 
-  const handleGuidedAddIncome = (description: string, amounts: number[]) => {
+  const handleGuidedAddIncome = (description: string, amounts: number[], recurrent = false, recurrenceAmount = 0) => {
     pendingGuidedEntryRef.current = {
       type: "incomes",
       description,
       amounts,
+      recurrent,
+      recurrenceAmount,
     };
 
     setIncomeOpen(true);
     addEntry("incomes");
   };
 
-  const handleGuidedAddExpense = (description: string, amounts: number[]) => {
+  const handleGuidedAddExpense = (description: string, amounts: number[], recurrent = false, recurrenceAmount = 0) => {
     pendingGuidedEntryRef.current = {
       type: "expenses",
       description,
       amounts,
+      recurrent,
+      recurrenceAmount,
     };
 
     setExpenseOpen(true);
@@ -325,8 +341,7 @@ function HomePageContent() {
 
       const description = entry?.description || t("entries.entry");
 
-      updateEntry(type, id, "amount", 0, monthIndex);
-      await commitEntryAmount(type, id, monthIndex, 0);
+      await resolveEntryMonth(id, monthIndex);
 
       toast.success(
         type === "incomes"
@@ -369,6 +384,7 @@ function HomePageContent() {
           className="space-y-6 lg:h-full"
         >
           <TabsContent value="main" className="lg:h-full">
+            <PendingOccurrences occurrences={data.pending || []} onResolve={resolveOccurrence} onDismiss={dismissOccurrence} />
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:h-full">
               {/* Left Column - Bank Amount */}
               <div className="space-y-4 pt-2 lg:overflow-y-auto lg:pr-1 lg:h-full lg:pb-36">
@@ -453,7 +469,14 @@ function HomePageContent() {
                       : undefined
                   }
                   totalFlashToken={entryFlashState.incomes?.token}
-                  totalFlashType={entryFlashState.incomes?.flashType}
+    totalFlashType={entryFlashState.incomes?.flashType}
+                  onResolvePendingOccurrence={async (_entry, monthIndex) => resolveEntryMonth(_entry.id, monthIndex)}
+                  onResolveCurrentOccurrence={async (_entry, monthIndex) => resolveEntryMonth(_entry.id, monthIndex)}
+                  onResolveOccurrence={async (_entry, monthIndex) => {
+                    const occurrenceId = _entry.occurrenceIds?.[monthIndex];
+                    if (occurrenceId) await resolveOccurrence({ entryId: _entry.id, description: _entry.description, type: "income", occurrenceId, year: new Date(new Date().getFullYear(), new Date().getMonth() + monthIndex, 1).getFullYear(), month: new Date(new Date().getFullYear(), new Date().getMonth() + monthIndex, 1).getMonth() + 1, amount: _entry.amounts[monthIndex] });
+                  }}
+                  onCommitRecurrence={async (id, recurrent, amount) => (await commitEntryRecurrence("incomes", id, recurrent, amount)).success}
                   onCommitDescription={async (id, desc) => {
                     const res: CommitResult = await commitEntryDescription(
                       "incomes",
@@ -553,7 +576,14 @@ function HomePageContent() {
                       : undefined
                   }
                   totalFlashToken={entryFlashState.expenses?.token}
-                  totalFlashType={entryFlashState.expenses?.flashType}
+    totalFlashType={entryFlashState.expenses?.flashType}
+                  onResolvePendingOccurrence={async (_entry, monthIndex) => resolveEntryMonth(_entry.id, monthIndex)}
+                  onResolveCurrentOccurrence={async (_entry, monthIndex) => resolveEntryMonth(_entry.id, monthIndex)}
+                  onResolveOccurrence={async (_entry, monthIndex) => {
+                    const occurrenceId = _entry.occurrenceIds?.[monthIndex];
+                    if (occurrenceId) await resolveOccurrence({ entryId: _entry.id, description: _entry.description, type: "expense", occurrenceId, year: new Date(new Date().getFullYear(), new Date().getMonth() + monthIndex, 1).getFullYear(), month: new Date(new Date().getFullYear(), new Date().getMonth() + monthIndex, 1).getMonth() + 1, amount: _entry.amounts[monthIndex] });
+                  }}
+                  onCommitRecurrence={async (id, recurrent, amount) => (await commitEntryRecurrence("expenses", id, recurrent, amount)).success}
                   onCommitDescription={async (id, desc) => {
                     const res: CommitResult = await commitEntryDescription(
                       "expenses",

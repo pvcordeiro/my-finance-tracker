@@ -1,18 +1,24 @@
 import { NextResponse } from "next/server";
+import crypto from "node:crypto";
 import { getDatabase, hashPassword } from "../../../../lib/database.js";
 import { registerSchema } from "../../../../lib/validations.ts";
 import { rateLimit, getClientIp } from "../../../../lib/rate-limit.ts";
 import {
   createSession,
-  getSessionCookieOptions,
   SESSION_COOKIE_NAME,
   getDeviceInfo,
-  isPrivateIP,
+  createSecureSessionCookie,
 } from "../../../../lib/session.js";
+import { emailConfigured, publicAppUrl, sendAccountEmail } from "../../../../lib/email.js";
+import { verifyRequestOrigin } from "../../../../lib/session.js";
 
 export async function POST(request) {
   try {
+    if (!verifyRequestOrigin(request)) return NextResponse.json({ error: "Invalid request origin" }, { status: 403 });
     const db = getDatabase();
+    if (process.env.ALLOW_UNVERIFIED_REGISTRATION !== "true" && (!emailConfigured() || !process.env.APP_URL)) {
+      return NextResponse.json({ error: "Account registration requires email delivery configuration." }, { status: 503 });
+    }
     const registrationSetting = db.prepare(
       "SELECT value FROM settings WHERE key = 'allow_registration'"
     ).get();
@@ -50,13 +56,25 @@ export async function POST(request) {
     const {
       username,
       password,
+      email,
       language = "en",
       currency = "EUR",
     } = validation.data;
 
+    if (process.env.ALLOW_UNVERIFIED_REGISTRATION !== "true" && !emailConfigured()) {
+      return NextResponse.json({ error: "Email delivery is not configured." }, { status: 503 });
+    }
+
+
+    const normalizedUsername = username.trim();
     const existingUser = db.prepare(
-      "SELECT id FROM users WHERE username = ?"
-    ).get(username);
+      `SELECT id FROM users
+       WHERE username = ? COLLATE NOCASE
+         OR email = ? COLLATE NOCASE
+         OR pending_email = ? COLLATE NOCASE
+         OR email = ? COLLATE NOCASE
+         OR pending_email = ? COLLATE NOCASE`
+    ).get(normalizedUsername, email.toLowerCase(), email.toLowerCase(), normalizedUsername, normalizedUsername);
     if (existingUser) {
       return NextResponse.json(
         { error: "Invalid username or password" },
@@ -65,24 +83,41 @@ export async function POST(request) {
     }
 
     const hashedPassword = hashPassword(password);
+    const token = process.env.ALLOW_UNVERIFIED_REGISTRATION === "true" ? null : crypto.randomBytes(32).toString("base64url");
+    const tokenHash = token ? crypto.createHash("sha256").update(token).digest("hex") : null;
+    const created = db.transaction(() => {
+      const userResult = db.prepare(
+        "INSERT INTO users (username, pending_email, password_hash, language, currency) VALUES (?, ?, ?, ?, ?)"
+      ).run(normalizedUsername, email.toLowerCase(), hashedPassword, language, currency);
+      const id = userResult.lastInsertRowid;
+      const groupResult = db.prepare("INSERT INTO groups (name, created_by) VALUES (?, ?)").run(`${username}'s group`, id);
+      db.prepare("INSERT INTO user_groups (user_id, group_id) VALUES (?, ?)").run(id, groupResult.lastInsertRowid);
+      if (tokenHash) {
+        db.prepare("INSERT INTO auth_tokens (user_id, token_hash, purpose, expires_at) VALUES (?, ?, 'verify-email', ?)")
+          .run(id, tokenHash, new Date(Date.now() + 30 * 60 * 1000).toISOString());
+      }
+      return { id, groupId: groupResult.lastInsertRowid };
+    })();
+    const userId = created.id;
+    const groupId = created.groupId;
 
-    const userResult = db.prepare(
-      "INSERT INTO users (username, password_hash, language, currency) VALUES (?, ?, ?, ?)"
-    ).run(username, hashedPassword, language, currency);
-    const userId = userResult.lastInsertRowid;
-
-    const groupName = `${username}'s group`;
-    const groupResult = db.prepare(
-      "INSERT INTO groups (name, created_by) VALUES (?, ?)"
-    ).run(groupName, userId);
-    const groupId = groupResult.lastInsertRowid;
-
-    db.prepare(
-      "INSERT INTO user_groups (user_id, group_id) VALUES (?, ?)"
-    ).run(userId, groupId);
+    if (token) {
+      try {
+        const verificationUrl = `${publicAppUrl()}/verify-email?token=${encodeURIComponent(token)}`;
+        await sendAccountEmail({
+          to: email.toLowerCase(),
+          subject: "Verify your Finance Tracker email",
+          text: `Verify your email: ${verificationUrl}`,
+          html: `<p><a href="${verificationUrl}">Verify your email address</a></p>`,
+        });
+      } catch (error) {
+        db.prepare("DELETE FROM users WHERE id = ?").run(userId);
+        throw error;
+      }
+    }
 
     const deviceInfo = getDeviceInfo(request);
-    const sessionToken = createSession(userId, deviceInfo);
+    const sessionToken = process.env.ALLOW_UNVERIFIED_REGISTRATION === "true" ? createSession(userId, deviceInfo) : null;
 
     const groups = db.prepare(
       `SELECT ug.group_id, g.name
@@ -95,17 +130,11 @@ export async function POST(request) {
     const current_group_id = groups.length > 0 ? groups[0].group_id : null;
 
     const response = NextResponse.json({
-      user: { id: userId, username, groups, current_group_id },
-      message: "User created successfully",
+      user: process.env.ALLOW_UNVERIFIED_REGISTRATION === "true" ? { id: userId, username, groups, current_group_id } : null,
+      message: process.env.ALLOW_UNVERIFIED_REGISTRATION === "true" ? "User created successfully" : "Check your email to verify your account before signing in.",
     });
 
-    const isSecure =
-      request.nextUrl.protocol === "https:" || !isPrivateIP(clientIp);
-    response.cookies.set(
-      SESSION_COOKIE_NAME,
-      sessionToken,
-      getSessionCookieOptions(isSecure)
-    );
+    if (sessionToken) createSecureSessionCookie(request, response, sessionToken);
 
     return response;
   } catch (error) {

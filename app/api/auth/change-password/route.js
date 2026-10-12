@@ -8,10 +8,15 @@ import { changePasswordSchema } from "../../../../lib/validations.ts";
 import {
   getSessionFromRequest,
   validateSession,
+  createSession,
+  createSecureSessionCookie,
+  getDeviceInfo,
+  verifyRequestOrigin,
 } from "../../../../lib/session.js";
 
 export async function POST(request) {
   try {
+    if (!verifyRequestOrigin(request)) return NextResponse.json({ error: "Invalid request origin" }, { status: 403 });
     const sessionToken = getSessionFromRequest(request);
     if (!sessionToken) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -56,7 +61,12 @@ export async function POST(request) {
       "UPDATE users SET password_hash = ? WHERE id = ?"
     ).run(newHash, sessionUser.id);
 
-    return NextResponse.json({ message: "Password updated successfully" });
+    db.prepare("DELETE FROM sessions WHERE user_id = ?").run(sessionUser.id);
+    const refreshedToken = createSession(sessionUser.id, getDeviceInfo(request));
+
+    const response = NextResponse.json({ message: "Password updated successfully" });
+    createSecureSessionCookie(request, response, refreshedToken);
+    return response;
   } catch (error) {
     console.error("Change password error:", error);
     return NextResponse.json(

@@ -20,8 +20,8 @@ import { useLanguage } from "@/hooks/use-language";
 import { LanguageCurrencyDialog } from "@/components/ui/language-currency-dialog";
 
 interface LoginFormProps {
-  onLogin: (username: string, password: string) => Promise<boolean>;
-  onRegister: (username: string, password: string) => Promise<boolean>;
+  onLogin: (identifier: string, password: string) => Promise<boolean>;
+  onRegister: (username: string, password: string, email: string) => Promise<boolean>;
 }
 
 export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
@@ -37,6 +37,9 @@ export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
   const [allowRegistration, setAllowRegistration] = useState(true);
   const [checkingRegistration, setCheckingRegistration] = useState(true);
   const [languageDialogOpen, setLanguageDialogOpen] = useState(false);
+  const [email, setEmail] = useState("");
+  const [resetOpen, setResetOpen] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
 
   useEffect(() => {
     const checkRegistrationStatus = async () => {
@@ -69,15 +72,15 @@ export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
           setIsLoading(false);
           return;
         }
-        if (password.length < 6) {
+        if (password.length < 8) {
           setError(t("auth.passwordTooShort"));
           setIsLoading(false);
           return;
         }
         try {
-          const success = await onRegister(username, password);
+          const success = await onRegister(username, password, email);
           if (!success) {
-            setError(t("auth.registrationFailed"));
+            setError(t("auth.checkEmailToVerify"));
           }
         } catch (registerError: unknown) {
           if (
@@ -146,7 +149,22 @@ export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
           </div>
         </CardHeader>
         <CardContent>
-          {isRegisterMode && !allowRegistration ? (
+          {resetOpen ? (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">{resetSent ? t("auth.resetIfRegistered") : t("auth.resetDescription")}</p>
+              {!resetSent && <div className="space-y-2"><Label htmlFor="reset-email">{t("auth.email")}</Label><Input id="reset-email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required />{error && <p role="alert" className="text-sm text-destructive">{error}</p>}</div>}
+              {!resetSent && <Button type="button" className="w-full" disabled={!email || isLoading} onClick={async () => {
+                setIsLoading(true);
+                try {
+                  const response = await fetch("/api/auth/password-reset", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }), credentials: "include" });
+                  if (!response.ok) throw new Error("Request failed");
+                  setResetSent(true);
+                } catch { setError(t("common.error")); }
+                finally { setIsLoading(false); }
+              }}>{isLoading ? t("common.loading") : t("auth.sendResetLink")}</Button>}
+              <Button type="button" variant="ghost" className="w-full" onClick={() => { setResetOpen(false); setResetSent(false); setError(""); }}>{t("auth.backToSignIn")}</Button>
+            </div>
+          ) : isRegisterMode && !allowRegistration ? (
             <div className="space-y-4">
               <Alert variant="destructive">
                 <AlertTriangle className="h-4 w-4" />
@@ -167,13 +185,13 @@ export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="username">{t("auth.username")}</Label>
+                <Label htmlFor="username">{isRegisterMode ? t("auth.username") : t("auth.loginIdentifier")}</Label>
                 <Input
                   id="username"
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder={t("auth.enterUsername")}
+                  placeholder={isRegisterMode ? t("auth.enterUsername") : t("auth.enterLoginIdentifier")}
                   required
                   className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
                 />
@@ -205,6 +223,12 @@ export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
                   </Button>
                 </div>
               </div>
+              {isRegisterMode && (
+                <div className="space-y-2">
+                  <Label htmlFor="register-email">{t("auth.email")}</Label>
+                  <Input id="register-email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required autoComplete="email" />
+                </div>
+              )}
               {isRegisterMode && (
                 <div className="space-y-2">
                   <Label htmlFor="confirmPassword">
@@ -253,6 +277,7 @@ export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
                 )}
               </Button>
               <div className="text-center">
+                {!isRegisterMode && <Button type="button" variant="link" className="block mx-auto text-sm" onClick={() => setResetOpen(true)}>{t("auth.forgotPassword")}</Button>}
                 <Button
                   type="button"
                   variant="ghost"
