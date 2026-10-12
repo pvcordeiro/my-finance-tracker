@@ -19,4 +19,5 @@ services:
       - BREVO_SMTP_USER=${BREVO_SMTP_USER:-}
       - BREVO_SMTP_KEY=${BREVO_SMTP_KEY:-}
       - EMAIL_FROM=${EMAIL_FROM:-}
+      - EMAIL_FROM_NAME=${EMAIL_FROM_NAME:-My Finance Tracker}
     restart: unless-stopped

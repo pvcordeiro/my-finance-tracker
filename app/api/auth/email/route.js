@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { getDatabase } from "@/lib/database";
 import { getSessionFromRequest, validateSession, verifyRequestOrigin } from "@/lib/session";
 import { rateLimit, getClientIp } from "@/lib/rate-limit.ts";
-import { accountActionEmail, emailConfigured, publicAppUrl, sendAccountEmail } from "@/lib/email";
+import { accountActionEmail, emailConfigured, publicAppUrl, sendAccountEmail, validateSenderConfiguration } from "@/lib/email";
 
 export async function POST(request) {
   try {
@@ -12,6 +12,7 @@ export async function POST(request) {
     const session = validateSession(sessionToken);
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     if (!emailConfigured()) return NextResponse.json({ error: "Email delivery is not configured" }, { status: 503 });
+    validateSenderConfiguration();
     if (!rateLimit(`email-verify:${session.id}:${getClientIp(request)}`, { maxRequests: 3, windowMs: 60 * 60 * 1000 })) {
       return NextResponse.json({ error: "Please wait before requesting another verification email." }, { status: 429 });
     }

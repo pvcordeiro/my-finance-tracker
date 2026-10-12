@@ -56,18 +56,19 @@ docker-compose up -d
 
 ### Environment Variables
 
-| Variable                 | Default    | Description                                                |
-| ------------------------ | ---------- | ---------------------------------------------------------- |
-| `ADMIN_USERNAME`         | `admin`    | Initial admin username                                     |
-| `ADMIN_PASSWORD`         | `changeme` | Initial admin password (change immediately!)               |
-| `ALLOW_REGISTRATION`     | `false`    | Allow new user registration (enable only while inviting users) |
-| `ENABLE_BALANCE_HISTORY` | `true`     | Enable transaction history display                         |
-| `APP_URL`                | —          | Public HTTPS origin used in verification/reset links       |
-| `BREVO_SMTP_HOST`        | Brevo host | SMTP relay host                                             |
-| `BREVO_SMTP_PORT`        | `587`      | SMTP port                                                   |
-| `BREVO_SMTP_USER`        | —          | Brevo SMTP login                                            |
-| `BREVO_SMTP_KEY`         | —          | Brevo SMTP key (not the Brevo API key)                      |
-| `EMAIL_FROM`             | —          | Verified sender name and address                            |
+| Variable                 | Default              | Description                                                    |
+| ------------------------ | -------------------- | -------------------------------------------------------------- |
+| `ADMIN_USERNAME`         | `admin`              | Initial admin username                                         |
+| `ADMIN_PASSWORD`         | `changeme`           | Initial admin password (change immediately!)                   |
+| `ALLOW_REGISTRATION`     | `false`              | Allow new user registration (enable only while inviting users) |
+| `ENABLE_BALANCE_HISTORY` | `true`               | Enable transaction history display                             |
+| `APP_URL`                | —                    | Public HTTPS origin used in verification/reset links           |
+| `BREVO_SMTP_HOST`        | Brevo host           | SMTP relay host                                                |
+| `BREVO_SMTP_PORT`        | `587`                | SMTP port                                                      |
+| `BREVO_SMTP_USER`        | —                    | Brevo SMTP login                                               |
+| `BREVO_SMTP_KEY`         | —                    | Brevo SMTP key (not the Brevo API key)                         |
+| `EMAIL_FROM`             | —                    | Sender address verified and enabled in your Brevo account      |
+| `EMAIL_FROM_NAME`        | `My Finance Tracker` | Friendly display name shown to recipients                      |
 
 ### Volumes
 

@@ -2,7 +2,7 @@ import crypto from "node:crypto";
 import { NextResponse } from "next/server";
 import { getDatabase, hashPassword } from "@/lib/database";
 import { getClientIp, rateLimit } from "@/lib/rate-limit.ts";
-import { accountActionEmail, emailConfigured, publicAppUrl, sendAccountEmail } from "@/lib/email";
+import { accountActionEmail, emailConfigured, publicAppUrl, sendAccountEmail, validateSenderConfiguration } from "@/lib/email";
 import { z } from "zod";
 import { verifyRequestOrigin } from "@/lib/session";
 
@@ -19,6 +19,7 @@ export async function POST(request) {
       return NextResponse.json(generic, { status: 200 });
     }
     if (!emailConfigured() || !process.env.APP_URL) return NextResponse.json(generic);
+    validateSenderConfiguration();
     const body = await request.json();
     const parsed = requestSchema.safeParse(body);
     if (!parsed.success) return NextResponse.json(generic);

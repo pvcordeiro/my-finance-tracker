@@ -9,7 +9,7 @@ import {
   getDeviceInfo,
   createSecureSessionCookie,
 } from "../../../../lib/session.js";
-import { emailConfigured, publicAppUrl, sendAccountEmail } from "../../../../lib/email.js";
+import { emailConfigured, publicAppUrl, sendAccountEmail, validateSenderConfiguration } from "../../../../lib/email.js";
 import { verifyRequestOrigin } from "../../../../lib/session.js";
 
 export async function POST(request) {
@@ -19,6 +19,7 @@ export async function POST(request) {
     if (process.env.ALLOW_UNVERIFIED_REGISTRATION !== "true" && (!emailConfigured() || !process.env.APP_URL)) {
       return NextResponse.json({ error: "Account registration requires email delivery configuration." }, { status: 503 });
     }
+    if (process.env.ALLOW_UNVERIFIED_REGISTRATION !== "true") validateSenderConfiguration();
     const registrationSetting = db.prepare(
       "SELECT value FROM settings WHERE key = 'allow_registration'"
     ).get();

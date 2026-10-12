@@ -192,6 +192,7 @@ export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
                     type="email"
                     value={email}
                     onChange={(event) => setEmail(event.target.value)}
+                    placeholder={t("auth.enterEmail")}
                     required
                     autoComplete="email"
                   />
