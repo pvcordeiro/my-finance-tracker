@@ -32,38 +32,27 @@ export async function POST(request) {
     if (current?.email?.toLowerCase() === email && !current.pending_email) {
       return NextResponse.json({ error: "That email is already verified for this account." }, { status: 409 });
     }
+    const link = `${publicAppUrl()}/verify-email?token=${encodeURIComponent(token)}`;
+    const message = accountActionEmail({
+      eyebrow: "Account verification",
+      title: "Confirm your recovery email",
+      message: "One quick click and this address can help you get back into your account if you ever forget your password.",
+      actionLabel: "Verify email address",
+      actionUrl: link,
+      expiry: "This link is valid for 30 minutes.",
+      ignoreNote: "Didn’t ask to change your email? You can safely ignore this message. Your current verified email remains active.",
+    });
+    await sendAccountEmail({ to: email, subject: "Verify your Finance Tracker email", ...message });
     const issue = db.transaction(() => {
       const latest = db.prepare("SELECT email, pending_email FROM users WHERE id = ?").get(session.id);
       const conflict = db.prepare("SELECT id FROM users WHERE (email = ? COLLATE NOCASE OR pending_email = ? COLLATE NOCASE) AND id != ?").get(email, email, session.id);
       if (conflict || latest?.email?.toLowerCase() === email && !latest.pending_email) return false;
       db.prepare("UPDATE users SET pending_email = ? WHERE id = ?").run(email, session.id);
       db.prepare("DELETE FROM auth_tokens WHERE user_id = ? AND purpose = 'verify-email'").run(session.id);
-      db.prepare("INSERT INTO auth_tokens (user_id, token_hash, purpose, expires_at) VALUES (?, ?, 'verify-email', ?)").run(session.id, tokenHash, expiresAt);
+      db.prepare("INSERT INTO auth_tokens (user_id, token_hash, purpose, expires_at, target_email) VALUES (?, ?, 'verify-email', ?, ?)").run(session.id, tokenHash, expiresAt, email);
       return true;
     });
     if (!issue()) return NextResponse.json({ error: "That email is already linked to another account." }, { status: 409 });
-    const link = `${publicAppUrl()}/verify-email?token=${encodeURIComponent(token)}`;
-    try {
-      const message = accountActionEmail({
-        eyebrow: "Account verification",
-        title: "Confirm your recovery email",
-        message: "One quick click and this address can help you get back into your account if you ever forget your password.",
-        actionLabel: "Verify email address",
-        actionUrl: link,
-        expiry: "This link is valid for 30 minutes.",
-        ignoreNote: "Didn’t ask to change your email? You can safely ignore this message. Your current verified email remains active.",
-      });
-      await sendAccountEmail({
-        to: email,
-        subject: "Verify your Finance Tracker email",
-        ...message,
-      });
-    } catch (error) {
-      db.prepare("DELETE FROM auth_tokens WHERE token_hash = ?").run(tokenHash);
-      db.prepare("DELETE FROM auth_tokens WHERE user_id = ? AND purpose = 'verify-email' AND token_hash != ?").run(session.id, tokenHash);
-      db.prepare("UPDATE users SET pending_email = ? WHERE id = ? AND pending_email = ?").run(current?.pending_email || null, session.id, email);
-      throw error;
-    }
     return NextResponse.json({ success: true, message: "Verification email sent." });
   } catch (error) {
     console.error("Email verification request failed:", error);
@@ -122,17 +111,23 @@ export async function PUT(request) {
     if (typeof token !== "string" || token.length < 32 || token.length > 128) return NextResponse.json({ error: "Invalid or expired verification link." }, { status: 400 });
     const hash = crypto.createHash("sha256").update(token).digest("hex");
     const db = getDatabase();
-    const row = db.prepare("SELECT id, user_id FROM auth_tokens WHERE token_hash = ? AND purpose = 'verify-email' AND expires_at > datetime('now')").get(hash);
+    const row = db.prepare("SELECT id, user_id, target_email FROM auth_tokens WHERE token_hash = ? AND purpose = 'verify-email' AND expires_at > datetime('now')").get(hash);
     if (!row) return NextResponse.json({ error: "Invalid or expired verification link." }, { status: 400 });
+    if (!row.target_email) return NextResponse.json({ error: "This verification link has no email address attached." }, { status: 400 });
     const owner = db.prepare("SELECT email, pending_email FROM users WHERE id = ?").get(row.user_id);
-    if (!owner?.pending_email) return NextResponse.json({ error: "No email address is awaiting verification." }, { status: 400 });
-    const conflict = db.prepare("SELECT id FROM users WHERE (email = ? COLLATE NOCASE OR pending_email = ? COLLATE NOCASE) AND id != ?").get(owner.pending_email, owner.pending_email, row.user_id);
+    const requestedEmail = row.target_email.toLowerCase();
+    if (owner?.pending_email?.toLowerCase() !== requestedEmail && owner?.email?.toLowerCase() !== requestedEmail) return NextResponse.json({ error: "This email change was replaced by a newer request." }, { status: 409 });
+    const conflict = db.prepare("SELECT id FROM users WHERE (email = ? COLLATE NOCASE OR pending_email = ? COLLATE NOCASE) AND id != ?").get(requestedEmail, requestedEmail, row.user_id);
     if (conflict) return NextResponse.json({ error: "That email is already linked to another account." }, { status: 409 });
     const accepted = db.transaction(() => {
       const current = db.prepare("SELECT email, pending_email FROM users WHERE id = ?").get(row.user_id);
-      const currentToken = db.prepare("SELECT id FROM auth_tokens WHERE id = ? AND token_hash = ? AND purpose = 'verify-email' AND expires_at > datetime('now')").get(row.id, hash);
-      if (!currentToken || !current?.pending_email || current.pending_email !== owner.pending_email) return false;
-      db.prepare("UPDATE users SET email = pending_email, pending_email = NULL, email_verified_at = CURRENT_TIMESTAMP WHERE id = ? AND pending_email IS NOT NULL").run(row.user_id);
+      const currentToken = db.prepare("SELECT id, target_email FROM auth_tokens WHERE id = ? AND token_hash = ? AND purpose = 'verify-email' AND expires_at > datetime('now')").get(row.id, hash);
+      if (!currentToken || currentToken.target_email?.toLowerCase() !== requestedEmail) return false;
+      if (current?.pending_email?.toLowerCase() === requestedEmail) {
+        db.prepare("UPDATE users SET email = pending_email, pending_email = NULL, email_verified_at = CURRENT_TIMESTAMP WHERE id = ? AND pending_email IS NOT NULL").run(row.user_id);
+      } else if (current?.email?.toLowerCase() !== requestedEmail) {
+        return false;
+      }
       db.prepare("DELETE FROM auth_tokens WHERE user_id = ? AND purpose = 'verify-email'").run(row.user_id);
       return true;
     })();

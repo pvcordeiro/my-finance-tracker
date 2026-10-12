@@ -15,9 +15,8 @@ if [ -z "$ADMIN_PASSWORD" ] || [ "$ADMIN_PASSWORD" = "changeme" ]; then
 fi
 
 echo "📋 Configuration:"
-echo "   Admin Username: ${ADMIN_USERNAME}"
-echo "   Admin Password: ${ADMIN_PASSWORD}"
-echo "   Allow Registration: ${ALLOW_REGISTRATION:-true}"
+echo "   Admin credentials: configured (values hidden)"
+echo "   Allow Registration: ${ALLOW_REGISTRATION:-false}"
 echo "   Enable Balance History: ${ENABLE_BALANCE_HISTORY:-true}"
 echo ""
 

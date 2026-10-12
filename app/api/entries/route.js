@@ -29,15 +29,21 @@ export const GET = withAuth(async (request) => {
     const recurrentEntries = db.prepare(
       "SELECT id, recurrence_amount FROM entries WHERE group_id = ? AND recurrent = 1"
     ).all(groupId) ?? [];
-    const createOccurrence = db.prepare(`
-      INSERT OR IGNORE INTO entry_occurrences
-        (entry_id, year, month, amount, is_resolved)
-      VALUES (?, ?, ?, ?, 0)
-    `);
     const ensureRecurringOccurrences = db.transaction(() => {
       for (const entry of recurrentEntries) {
         for (const slot of nextMonths) {
-          createOccurrence.run(entry.id, slot.year, slot.month, entry.recurrence_amount);
+          const insertResult = db.prepare(`
+            INSERT OR IGNORE INTO entry_occurrences
+              (entry_id, year, month, amount, is_resolved)
+            VALUES (?, ?, ?, ?, 0)
+          `).run(entry.id, slot.year, slot.month, entry.recurrence_amount);
+          if (insertResult.changes > 0) {
+            db.prepare(`
+              INSERT OR REPLACE INTO entry_amounts
+                (entry_id, year, month, amount, created_at, updated_at)
+              VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            `).run(entry.id, slot.month, slot.year, entry.recurrence_amount);
+          }
         }
       }
     });
@@ -72,7 +78,7 @@ export const GET = withAuth(async (request) => {
           type: row.type,
           created_at: row.created_at,
           updated_at: row.updated_at,
-          recurrent: Boolean(row.recurrent),
+        recurrent: Boolean(row.recurrent),
           recurrence_amount: Number(row.recurrence_amount) || 0,
           amounts: new Array(12).fill(0),
           resolved: new Array(12).fill(false),
@@ -201,28 +207,25 @@ export const POST = withAuth(async (request) => {
     const db = getDatabase();
 
     const doTransaction = db.transaction(() => {
-      db.prepare(
-        `DELETE FROM entry_amounts WHERE entry_id IN (SELECT id FROM entries WHERE group_id = ?)`
-      ).run(groupId);
-
-      db.prepare("DELETE FROM entries WHERE group_id = ?").run(groupId);
-
       let insertedCount = 0;
       for (const entry of entries) {
         if (entry.name && entry.type && entry.amounts) {
-          const entryResult = db.prepare(
-            `INSERT INTO entries
-              (group_id, user_id, name, type, recurrent, recurrence_amount, created_at, updated_at)
-             VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
-          ).run(
-            groupId,
-            user.id,
-            entry.name,
-            entry.type,
-            entry.recurrent ? 1 : 0,
-            Number(entry.recurrenceAmount) || 0
-          );
-          const entryId = entryResult.lastInsertRowid;
+          const existing = db.prepare(`
+            SELECT id FROM entries WHERE group_id = ? AND name = ? COLLATE NOCASE AND type = ?
+          `).get(groupId, entry.name, entry.type);
+          const existingId = existing?.id;
+          let entryId = existingId;
+          if (existingId) {
+            db.prepare("UPDATE entries SET recurrent = ?, recurrence_amount = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
+              .run(entry.recurrent ? 1 : 0, Number(entry.recurrenceAmount) || 0, existingId);
+          } else {
+            const result = db.prepare(`
+              INSERT INTO entries
+                (group_id, user_id, name, type, recurrent, recurrence_amount, created_at, updated_at)
+              VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            `).run(groupId, user.id, entry.name, entry.type, entry.recurrent ? 1 : 0, Number(entry.recurrenceAmount) || 0);
+            entryId = result.lastInsertRowid;
+          }
 
           let amounts = entry.amounts;
           if (typeof amounts === "string") {
@@ -242,13 +245,15 @@ export const POST = withAuth(async (request) => {
               const year = date.getFullYear();
               const month = date.getMonth() + 1;
               db.prepare(
-                `INSERT OR REPLACE INTO entry_amounts (entry_id, month, year, amount, created_at, updated_at)
-                 VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
+                `INSERT INTO entry_amounts (entry_id, month, year, amount, created_at, updated_at)
+                 VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                 ON CONFLICT(entry_id, month, year) DO UPDATE SET amount = excluded.amount, updated_at = CURRENT_TIMESTAMP`
               ).run(entryId, month, year, amount);
               db.prepare(
-                `INSERT OR REPLACE INTO entry_occurrences
+                `INSERT INTO entry_occurrences
                   (entry_id, year, month, amount, is_resolved, created_at, updated_at)
-                 VALUES (?, ?, ?, ?, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
+                 VALUES (?, ?, ?, ?, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                 ON CONFLICT(entry_id, year, month) DO UPDATE SET amount = excluded.amount, updated_at = CURRENT_TIMESTAMP`
               ).run(entryId, year, month, amount);
             }
           }

@@ -28,6 +28,7 @@ export const GET = withAuth(async (request) => {
     const entriesWithAmounts = db.prepare(`
       SELECT 
         e.id, e.name, e.type, e.created_at, e.updated_at,
+        e.recurrent, e.recurrence_amount,
         ea.month, ea.amount
       FROM entries e
       LEFT JOIN entry_amounts ea ON e.id = ea.entry_id AND ea.year = ?
@@ -45,6 +46,8 @@ export const GET = withAuth(async (request) => {
           type: row.type,
           created_at: row.created_at,
           updated_at: row.updated_at,
+          recurrent: Boolean(row.recurrent),
+          recurrence_amount: Number(row.recurrence_amount) || 0,
           amounts: new Array(12).fill(0),
         });
       }

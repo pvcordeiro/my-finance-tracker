@@ -93,8 +93,8 @@ export async function POST(request) {
       const groupResult = db.prepare("INSERT INTO groups (name, created_by) VALUES (?, ?)").run(`${username}'s group`, id);
       db.prepare("INSERT INTO user_groups (user_id, group_id) VALUES (?, ?)").run(id, groupResult.lastInsertRowid);
       if (tokenHash) {
-        db.prepare("INSERT INTO auth_tokens (user_id, token_hash, purpose, expires_at) VALUES (?, ?, 'verify-email', ?)")
-          .run(id, tokenHash, new Date(Date.now() + 30 * 60 * 1000).toISOString());
+        db.prepare("INSERT INTO auth_tokens (user_id, token_hash, purpose, expires_at, target_email) VALUES (?, ?, 'verify-email', ?, ?)")
+          .run(id, tokenHash, new Date(Date.now() + 30 * 60 * 1000).toISOString(), email.toLowerCase());
       }
       return { id, groupId: groupResult.lastInsertRowid };
     })();
