@@ -643,6 +643,7 @@ export function useFinanceData() {
         credentials: "include",
       });
       if (!response.ok) throw new Error("Failed to resolve occurrence");
+      const result = await response.json();
       const updateList = (items: FinanceEntry[]) => items.map((entry: any) => {
         if (entry.id !== occurrence.entryId) return entry;
         const slot = getRollingMonthIndex(occurrence.year, occurrence.month);
@@ -658,6 +659,10 @@ export function useFinanceData() {
         ),
       }));
       setOriginalData((previous) => ({ ...previous, incomes: updateList(previous.incomes), expenses: updateList(previous.expenses) }));
+      if (typeof result.bankAmount === "number") {
+        setData((previous) => ({ ...previous, bankAmount: result.bankAmount }));
+        setOriginalData((previous) => ({ ...previous, bankAmount: result.bankAmount }));
+      }
     } catch (error) {
       console.error("Failed to resolve pending occurrence:", error);
       toast.error("Could not update this pending item.");
@@ -712,12 +717,17 @@ export function useFinanceData() {
         credentials: "include",
       });
       if (!response.ok) throw new Error("Failed to resolve this month");
+      const result = await response.json();
       const updateList = (items: FinanceEntry[]) => items.map((entry: any) => {
         if (entry.id !== entryId) return entry;
         return resolveRollingOccurrence(entry, monthIndex, year, month);
       });
       setData((previous) => ({ ...previous, incomes: updateList(previous.incomes), expenses: updateList(previous.expenses) }));
       setOriginalData((previous) => ({ ...previous, incomes: updateList(previous.incomes), expenses: updateList(previous.expenses) }));
+      if (typeof result.bankAmount === "number") {
+        setData((previous) => ({ ...previous, bankAmount: result.bankAmount }));
+        setOriginalData((previous) => ({ ...previous, bankAmount: result.bankAmount }));
+      }
     } catch (error) {
       console.error("Failed to resolve month:", error);
       toast.error("Could not update this month.");

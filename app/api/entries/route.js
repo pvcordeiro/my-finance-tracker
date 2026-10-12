@@ -6,7 +6,8 @@ import {
   getAuthenticatedUser,
 } from "../../../lib/auth-middleware.js";
 import { notifyEntryChange } from "../../../lib/sse-notifications.js";
-import { backfillLegacyRollingAmounts } from "../../../lib/rolling-months.js";
+import { notifyBankAmountChange } from "../../../lib/sse-notifications.js";
+import { applyOccurrenceToBalance, backfillLegacyRollingAmounts } from "../../../lib/rolling-months.js";
 
 export const GET = withAuth(async (request) => {
   try {
@@ -44,6 +45,22 @@ export const GET = withAuth(async (request) => {
                 (entry_id, month, year, amount, created_at, updated_at)
               VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
             `).run(entry.id, slot.month, slot.year, entry.recurrence_amount);
+          } else {
+            // Some historical recurring rows were zeroed while their future
+            // schedule remained active. Seed new future occurrences from the
+            // recurring template, but never refill a resolved/dismissed month.
+            db.prepare(`
+              UPDATE entry_occurrences
+              SET amount = ?, updated_at = CURRENT_TIMESTAMP
+              WHERE entry_id = ? AND year = ? AND month = ?
+                AND is_resolved = 0 AND is_dismissed = 0 AND amount = 0
+            `).run(entry.recurrence_amount, entry.id, slot.year, slot.month);
+            db.prepare(`
+              UPDATE entry_amounts
+              SET amount = ?, updated_at = CURRENT_TIMESTAMP
+              WHERE entry_id = ? AND year = ? AND month = ?
+                AND EXISTS (SELECT 1 FROM entry_occurrences WHERE entry_id = ? AND year = ? AND month = ? AND is_resolved = 0 AND is_dismissed = 0)
+            `).run(entry.recurrence_amount, entry.id, slot.year, slot.month, entry.id, slot.year, slot.month);
           }
         }
       }
@@ -61,7 +78,7 @@ export const GET = withAuth(async (request) => {
     const rowsWithSlots = db.prepare(`
       SELECT e.id, e.name, e.type, e.created_at, e.updated_at,
         e.recurrent, e.recurrence_amount,
-            o.id AS occurrence_id, o.year, o.month, o.amount, o.is_resolved, o.is_dismissed,
+        o.id AS occurrence_id, o.year, o.month, o.amount, o.is_resolved, o.is_dismissed,
         ea.amount AS legacy_amount
       FROM entries e
       LEFT JOIN entry_occurrences o ON e.id = o.entry_id
@@ -102,7 +119,7 @@ export const GET = withAuth(async (request) => {
           entry.occurrenceIds[index] = row.occurrence_id;
         }
         const amount = row.amount ?? row.legacy_amount ?? 0;
-        entry.amounts[index] = Number(amount) || 0;
+        entry.amounts[index] = row.is_resolved || row.is_dismissed ? 0 : Number(amount) || 0;
       }
     });
 
@@ -130,8 +147,9 @@ export const GET = withAuth(async (request) => {
       VALUES (?, ?, ?, ?, 0, 0)
     `);
     const insertBackfilledAmount = db.prepare(`
-      INSERT OR IGNORE INTO entry_amounts (entry_id, month, year, amount)
+      INSERT INTO entry_amounts (entry_id, month, year, amount)
       VALUES (?, ?, ?, ?)
+      ON CONFLICT(entry_id, month, year) DO NOTHING
     `);
     for (const [entryId, entry] of entriesMap) {
       const matched = matchedRollingSlots.get(entryId) || [];
@@ -148,8 +166,13 @@ export const GET = withAuth(async (request) => {
         const slot = nextMonths[index];
         if (!values.has(slot.month)) continue;
         const amount = entry.amounts[index];
-        insertBackfilledOccurrence.run(entryId, slot.year, slot.month, amount);
+        const backfilled = insertBackfilledOccurrence.run(entryId, slot.year, slot.month, amount);
         insertBackfilledAmount.run(entryId, slot.month, slot.year, amount);
+        const occurrence = db.prepare("SELECT id, amount, is_resolved, is_dismissed FROM entry_occurrences WHERE entry_id = ? AND year = ? AND month = ?").get(entryId, slot.year, slot.month);
+        entry.occurrenceIds[index] = occurrence?.id ?? null;
+        entry.resolved[index] = Boolean(occurrence?.is_resolved);
+        entry.dismissed[index] = Boolean(occurrence?.is_dismissed);
+        entry.amounts[index] = occurrence?.is_resolved || occurrence?.is_dismissed ? 0 : Number(occurrence?.amount ?? amount) || 0;
       }
     }
 
@@ -492,41 +515,69 @@ export const PATCH = withAuth(async (request) => {
     }
 
     if (is_resolved !== undefined) {
-      if (occurrence_id !== undefined) {
-        const occurrence = db.prepare(`
-          SELECT o.id, o.entry_id FROM entry_occurrences o
-          JOIN entries e ON e.id = o.entry_id
-          WHERE o.id = ? AND o.entry_id = ? AND e.group_id = ?
-        `).get(occurrence_id, id, groupId);
-        if (!occurrence) return NextResponse.json({ error: "Occurrence not found" }, { status: 404 });
-      }
       const numericMonth = Number(month);
       const numericYear = Number(year);
       if (!Number.isInteger(numericMonth) || numericMonth < 1 || numericMonth > 12 || !Number.isInteger(numericYear)) {
         return NextResponse.json({ error: "Valid month and year are required" }, { status: 400 });
       }
+      let bankUpdate = null;
       if (is_resolved) {
-        const target = occurrence_id !== undefined
-          ? db.prepare("SELECT id, amount FROM entry_occurrences WHERE id = ? AND entry_id = ?").get(occurrence_id, id)
-          : db.prepare("SELECT id, amount FROM entry_occurrences WHERE entry_id = ? AND year = ? AND month = ?").get(id, numericYear, numericMonth);
-        if (!target) return NextResponse.json({ error: "Occurrence not found" }, { status: 404 });
-        db.transaction(() => {
-          db.prepare("UPDATE entry_occurrences SET is_resolved = 1, amount = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(target.id);
+        const applyResolution = db.transaction(() => {
+          const target = occurrence_id !== undefined
+            ? db.prepare(`
+                SELECT o.id, o.entry_id, o.year, o.month, o.amount, o.is_resolved, e.type, e.name
+                FROM entry_occurrences o JOIN entries e ON e.id = o.entry_id
+                WHERE o.id = ? AND o.entry_id = ? AND e.group_id = ?
+              `).get(occurrence_id, id, groupId)
+            : db.prepare(`
+                SELECT o.id, o.entry_id, o.year, o.month, o.amount, o.is_resolved, e.type, e.name
+                FROM entry_occurrences o JOIN entries e ON e.id = o.entry_id
+                WHERE o.entry_id = ? AND o.year = ? AND o.month = ? AND e.group_id = ?
+              `).get(id, numericYear, numericMonth, groupId);
+          if (!target || target.year !== numericYear || target.month !== numericMonth) {
+            return { error: "Occurrence not found" };
+          }
+          if (target.is_resolved) {
+            const current = db.prepare("SELECT amount FROM bank_amounts WHERE group_id = ? ORDER BY updated_at DESC LIMIT 1").get(groupId);
+            return { alreadyResolved: true, bankAmount: Number(current?.amount) || 0 };
+          }
+
+          let amountToApply = Number(target.amount) || 0;
+          if (amountToApply === 0) {
+            amountToApply = Number(db.prepare("SELECT amount FROM entry_amounts WHERE entry_id = ? AND year = ? AND month = ?").get(id, numericYear, numericMonth)?.amount) || 0;
+          }
+          const current = db.prepare("SELECT amount FROM bank_amounts WHERE group_id = ? ORDER BY updated_at DESC LIMIT 1").get(groupId);
+          const oldAmount = Number(current?.amount) || 0;
+          const { nextBalance: newAmount, appliedDelta: actualDelta } = applyOccurrenceToBalance(oldAmount, target.type, amountToApply);
+
+          const resolved = db.prepare("UPDATE entry_occurrences SET is_resolved = 1, amount = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND is_resolved = 0").run(target.id);
+          if (!resolved.changes) return { alreadyResolved: true, bankAmount: oldAmount };
           db.prepare("UPDATE entry_amounts SET amount = 0, updated_at = CURRENT_TIMESTAMP WHERE entry_id = ? AND year = ? AND month = ?").run(id, numericYear, numericMonth);
-        })();
+
+          if (actualDelta !== 0) {
+            db.prepare("INSERT INTO bank_amounts (group_id, user_id, amount, updated_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)").run(groupId, user.id, newAmount);
+            db.prepare(`INSERT INTO balance_history (group_id, user_id, old_amount, new_amount, delta, note, created_at)
+              VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`)
+              .run(groupId, user.id, oldAmount, newAmount, actualDelta, `Resolved ${target.type}: ${target.name}`);
+          }
+          return { alreadyResolved: false, bankAmount: newAmount, operationType: actualDelta >= 0 ? "add" : "subtract" };
+        });
+        const result = applyResolution();
+        if (result.error) return NextResponse.json({ error: result.error }, { status: 404 });
+        bankUpdate = result;
+        if (!result.alreadyResolved && result.bankAmount !== undefined) {
+          notifyBankAmountChange(groupId, result.bankAmount, result.operationType);
+        }
       } else {
+        const entryAmount = db.prepare(`SELECT amount FROM entry_amounts WHERE entry_id = ? AND year = ? AND month = ?`).get(id, numericYear, numericMonth);
         db.prepare(`
           INSERT INTO entry_occurrences (entry_id, year, month, amount, is_resolved)
-          VALUES (?, ?, ?, COALESCE(
-            (SELECT amount FROM entry_occurrences WHERE entry_id = ? AND year = ? AND month = ?),
-            (SELECT amount FROM entry_amounts WHERE entry_id = ? AND year = ? AND month = ?),
-            0
-          ), 0)
+          VALUES (?, ?, ?, COALESCE(?, 0), 0)
           ON CONFLICT(entry_id, year, month) DO UPDATE SET
             is_resolved = 0,
-            amount = COALESCE((SELECT amount FROM entry_amounts WHERE entry_id = ? AND year = ? AND month = ?), entry_occurrences.amount),
+            amount = COALESCE(?, entry_occurrences.amount),
             updated_at = CURRENT_TIMESTAMP
-        `).run(id, numericYear, numericMonth, id, numericYear, numericMonth, id, numericYear, numericMonth, id, numericYear, numericMonth);
+        `).run(id, numericYear, numericMonth, entryAmount?.amount ?? null, entryAmount?.amount ?? null);
       }
       updates.is_resolved = Boolean(is_resolved);
       updates.month = numericMonth;
@@ -560,7 +611,7 @@ export const PATCH = withAuth(async (request) => {
       timestamp: Date.now(),
     });
 
-    return NextResponse.json({ success: true, updates });
+    return NextResponse.json({ success: true, updates, ...(is_resolved && bankUpdate ? { bankAmount: bankUpdate.bankAmount, alreadyResolved: bankUpdate.alreadyResolved } : {}) });
   } catch (error) {
     console.error("Patch entry error:", error);
     return NextResponse.json(
