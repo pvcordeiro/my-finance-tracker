@@ -14,7 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Eye, EyeOff, UserPlus, LogIn, AlertTriangle } from "lucide-react";
+import { Eye, EyeOff, UserPlus, LogIn, AlertTriangle, CheckCircle } from "lucide-react";
 import { LoadingSpinner } from "@/components/ui/loading";
 import { useLanguage } from "@/hooks/use-language";
 import { LanguageCurrencyDialog } from "@/components/ui/language-currency-dialog";
@@ -32,6 +32,7 @@ export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isRegisterMode, setIsRegisterMode] = useState(false);
   const [allowRegistration, setAllowRegistration] = useState(true);
@@ -63,6 +64,7 @@ export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setSuccessMessage("");
     setIsLoading(true);
 
     try {
@@ -79,9 +81,7 @@ export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
         }
         try {
           const success = await onRegister(username, password, email);
-          if (!success) {
-            setError(t("auth.checkEmailToVerify"));
-          }
+          if (!success) setSuccessMessage(t("auth.checkEmailToVerify"));
         } catch (registerError: unknown) {
           if (
             registerError &&
@@ -252,6 +252,12 @@ export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
                     className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
                   />
                 </div>
+              )}
+              {successMessage && (
+                <Alert className="border-finance-positive/40 bg-finance-positive/10 text-finance-positive" role="status">
+                  <CheckCircle className="h-4 w-4" />
+                  <AlertDescription>{successMessage}</AlertDescription>
+                </Alert>
               )}
               {error && (
                 <Alert variant="destructive">

@@ -9,7 +9,7 @@ import {
   getDeviceInfo,
   createSecureSessionCookie,
 } from "../../../../lib/session.js";
-import { emailConfigured, publicAppUrl, sendAccountEmail, validateSenderConfiguration } from "../../../../lib/email.js";
+import { accountActionEmail, emailConfigured, publicAppUrl, sendAccountEmail, validateSenderConfiguration } from "../../../../lib/email.js";
 import { verifyRequestOrigin } from "../../../../lib/session.js";
 
 export async function POST(request) {
@@ -105,11 +105,19 @@ export async function POST(request) {
     if (token) {
       try {
         const verificationUrl = `${publicAppUrl()}/verify-email?token=${encodeURIComponent(token)}`;
+        const message = accountActionEmail({
+          eyebrow: "Welcome to My Finance Tracker",
+          title: "Verify your email to get started",
+          message: "Confirm this email address to finish creating your account and keep a safe way to get back in.",
+          actionLabel: "Verify my email",
+          actionUrl: verificationUrl,
+          expiry: "This one-time link is valid for 30 minutes.",
+          ignoreNote: "If you didn’t create an account, you can safely ignore this email.",
+        });
         await sendAccountEmail({
           to: email.toLowerCase(),
           subject: "Verify your Finance Tracker email",
-          text: `Verify your email: ${verificationUrl}`,
-          html: `<p><a href="${verificationUrl}">Verify your email address</a></p>`,
+          ...message,
         });
       } catch (error) {
         db.prepare("DELETE FROM users WHERE id = ?").run(userId);
