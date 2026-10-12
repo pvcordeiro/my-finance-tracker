@@ -4,6 +4,7 @@ import { getDatabase, hashPassword } from "@/lib/database";
 import { getClientIp, rateLimit } from "@/lib/rate-limit.ts";
 import { accountActionEmail, emailConfigured, publicAppUrl, sendAccountEmail } from "@/lib/email";
 import { z } from "zod";
+import { verifyRequestOrigin } from "@/lib/session";
 
 const requestSchema = z.object({ email: z.string().email().max(254) });
 const resetSchema = z.object({ token: z.string().min(32).max(128), password: z.string().min(8).max(200) });
@@ -12,7 +13,7 @@ const generic = { message: "If an account with that email is verified, reset ins
 export async function POST(request) {
   let issuedTokenHash = null;
   try {
-    if (request.headers.get("origin") && new URL(request.headers.get("origin")).origin !== new URL(request.url).origin) return NextResponse.json(generic);
+    if (!verifyRequestOrigin(request)) return NextResponse.json(generic, { status: 403 });
     const clientIp = getClientIp(request);
     if (!rateLimit(`password-reset:${clientIp}`, { maxRequests: 5, windowMs: 60 * 60 * 1000 })) {
       return NextResponse.json(generic, { status: 200 });
@@ -69,7 +70,7 @@ export async function POST(request) {
 
 export async function PUT(request) {
   try {
-    if (request.headers.get("origin") && new URL(request.headers.get("origin")).origin !== new URL(request.url).origin) return NextResponse.json({ error: "Invalid request origin." }, { status: 403 });
+    if (!verifyRequestOrigin(request)) return NextResponse.json({ error: "Invalid request origin." }, { status: 403 });
     if (!rateLimit(`password-reset-complete:${getClientIp(request)}`, { maxRequests: 10, windowMs: 60 * 60 * 1000 })) {
       return NextResponse.json({ error: "Too many attempts. Request a new reset link later." }, { status: 429 });
     }

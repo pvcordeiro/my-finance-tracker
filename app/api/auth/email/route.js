@@ -1,13 +1,13 @@
 import crypto from "node:crypto";
 import { NextResponse } from "next/server";
 import { getDatabase } from "@/lib/database";
-import { getSessionFromRequest, validateSession } from "@/lib/session";
+import { getSessionFromRequest, validateSession, verifyRequestOrigin } from "@/lib/session";
 import { rateLimit, getClientIp } from "@/lib/rate-limit.ts";
 import { accountActionEmail, emailConfigured, publicAppUrl, sendAccountEmail } from "@/lib/email";
 
 export async function POST(request) {
   try {
-    if (request.headers.get("origin") && new URL(request.headers.get("origin")).origin !== new URL(request.url).origin) return NextResponse.json({ error: "Invalid request origin." }, { status: 403 });
+    if (!verifyRequestOrigin(request)) return NextResponse.json({ error: "Invalid request origin." }, { status: 403 });
     const sessionToken = getSessionFromRequest(request);
     const session = validateSession(sessionToken);
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -62,7 +62,7 @@ export async function POST(request) {
 
 export async function DELETE(request) {
   try {
-    if (request.headers.get("origin") && new URL(request.headers.get("origin")).origin !== new URL(request.url).origin) {
+    if (!verifyRequestOrigin(request)) {
       return NextResponse.json({ error: "Invalid request origin." }, { status: 403 });
     }
     const session = validateSession(getSessionFromRequest(request));
@@ -107,6 +107,7 @@ export async function GET(request) {
 
 export async function PUT(request) {
   try {
+    if (!verifyRequestOrigin(request)) return NextResponse.json({ error: "Invalid request origin." }, { status: 403 });
     const { token = "" } = await request.json();
     if (typeof token !== "string" || token.length < 32 || token.length > 128) return NextResponse.json({ error: "Invalid or expired verification link." }, { status: 400 });
     const hash = crypto.createHash("sha256").update(token).digest("hex");

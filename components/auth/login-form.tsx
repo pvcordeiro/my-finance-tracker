@@ -184,6 +184,19 @@ export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
+              {isRegisterMode && (
+                <div className="space-y-2">
+                  <Label htmlFor="register-email">{t("auth.email")}</Label>
+                  <Input
+                    id="register-email"
+                    type="email"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    required
+                    autoComplete="email"
+                  />
+                </div>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="username">{isRegisterMode ? t("auth.username") : t("auth.loginIdentifier")}</Label>
                 <Input
@@ -223,12 +236,6 @@ export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
                   </Button>
                 </div>
               </div>
-              {isRegisterMode && (
-                <div className="space-y-2">
-                  <Label htmlFor="register-email">{t("auth.email")}</Label>
-                  <Input id="register-email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required autoComplete="email" />
-                </div>
-              )}
               {isRegisterMode && (
                 <div className="space-y-2">
                   <Label htmlFor="confirmPassword">
