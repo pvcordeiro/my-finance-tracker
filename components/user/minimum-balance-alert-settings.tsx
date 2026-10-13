@@ -5,7 +5,7 @@ import { AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { CurrencyAmountInput } from "@/components/ui/currency-amount-input";
 import { Label } from "@/components/ui/label";
 import { useLanguage } from "@/hooks/use-language";
 import { useOnline } from "@/hooks/use-online";
@@ -100,17 +100,14 @@ export function MinimumBalanceAlertSettings() {
           {t("settings.minimumBalanceAlertInput")}
         </Label>
         <div className="flex w-full max-w-md items-center gap-2">
-          <div className="relative min-w-0 flex-1">
-            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-              {currencySymbol}
-            </span>
-            <Input
+          <div className="min-w-0 flex-1">
+            <CurrencyAmountInput
+              currencySymbol={currencySymbol}
               id="minimum-balance-alert-setting"
               type="number"
               min="0"
               step="0.01"
               inputMode="decimal"
-              className="pl-8"
               placeholder="0.00"
               value={value}
               disabled={isLoading || !isOnline}

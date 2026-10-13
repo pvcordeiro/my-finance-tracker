@@ -18,6 +18,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
+import { CurrencyAmountInput } from "@/components/ui/currency-amount-input";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { PrivacyNumber } from "@/components/ui/privacy-number";
@@ -74,7 +75,7 @@ export function EntryEditDialog({
   onDeleteEntry,
   rollingMonths,
 }: EntryEditDialogProps) {
-  const { currencySymbol, t } = useLanguage();
+  const { currencySymbol, currencyFractionDigits, t } = useLanguage();
   const [changedFields, setChangedFields] = useState<Set<string>>(new Set());
   const [savedFields, setSavedFields] = useState<Set<string>>(new Set());
   const [localEntry, setLocalEntry] = useState<FinanceEntry | null>(null);
@@ -301,10 +302,8 @@ export function EntryEditDialog({
                       {month}{(localEntry.resolved?.[index] || localEntry.dismissed?.[index]) && <span className="ml-1.5 text-finance-positive">{t("entries.resolvedShort")}</span>}
                     </label>
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
-                        {currencySymbol}
-                      </span>
-                      <Input
+                      <CurrencyAmountInput
+                        currencySymbol={currencySymbol}
                         type="number"
                         inputMode="decimal"
                         step="0.01"
@@ -312,7 +311,10 @@ export function EntryEditDialog({
                       value={localEntry.resolved?.[index] || localEntry.dismissed?.[index] ? "" : localEntry.amounts[index] || ""}
                         onChange={(e) => {
                           const value = e.target.value;
-                          const regex = /^\d*\.?\d{0,2}$/;
+                           const regex =
+                             currencyFractionDigits === 0
+                               ? /^\d*$/
+                               : new RegExp(`^\\d*\\.?\\d{0,${currencyFractionDigits}}$`);
                           if (value === "" || regex.test(value)) {
                             const newAmount = Number.parseFloat(value) || 0;
                             const newAmounts = [...localEntry.amounts];
@@ -357,7 +359,7 @@ export function EntryEditDialog({
                           scrollInputIntoView(e.target as HTMLElement);
                         }}
                         className={cn(
-                          "pl-8 transition-all duration-200",
+                          "transition-all duration-200",
                           savedFields.has(`${localEntry.id}-amount-${index}`) &&
                             "flash-success"
                         )}

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { currencyCodes } from "./i18n";
 
 export const loginSchema = z.object({
   identifier: z.string().min(1, "Username or email is required").max(254).optional(),
@@ -11,7 +12,7 @@ export const registerSchema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters").max(200),
   email: z.string().email().max(254),
   language: z.string().optional(),
-  currency: z.string().optional(),
+  currency: z.enum(currencyCodes).optional(),
 });
 
 export const entrySchema = z.object({

@@ -3,7 +3,7 @@
 export const dynamic = "force-dynamic";
 
 import { useEffect, useState, useRef, useCallback, Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { useFinanceData } from "@/hooks/use-finance-data";
 import { DashboardHeader } from "@/components/finance/dashboard-header";
@@ -11,7 +11,6 @@ import { BankAmount } from "@/components/finance/bank-amount";
 import { BalanceHistory } from "@/components/finance/balance-history";
 import { EntryForm } from "@/components/finance/entry-form";
 import { Button } from "@/components/ui/button";
-import { DataManagement } from "@/components/finance/data-management";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 
@@ -47,7 +46,6 @@ function HomePageContent() {
     addEntry,
     updateEntry,
     removeEntry,
-    setData,
     addToBankAmount,
     subtractFromBankAmount,
     entryFlashState,
@@ -59,9 +57,6 @@ function HomePageContent() {
   const [expenseGuidedDialogOpen, setExpenseGuidedDialogOpen] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const nextRouteRef = useRef<string | null>(null);
-  const [activeTab, setActiveTab] = useState(
-    searchParams.get("tab") === "management" ? "management" : "main"
-  );
   const pendingGuidedEntryRef = useRef<{
     type: "incomes" | "expenses";
     description: string;
@@ -80,11 +75,10 @@ function HomePageContent() {
   } | null>(null);
 
   useEffect(() => {
-    const tab = searchParams.get("tab");
-    setActiveTab(tab === "management" ? "management" : "main");
-  }, [searchParams]);
-
-
+    if (searchParams.get("tab") === "management") {
+      router.replace("/user");
+    }
+  }, [router, searchParams]);
 
   useEffect(() => {
     const applyGuidedData = async () => {
@@ -185,20 +179,6 @@ function HomePageContent() {
     setShowConfirm(false);
     nextRouteRef.current = null;
   }, []);
-
-  const handleImportData = async (importedData: FinanceData) => {
-    await setData(importedData, true);
-  };
-
-  const handleClearData = async () => {
-    const emptyData = {
-      bankAmount: 0,
-      incomes: [],
-      expenses: [],
-      pending: [],
-    };
-    await setData(emptyData, true);
-  };
 
   const [lastSaved, setLastSaved] = useState<{
     kind: "bank" | "entry-desc" | "entry-amount";
@@ -383,8 +363,7 @@ function HomePageContent() {
       <DashboardHeader />
       <main className="container mx-auto px-4 pt-0 space-y-6 lg:h-full lg:overflow-hidden">
         <Tabs
-          value={activeTab}
-          onValueChange={setActiveTab}
+          defaultValue="main"
           className="space-y-6 lg:h-full"
         >
           <TabsContent value="main" className="lg:h-full">
@@ -623,13 +602,6 @@ function HomePageContent() {
             </div>
           </TabsContent>
 
-          <TabsContent value="management">
-            <DataManagement
-              data={data}
-              onImportData={handleImportData}
-              onClearData={handleClearData}
-            />
-          </TabsContent>
         </Tabs>
       </main>
       {/* Confirmation Dialog */}

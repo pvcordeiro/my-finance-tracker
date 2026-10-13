@@ -625,11 +625,10 @@ export function useFinanceData() {
         credentials: "include",
       });
       if (!response.ok) throw new Error("Failed to update recurrence");
-      const updateEntries = (entries: FinanceEntry[]) => entries.map((entry: any) =>
-        entry.id === id ? { ...entry, recurrent, recurrenceAmount } : entry
-      );
-      setData((previous) => ({ ...previous, [entryType]: updateEntries(previous[entryType]) }));
-      setOriginalData((previous) => ({ ...previous, [entryType]: updateEntries(previous[entryType]) }));
+      // The server creates or updates all scheduled month occurrences when
+      // recurrence is enabled. Reload so the current rolling-month data shows
+      // those generated amounts immediately instead of waiting for a page reload.
+      await loadDataFromServer();
       return { success: true };
     } catch (error) {
       console.error("Recurrence update failed:", error);

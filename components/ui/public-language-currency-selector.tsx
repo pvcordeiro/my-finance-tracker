@@ -9,6 +9,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
+import { currencies } from "@/lib/i18n";
+import { useLanguage } from "@/hooks/use-language";
 
 interface PublicLanguageCurrencySelectorProps {
   language: string;
@@ -27,18 +29,9 @@ export function PublicLanguageCurrencySelector({
   variant = "outline",
   size = "sm",
 }: PublicLanguageCurrencySelectorProps) {
-  const getCurrencySymbol = (curr: string) => {
-    switch (curr) {
-      case "USD":
-        return "$";
-      case "EUR":
-        return "€";
-      case "BRL":
-        return "R$";
-      default:
-        return "€";
-    }
-  };
+  const { t } = useLanguage();
+  const getCurrencySymbol = (curr: string) =>
+    currencies.find((item) => item.code === curr)?.symbol || "€";
 
   return (
     <DropdownMenu>
@@ -75,30 +68,31 @@ export function PublicLanguageCurrencySelector({
         <DropdownMenuSeparator />
 
         <DropdownMenuLabel className="text-xs">Currency</DropdownMenuLabel>
-        <DropdownMenuItem
-          onClick={() => onCurrencyChange("USD")}
-          className="flex items-center gap-2"
-        >
-          <span className="font-semibold">$</span>
-          <span>US Dollar</span>
-          {currency === "USD" && <span className="ml-auto">✓</span>}
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => onCurrencyChange("EUR")}
-          className="flex items-center gap-2"
-        >
-          <span className="font-semibold">€</span>
-          <span>Euro</span>
-          {currency === "EUR" && <span className="ml-auto">✓</span>}
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => onCurrencyChange("BRL")}
-          className="flex items-center gap-2"
-        >
-          <span className="font-semibold">R$</span>
-          <span>Real</span>
-          {currency === "BRL" && <span className="ml-auto">✓</span>}
-        </DropdownMenuItem>
+        {currencies.map((item) => (
+          <DropdownMenuItem
+            key={item.code}
+            onClick={() => onCurrencyChange(item.code)}
+            className="flex items-center gap-2"
+          >
+            <span className="w-8 font-semibold">{item.symbol}</span>
+            <span>{t(`auth.currency${
+              {
+                EUR: "Euro",
+                USD: "UsDollar",
+                BRL: "BrazilianReal",
+                GBP: "BritishPound",
+                CAD: "CanadianDollar",
+                AUD: "AustralianDollar",
+                JPY: "JapaneseYen",
+                CHF: "SwissFranc",
+                INR: "IndianRupee",
+                CNY: "ChineseYuan",
+                MXN: "MexicanPeso",
+              }[item.code]
+            }`)}</span>
+            {currency === item.code && <span className="ml-auto">✓</span>}
+          </DropdownMenuItem>
+        ))}
       </DropdownMenuContent>
     </DropdownMenu>
   );

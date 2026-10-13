@@ -79,6 +79,17 @@ export const translations = {
       language: "Language",
       currency: "Currency",
       currencyHint: "You can change this later in your profile settings",
+      currencyEuro: "Euro",
+      currencyUsDollar: "US Dollar",
+      currencyBrazilianReal: "Brazilian Real",
+      currencyBritishPound: "British Pound",
+      currencyCanadianDollar: "Canadian Dollar",
+      currencyAustralianDollar: "Australian Dollar",
+      currencyJapaneseYen: "Japanese Yen",
+      currencySwissFranc: "Swiss Franc",
+      currencyIndianRupee: "Indian Rupee",
+      currencyChineseYuan: "Chinese Yuan",
+      currencyMexicanPeso: "Mexican Peso",
       logout: "Log Out",
       changePassword: "Change Password",
       changeUsername: "Change Username",
@@ -488,7 +499,7 @@ export const translations = {
       clearDataWarning:
         "This will delete all your financial entries. This action cannot be undone.",
       confirmClear: "Type CONFIRM to proceed",
-      backup: "Backup",
+      backup: "Import/Export Data",
       unsavedChanges: "Unsaved Changes",
       unsavedChangesDescription:
         "You have unsaved changes. Are you sure you want to leave this page? Your changes will be lost.",
@@ -499,12 +510,12 @@ export const translations = {
       incomeEntries: "Income Entries",
       expenseEntries: "Expense Entries",
       dataSize: "Data Size",
-      downloadBackup: "Download Backup",
+      downloadBackup: "Export data (CSV)",
       exportBackupDescription:
-        "Export your financial data as a JSON file for backup or transfer.",
+        "Download a CSV export with exact months, recurrence settings, and payment status.",
       importDataFile: "Import Data",
       importBackupDescription:
-        "Import financial data from a previously exported JSON file.",
+        "Import a Finance Tracker CSV export. Restore merges matching entries and months; it does not delete data absent from the file.",
       dangerZone: "Danger Zone",
       clearDataDescription:
         "Permanently delete all financial data. This action cannot be undone.",
@@ -513,9 +524,20 @@ export const translations = {
       invalidFileFormat:
         "Invalid file format. Please ensure the file contains valid finance data.",
       dataImportedSuccessfully:
-        "Data imported successfully! Your financial data has been updated.",
-      failedToParse: "Failed to parse JSON file. Please check the file format.",
+        "CSV data merged successfully. Existing data not included in the file was kept.",
+      failedToParse: "Could not read this file. Choose a valid Finance Tracker CSV export.",
+      failedToExportData: "Could not export your financial data.",
+      failedToImportData: "Could not restore this backup.",
+      restoreBackupTitle: "Restore CSV backup?",
+      restoreBackupDescription:
+        "Matching entries and month values will be updated. Entries and months not present in the file will remain unchanged. The bank balance will be set to the value in this backup.",
+      restoreBackup: "Merge backup",
+      backupEntriesCount: "Entries in backup: {count}",
+      backupMonthsCount: "Monthly values in backup: {count}",
+      backupTooLarge: "This backup file is too large to import.",
+      chooseImportFile: "Import data (CSV)",
       allDataCleared: "All data cleared successfully.",
+      failedToClearData: "Could not clear financial data.",
     },
     navigation: {
       home: "Home",
@@ -639,6 +661,17 @@ export const translations = {
       language: "Idioma",
       currency: "Moeda",
       currencyHint: "Você pode alterar isso depois nas configurações do perfil",
+      currencyEuro: "Euro",
+      currencyUsDollar: "Dólar americano",
+      currencyBrazilianReal: "Real brasileiro",
+      currencyBritishPound: "Libra esterlina",
+      currencyCanadianDollar: "Dólar canadense",
+      currencyAustralianDollar: "Dólar australiano",
+      currencyJapaneseYen: "Iene japonês",
+      currencySwissFranc: "Franco suíço",
+      currencyIndianRupee: "Rupia indiana",
+      currencyChineseYuan: "Yuan chinês",
+      currencyMexicanPeso: "Peso mexicano",
       logout: "Sair",
       changePassword: "Alterar Senha",
       changeUsername: "Alterar Nome de Usuário",
@@ -1052,7 +1085,7 @@ export const translations = {
       clearDataWarning:
         "Isso excluirá todos os seus lançamentos financeiros. Esta ação não pode ser desfeita.",
       confirmClear: "Digite CONFIRMAR para prosseguir",
-      backup: "Backup",
+      backup: "Importar/Exportar Dados",
       unsavedChanges: "Alterações Não Salvas",
       unsavedChangesDescription:
         "Você tem alterações não salvas. Tem certeza de que deseja sair desta página? Suas alterações serão perdidas.",
@@ -1063,12 +1096,12 @@ export const translations = {
       incomeEntries: "Lançamentos de Receitas",
       expenseEntries: "Lançamentos de Despesas",
       dataSize: "Tamanho dos Dados",
-      downloadBackup: "Baixar Backup",
+      downloadBackup: "Exportar dados (CSV)",
       exportBackupDescription:
-        "Exporte seus dados financeiros como um arquivo JSON para backup ou transferência.",
+        "Baixe um arquivo CSV com meses exatos, recorrência e status de pagamento.",
       importDataFile: "Importar Dados",
       importBackupDescription:
-        "Importe dados financeiros de um arquivo JSON exportado anteriormente.",
+        "Importe um CSV exportado pelo Finance Tracker. A restauração combina lançamentos e meses correspondentes; os dados ausentes no arquivo não são excluídos.",
       dangerZone: "Zona de Perigo",
       clearDataDescription:
         "Exclua permanentemente todos os dados financeiros. Esta ação não pode ser desfeita.",
@@ -1077,10 +1110,21 @@ export const translations = {
       invalidFileFormat:
         "Formato de arquivo inválido. Certifique-se de que o arquivo contém dados financeiros válidos.",
       dataImportedSuccessfully:
-        "Dados importados com sucesso! Seus dados financeiros foram atualizados.",
+        "Dados CSV combinados com sucesso. Os dados existentes ausentes no arquivo foram mantidos.",
       failedToParse:
-        "Falha ao analisar arquivo JSON. Verifique o formato do arquivo.",
+        "Não foi possível ler este arquivo. Escolha um CSV válido exportado pelo Finance Tracker.",
+      failedToExportData: "Não foi possível exportar seus dados financeiros.",
+      failedToImportData: "Não foi possível restaurar este backup.",
+      restoreBackupTitle: "Restaurar backup CSV?",
+      restoreBackupDescription:
+        "Lançamentos e valores mensais correspondentes serão atualizados. Lançamentos e meses ausentes no arquivo permanecerão inalterados. O saldo bancário será definido pelo valor deste backup.",
+      restoreBackup: "Combinar backup",
+      backupEntriesCount: "Lançamentos no backup: {count}",
+      backupMonthsCount: "Valores mensais no backup: {count}",
+      backupTooLarge: "Este arquivo de backup é muito grande para importar.",
+      chooseImportFile: "Importar dados (CSV)",
       allDataCleared: "Todos os dados foram limpos com sucesso.",
+      failedToClearData: "Não foi possível limpar os dados financeiros.",
     },
     navigation: {
       home: "Início",
@@ -1126,10 +1170,38 @@ export const translations = {
   },
 };
 
-export const currencies = [
+export const currencyCodes = [
+  "EUR",
+  "USD",
+  "BRL",
+  "GBP",
+  "CAD",
+  "AUD",
+  "JPY",
+  "CHF",
+  "INR",
+  "CNY",
+  "MXN",
+] as const;
+
+export type CurrencyCode = (typeof currencyCodes)[number];
+
+export const currencies: Array<{
+  code: CurrencyCode;
+  symbol: string;
+  name: string;
+}> = [
   { code: "EUR", symbol: "€", name: "Euro" },
   { code: "USD", symbol: "$", name: "US Dollar" },
   { code: "BRL", symbol: "R$", name: "Real Brasileiro" },
+  { code: "GBP", symbol: "£", name: "British Pound" },
+  { code: "CAD", symbol: "CA$", name: "Canadian Dollar" },
+  { code: "AUD", symbol: "A$", name: "Australian Dollar" },
+  { code: "JPY", symbol: "¥", name: "Japanese Yen" },
+  { code: "CHF", symbol: "CHF", name: "Swiss Franc" },
+  { code: "INR", symbol: "₹", name: "Indian Rupee" },
+  { code: "CNY", symbol: "CN¥", name: "Chinese Yuan" },
+  { code: "MXN", symbol: "MX$", name: "Mexican Peso" },
 ];
 
 export const languages = [

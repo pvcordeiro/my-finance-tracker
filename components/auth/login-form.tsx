@@ -21,7 +21,13 @@ import { LanguageCurrencyDialog } from "@/components/ui/language-currency-dialog
 
 interface LoginFormProps {
   onLogin: (identifier: string, password: string) => Promise<boolean>;
-  onRegister: (username: string, password: string, email: string) => Promise<boolean>;
+  onRegister: (
+    username: string,
+    password: string,
+    email: string,
+    language: "en" | "pt",
+    currency: import("@/lib/i18n").CurrencyCode
+  ) => Promise<boolean>;
 }
 
 export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
@@ -80,7 +86,13 @@ export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
           return;
         }
         try {
-          const success = await onRegister(username, password, email);
+          const success = await onRegister(
+            username,
+            password,
+            email,
+            language,
+            currency
+          );
           if (!success) setSuccessMessage(t("auth.checkEmailToVerify"));
         } catch (registerError: unknown) {
           if (

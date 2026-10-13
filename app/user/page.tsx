@@ -3,6 +3,7 @@
 export const dynamic = "force-dynamic";
 
 import { useAuth } from "@/hooks/use-auth";
+import { useFinanceData } from "@/hooks/use-finance-data";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ChangePasswordForm } from "@/components/auth/change-password-form";
@@ -34,7 +35,6 @@ import {
   Lock,
   Key,
   Laptop,
-  Save,
   Users,
   Check,
 } from "lucide-react";
@@ -61,9 +61,12 @@ import { OfflineBlockedPage } from "@/components/pwa/offline-blocked-page";
 import { MinimalPageHeader } from "@/components/pwa/minimal-page-header";
 import { EmailRecoverySettings } from "@/components/user/email-recovery-settings";
 import { MinimumBalanceAlertSettings } from "@/components/user/minimum-balance-alert-settings";
+import { DataManagement } from "@/components/finance/data-management";
+import type { CurrencyCode } from "@/lib/i18n";
 
 export default function UserSettingsPage() {
   const { user, isLoading, logout, refreshUser } = useAuth();
+  const { data, refreshData } = useFinanceData();
   const { t, language, setLanguage, currency, setCurrency } = useLanguage();
   const router = useRouter();
   const isMobile = useIsMobile();
@@ -82,7 +85,7 @@ export default function UserSettingsPage() {
     toast.success(t("settings.languageUpdated"));
   };
 
-  const handleCurrencyChange = (newCurrency: "EUR" | "USD" | "BRL") => {
+  const handleCurrencyChange = (newCurrency: CurrencyCode) => {
     setCurrency(newCurrency);
     toast.success(t("settings.currencyUpdated"));
   };
@@ -118,6 +121,18 @@ export default function UserSettingsPage() {
     } finally {
       setSwitchingGroup(false);
     }
+  };
+
+  const handleClearData = async () => {
+    const response = await fetch("/api/data/clear", {
+      method: "DELETE",
+      credentials: "include",
+    });
+    if (!response.ok) {
+      const result = await response.json().catch(() => ({}));
+      throw new Error(result.error || t("manage.failedToClearData"));
+    }
+    await refreshData();
   };
 
   useEffect(() => {
@@ -246,13 +261,6 @@ export default function UserSettingsPage() {
                   >
                     <Calculator className="w-4 h-4 mr-2" />
                     {t("navigation.home")}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => router.push("/manage?tab=management")}
-                    className="cursor-pointer"
-                  >
-                    <Save className="w-4 h-4 mr-2" />
-                    {t("manage.backup")}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
@@ -495,6 +503,11 @@ export default function UserSettingsPage() {
           </CardHeader>
           <CardContent><EmailRecoverySettings /></CardContent>
         </Card>
+        <DataManagement
+          data={data}
+          onImportComplete={refreshData}
+          onClearData={handleClearData}
+        />
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

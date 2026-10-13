@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
+import { CurrencyAmountInput } from "@/components/ui/currency-amount-input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -120,16 +121,14 @@ export function BankAmount({
                 }`}
               >
                 <div className="relative">
-                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                    {currencySymbol}
-                  </div>
-                  <Input
+                  <CurrencyAmountInput
+                    currencySymbol={currencySymbol}
                     type="number"
                     value={inputValue || ""}
                     onChange={(e) =>
                       setInputValue(parseFloat(e.target.value) || 0)
                     }
-                    className="pl-8 text-lg h-10"
+                    className="text-lg h-10"
                     placeholder="0.00"
                   />
                 </div>

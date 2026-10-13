@@ -7,10 +7,10 @@ import {
   useEffect,
   ReactNode,
 } from "react";
-import { translations, languages, currencies } from "@/lib/i18n";
+import { translations, currencies, currencyCodes, type CurrencyCode } from "@/lib/i18n";
 
 type Language = keyof typeof translations;
-type Currency = "EUR" | "USD" | "BRL";
+type Currency = CurrencyCode;
 
 interface LanguageContextType {
   language: Language;
@@ -20,6 +20,7 @@ interface LanguageContextType {
   t: (key: string) => string;
   formatCurrency: (amount: number) => string;
   currencySymbol: string;
+  currencyFractionDigits: number;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(
@@ -37,7 +38,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     if (savedLanguage && (savedLanguage === "en" || savedLanguage === "pt")) {
       setLanguageState(savedLanguage as Language);
     }
-    if (savedCurrency && ["EUR", "USD", "BRL"].includes(savedCurrency)) {
+    if (savedCurrency && currencyCodes.includes(savedCurrency as Currency)) {
       setCurrencyState(savedCurrency as Currency);
     }
   }, []);
@@ -52,7 +53,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   };
 
   const setCurrency = (curr: Currency) => {
-    if (!["EUR", "USD", "BRL"].includes(curr)) {
+    if (!currencyCodes.includes(curr)) {
       console.warn(`Invalid currency: ${curr}. Defaulting to "EUR".`);
       return;
     }
@@ -81,13 +82,15 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     return new Intl.NumberFormat(language === "pt" ? "pt-BR" : "en-US", {
       style: "currency",
       currency: currency,
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
     }).format(amount);
   };
 
   const currencySymbol =
     currencies.find((c) => c.code === currency)?.symbol || "€";
+  const currencyFractionDigits = new Intl.NumberFormat(
+    language === "pt" ? "pt-BR" : "en-US",
+    { style: "currency", currency }
+  ).resolvedOptions().maximumFractionDigits ?? 2;
 
   return (
     <LanguageContext.Provider
@@ -99,6 +102,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
         t,
         formatCurrency,
         currencySymbol,
+        currencyFractionDigits,
       }}
     >
       {children}

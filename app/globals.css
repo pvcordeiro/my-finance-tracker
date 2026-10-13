@@ -290,6 +290,41 @@
   padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
 }
 
+/* Long group names scroll only when the selected group row overflows. */
+.group-name-window {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.group-name-marquee {
+  display: inline-flex;
+  width: max-content;
+  min-width: 100%;
+  animation: group-name-marquee 9s ease-in-out infinite alternate;
+}
+
+.group-name-marquee > span {
+  flex: none;
+  padding-right: 2rem;
+}
+
+.group-name-window:hover .group-name-marquee,
+.group-name-window:focus-within .group-name-marquee {
+  animation-play-state: paused;
+}
+
+@keyframes group-name-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(calc(-50% + 1rem)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .group-name-marquee { animation: none; }
+  .group-name-marquee > span:nth-child(2) { display: none; }
+}
+
 @media (min-width: 768px) {
   .page-nav-padding {
     padding-bottom: 0;

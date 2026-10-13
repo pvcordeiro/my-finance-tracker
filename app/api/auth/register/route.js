@@ -11,6 +11,7 @@ import {
 } from "../../../../lib/session.js";
 import { accountActionEmail, emailConfigured, publicAppUrl, sendAccountEmail, validateSenderConfiguration } from "../../../../lib/email.js";
 import { verifyRequestOrigin } from "../../../../lib/session.js";
+import { currencyCodes } from "../../../../lib/i18n.ts";
 
 export async function POST(request) {
   try {
@@ -61,6 +62,10 @@ export async function POST(request) {
       language = "en",
       currency = "EUR",
     } = validation.data;
+
+    if (!currencyCodes.includes(currency)) {
+      return NextResponse.json({ error: "Unsupported currency" }, { status: 400 });
+    }
 
     if (process.env.ALLOW_UNVERIFIED_REGISTRATION !== "true" && !emailConfigured()) {
       return NextResponse.json({ error: "Email delivery is not configured." }, { status: 503 });

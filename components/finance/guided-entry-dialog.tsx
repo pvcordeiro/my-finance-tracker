@@ -29,7 +29,7 @@ export function GuidedEntryDialog({
   type,
   onSubmit,
 }: GuidedEntryDialogProps) {
-  const { currencySymbol, t } = useLanguage();
+  const { currencySymbol, currencyFractionDigits, t } = useLanguage();
   const [step, setStep] = useState<"description" | "type" | "amounts">(
     "description"
   );
@@ -291,7 +291,10 @@ export function GuidedEntryDialog({
                     onChange={(e) => {
                       const value = e.target.value;
 
-                      const regex = /^\d*\.?\d{0,2}$/;
+                      const regex =
+                        currencyFractionDigits === 0
+                          ? /^\d*$/
+                          : new RegExp(`^\\d*\\.?\\d{0,${currencyFractionDigits}}$`);
                       if (value === "" || regex.test(value)) {
                         setFixedAmount(value);
                       }
@@ -339,7 +342,10 @@ export function GuidedEntryDialog({
                       onChange={(e) => {
                         const value = e.target.value;
 
-                        const regex = /^\d*\.?\d{0,2}$/;
+                         const regex =
+                           currencyFractionDigits === 0
+                             ? /^\d*$/
+                             : new RegExp(`^\\d*\\.?\\d{0,${currencyFractionDigits}}$`);
                         if (value === "" || regex.test(value)) {
                           const newAmounts = [...amounts];
                           newAmounts[currentMonthIndex] = value;

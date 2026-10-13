@@ -6,14 +6,13 @@ import {
   ChevronDown,
   Shield,
   User,
-  Save,
   Eye,
   EyeOff,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { usePrivacy } from "@/hooks/use-privacy";
 import Link from "next/link";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { Edit, BarChart3, FileSpreadsheet } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
@@ -37,11 +36,10 @@ import {
 export function DashboardHeader() {
   const { user, logout } = useAuth();
   const { privacyMode, isLoading: privacyLoading } = usePrivacy();
-  const { t, currencySymbol, language, currency, setLanguage, setCurrency } =
+  const { t, language, currency, setLanguage, setCurrency } =
     useLanguage();
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const isMobile = useIsMobile();
   const isOnline = useOnline();
   const [languageDialogOpen, setLanguageDialogOpen] = useState(false);
@@ -107,9 +105,12 @@ export function DashboardHeader() {
             className="flex items-center gap-2 sm:gap-3"
             aria-label={t("dashboard.title")}
           >
-            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-primary rounded-full flex items-center justify-center">
-              <span className="text-lg sm:text-xl font-bold text-primary-foreground">
-                {currencySymbol}
+            <div className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0 bg-primary rounded-full flex items-center justify-center">
+              <span
+                className="text-xl sm:text-2xl [text-shadow:0_1px_2px_rgba(0,0,0,0.65)]"
+                aria-hidden="true"
+              >
+                💸
               </span>
             </div>
             <div>
@@ -185,14 +186,6 @@ export function DashboardHeader() {
                 {user?.groups && user.groups.length > 1 && (
                   <GroupSelectorMenuItem onOpenChange={setGroupDialogOpen} />
                 )}
-                <DropdownMenuItem
-                  onClick={() => router.push("/manage?tab=management")}
-                  className="cursor-pointer"
-                  disabled={!isOnline}
-                >
-                  <Save className="w-4 h-4 mr-2" />
-                  {t("manage.backup")}
-                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() => setLanguageDialogOpen(true)}
@@ -223,11 +216,7 @@ export function DashboardHeader() {
         {!isMobile && (
           <nav className="hidden sm:flex justify-center gap-4 pt-2 border-t border-border/50 mt-2">
             {navItems.map(({ href, label, icon: Icon }) => {
-              const isActive =
-                href === "/manage"
-                  ? pathname === href &&
-                    searchParams.get("tab") !== "management"
-                  : pathname === href;
+              const isActive = pathname === href;
               return (
                 <Button
                   key={href}

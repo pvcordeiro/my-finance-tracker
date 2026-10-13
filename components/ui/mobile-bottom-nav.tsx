@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Edit, BarChart3, FileSpreadsheet } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -14,7 +14,6 @@ export function MobileBottomNav() {
   const { user } = useAuth();
   const { t } = useLanguage();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const isOnline = useOnline();
 
   const navItems = [
@@ -39,10 +38,7 @@ export function MobileBottomNav() {
       <div className="flex justify-around items-center h-16 px-4">
         {navItems.map(({ href, label, icon: Icon, offlineDisabled }) => {
           const isDisabled = offlineDisabled && !isOnline;
-          const isActive =
-            href === "/manage"
-              ? pathname === href && searchParams.get("tab") !== "management"
-              : pathname === href;
+          const isActive = pathname === href;
           return (
             <Link
               key={href}

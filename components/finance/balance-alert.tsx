@@ -11,7 +11,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Input } from "@/components/ui/input";
+import { CurrencyAmountInput } from "@/components/ui/currency-amount-input";
 import { Label } from "@/components/ui/label";
 import { useLanguage } from "@/hooks/use-language";
 import { useOnline } from "@/hooks/use-online";
@@ -189,16 +189,13 @@ export function BalanceAlert({ projectedMonths }: BalanceAlertProps) {
               {t("settings.minimumBalanceAlertInput")}
             </Label>
             <div className="relative">
-              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                {currencySymbol}
-              </span>
-              <Input
+              <CurrencyAmountInput
+                currencySymbol={currencySymbol}
                 id="minimum-balance-alert"
                 type="number"
                 min="0"
                 step="0.01"
                 inputMode="decimal"
-                className="pl-8"
                 placeholder="0.00"
                 value={inputValue}
                 onChange={(event) => setInputValue(event.target.value)}

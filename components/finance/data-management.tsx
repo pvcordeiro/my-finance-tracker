@@ -3,7 +3,13 @@ import { useState } from "react";
 import type React from "react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -16,74 +22,118 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Download, Trash2 } from "lucide-react";
+import { Database, Download, FileSpreadsheet, Trash2 } from "lucide-react";
+import { parseFinanceBackup } from "@/lib/finance-backup";
+import type { FinanceBackup } from "@/lib/finance-backup.types";
 import type { FinanceData } from "@/hooks/use-finance-data";
-import { isFinanceImportData } from "@/lib/types";
 import { toast } from "sonner";
 import { useLanguage } from "@/hooks/use-language";
+import { useRef } from "react";
 
 interface DataManagementProps {
   data: FinanceData;
-  onImportData: (data: FinanceData) => void;
-  onClearData: () => void;
+  onImportComplete: () => Promise<void>;
+  onClearData: () => Promise<void>;
 }
 
 export function DataManagement({
   data,
-  onImportData,
+  onImportComplete,
   onClearData,
 }: DataManagementProps) {
   const { t } = useLanguage();
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [importedBackup, setImportedBackup] = useState<FinanceBackup | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
+  const importInputRef = useRef<HTMLInputElement | null>(null);
 
-  const exportData = () => {
-    const dataStr = JSON.stringify(data, null, 2);
-    const dataBlob = new Blob([dataStr], { type: "application/json" });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `finance-data-${
-      new Date().toISOString().split("T")[0]
-    }.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+  const exportData = async () => {
+    try {
+      const response = await fetch("/api/data/export", { credentials: "include" });
+      if (!response.ok) throw new Error("Export failed");
+      const csv = await response.text();
+      const dataBlob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `finance-tracker-${new Date().toISOString().split("T")[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Finance CSV export failed:", error);
+      toast.error(t("manage.failedToExportData"));
+    }
   };
 
   const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
+    if (file.size > 8_000_000) {
+      toast.error(t("manage.backupTooLarge"));
+      event.target.value = "";
+      return;
+    }
 
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
-        const importedData = JSON.parse(e.target?.result as string);
-
-        if (!isFinanceImportData(importedData)) {
-          toast.error(t("manage.invalidFileFormat"));
-          return;
-        }
-
-        onImportData(importedData);
-        toast.success(t("manage.dataImportedSuccessfully"));
-      } catch {
+        const backup = parseFinanceBackup(String(e.target?.result ?? ""));
+        setImportedBackup(backup);
+        setImportDialogOpen(true);
+      } catch (error) {
+        console.error("Finance backup parse failed:", error);
         toast.error(t("manage.failedToParse"));
       }
     };
-    reader.readAsText(file);
+    reader.onerror = () => toast.error(t("manage.failedToParse"));
+    reader.readAsText(file, "utf-8");
 
     event.target.value = "";
+  };
+
+  const confirmImport = async () => {
+    if (!importedBackup || isImporting) return;
+    setIsImporting(true);
+    try {
+      const response = await fetch("/api/data/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(importedBackup),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(result.error || t("manage.failedToImportData"));
+      }
+
+      await onImportComplete();
+      setImportDialogOpen(false);
+      setImportedBackup(null);
+      toast.success(t("manage.dataImportedSuccessfully"));
+    } catch (error) {
+      console.error("Finance backup import failed:", error);
+      toast.error(error instanceof Error ? error.message : t("manage.failedToImportData"));
+    } finally {
+      setIsImporting(false);
+    }
   };
 
   const handleClearData = () => {
     setClearDialogOpen(true);
   };
 
-  const confirmClearData = () => {
-    onClearData();
-    setClearDialogOpen(false);
-    toast.success(t("manage.allDataCleared"));
+  const confirmClearData = async () => {
+    try {
+      await onClearData();
+      setClearDialogOpen(false);
+      toast.success(t("manage.allDataCleared"));
+    } catch (error) {
+      console.error("Clearing finance data failed:", error);
+      toast.error(t("manage.failedToClearData"));
+    }
   };
 
   const getDataStats = () => {
@@ -103,14 +153,17 @@ export function DataManagement({
   const stats = getDataStats();
 
   return (
-    <div className="space-y-6">
-      {/* Data Statistics */}
+    <>
       <Card>
         <CardHeader>
-          <CardTitle>{t("manage.dataOverview")}</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Database className="h-5 w-5" />
+            {t("manage.dataManagement")}
+          </CardTitle>
+          <CardDescription>{t("manage.exportBackupDescription")}</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 rounded-lg border bg-muted/30 p-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-primary">
                 {stats.totalEntries}
@@ -144,15 +197,6 @@ export function DataManagement({
               </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Import/Export */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("manage.dataManagement")}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
           {/* Export */}
           <div className="space-y-2">
             <Label>{t("manage.exportData")}</Label>
@@ -170,13 +214,27 @@ export function DataManagement({
 
           {/* Import */}
           <div className="space-y-2">
-            <Label htmlFor="import-file">{t("manage.importData")}</Label>
+            <Label>{t("manage.importData")}</Label>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full justify-start gap-2"
+              onClick={() => importInputRef.current?.click()}
+            >
+              <FileSpreadsheet className="h-4 w-4" />
+              {t("manage.chooseImportFile")}
+            </Button>
             <Input
               id="import-file"
+              ref={importInputRef}
               type="file"
-              accept=".json"
+              accept=".csv,text/csv"
+              aria-label={t("manage.importBackupDescription")}
               onChange={handleImport}
-              className="transition-all duration-200 focus:ring-2 focus:ring-primary/20 cursor-pointer file:cursor-pointer"
+              className="absolute h-px w-px overflow-hidden border-0 p-0"
+              style={{ clip: "rect(0, 0, 0, 0)" }}
+              tabIndex={-1}
+              aria-hidden="true"
             />
             <p className="text-sm text-muted-foreground">
               {t("manage.importBackupDescription")}
@@ -220,6 +278,50 @@ export function DataManagement({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+
+      <AlertDialog
+        open={importDialogOpen}
+        onOpenChange={(open) => {
+          if (isImporting) return;
+          setImportDialogOpen(open);
+          if (!open) setImportedBackup(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("manage.restoreBackupTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("manage.restoreBackupDescription")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {importedBackup && (
+            <div className="rounded-md border bg-muted/40 p-3 text-sm">
+              <p>{t("manage.backupEntriesCount").replace("{count}", String(importedBackup.entries.length))}</p>
+              <p className="text-muted-foreground">
+                {t("manage.backupMonthsCount").replace(
+                  "{count}",
+                  String(importedBackup.entries.reduce((total, entry) => total + entry.months.length, 0))
+                )}
+              </p>
+            </div>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isImporting}>
+              {t("common.cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={isImporting || !importedBackup}
+              onClick={(event) => {
+                event.preventDefault();
+                void confirmImport();
+              }}
+            >
+              <FileSpreadsheet className="mr-2 h-4 w-4" />
+              {isImporting ? t("common.loading") : t("manage.restoreBackup")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

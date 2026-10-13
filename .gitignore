@@ -3,6 +3,8 @@ node_modules
 next-env.d.ts
 bun.lockb
 data
+!app/api/data/
+!app/api/data/**
 .env
 */.DS_Store
 .playwright-mcp/

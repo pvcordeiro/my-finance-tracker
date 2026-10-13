@@ -9,14 +9,15 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { currencies, type CurrencyCode } from "@/lib/i18n";
 
 interface LanguageCurrencyDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   language: string;
-  currency: string;
+  currency: CurrencyCode;
   onLanguageChange: (lang: "en" | "pt") => void;
-  onCurrencyChange: (curr: "EUR" | "USD" | "BRL") => void;
+  onCurrencyChange: (curr: CurrencyCode) => void;
   t?: (key: string) => string;
 }
 
@@ -39,12 +40,6 @@ export function LanguageCurrencyDialog({
   const languages = [
     { code: "en", name: "English", flag: "🇺🇸" },
     { code: "pt", name: "Português", flag: "🇧🇷" },
-  ];
-
-  const currencies = [
-    { code: "USD", name: "US Dollar", symbol: "$" },
-    { code: "EUR", name: "Euro", symbol: "€" },
-    { code: "BRL", name: "Real", symbol: "R$" },
   ];
 
   return (
@@ -102,13 +97,29 @@ export function LanguageCurrencyDialog({
                       : "focus-visible:border-input"
                   )}
                   onClick={() =>
-                    onCurrencyChange(curr.code as "EUR" | "USD" | "BRL")
+                    onCurrencyChange(curr.code)
                   }
                 >
-                  <span className="text-xl font-bold mr-3 w-8">
+                  <span className="text-base font-bold mr-3 w-12">
                     {curr.symbol}
                   </span>
-                  <span className="flex-1 font-medium">{curr.name}</span>
+                  <span className="flex-1 font-medium">
+                    {t(`auth.currency${
+                      {
+                        EUR: "Euro",
+                        USD: "UsDollar",
+                        BRL: "BrazilianReal",
+                        GBP: "BritishPound",
+                        CAD: "CanadianDollar",
+                        AUD: "AustralianDollar",
+                        JPY: "JapaneseYen",
+                        CHF: "SwissFranc",
+                        INR: "IndianRupee",
+                        CNY: "ChineseYuan",
+                        MXN: "MexicanPeso",
+                      }[curr.code]
+                    }`)}
+                  </span>
                   {currency === curr.code && (
                     <Check className="w-5 h-5 text-primary" />
                   )}

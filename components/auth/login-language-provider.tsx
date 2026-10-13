@@ -1,10 +1,10 @@
 "use client";
 
 import { createContext, useContext, useState, ReactNode } from "react";
-import { translations, currencies } from "@/lib/i18n";
+import { currencyCodes, currencies, translations, type CurrencyCode } from "@/lib/i18n";
 
 type Language = "en" | "pt";
-type Currency = "EUR" | "USD" | "BRL";
+type Currency = CurrencyCode;
 
 interface LoginLanguageContextType {
   language: Language;
@@ -45,8 +45,6 @@ export function LoginLanguageProvider({ children }: { children: ReactNode }) {
     return new Intl.NumberFormat(language === "pt" ? "pt-BR" : "en-US", {
       style: "currency",
       currency: currency,
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
     }).format(amount);
   };
 
