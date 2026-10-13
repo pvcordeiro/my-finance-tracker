@@ -262,7 +262,8 @@ export function EntryEditDialog({
             {isRecurrent && (
               <div className="space-y-2">
                 <label className="text-sm font-medium">{t("entries.recurringMonthlyAmount")}</label>
-                <Input
+                <CurrencyAmountInput
+                  currencySymbol={currencySymbol}
                   type="number"
                   inputMode="decimal"
                   step="0.01"

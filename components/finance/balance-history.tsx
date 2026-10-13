@@ -90,8 +90,8 @@ export function BalanceHistory({
               className="w-full flex items-center justify-between p-0 hover:bg-transparent"
             >
               <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                <History className="w-5 h-5 sm:w-6 sm:h-6 text-primary flex-shrink-0" />
-                <span className="font-semibold text-primary">
+                <History className="w-5 h-5 sm:w-6 sm:h-6 text-primary-contrast flex-shrink-0" />
+                <span className="font-semibold text-primary-contrast">
                   {t("dashboard.recentBalanceChanges")}
                 </span>
                 {!isOpen && (
@@ -101,7 +101,7 @@ export function BalanceHistory({
                 )}
               </CardTitle>
               <ChevronDown
-                className={`w-4 h-4 text-primary transition-transform duration-280 ${
+                className={`w-4 h-4 text-primary-contrast transition-transform duration-280 ${
                   isOpen ? "rotate-180" : ""
                 }`}
               />

@@ -111,7 +111,7 @@ export function PWAInstallPrompt() {
               <div className="flex items-center gap-3">
                 {/* App icon placeholder */}
                 <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
-                  <Smartphone className="w-6 h-6 text-primary" />
+                  <Smartphone className="w-6 h-6 text-primary-contrast" />
                 </div>
                 <div>
                   <p className="font-semibold text-foreground leading-tight">

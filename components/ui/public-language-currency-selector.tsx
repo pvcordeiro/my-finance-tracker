@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
 import { currencies } from "@/lib/i18n";
 import { useLanguage } from "@/hooks/use-language";
+import { LanguageFlag } from "@/components/ui/language-flag";
 
 interface PublicLanguageCurrencySelectorProps {
   language: string;
@@ -41,7 +42,7 @@ export function PublicLanguageCurrencySelector({
           size={size}
           className="flex items-center gap-2"
         >
-          <span className="text-lg">{language === "pt" ? "🇧🇷" : "🇺🇸"}</span>
+          <LanguageFlag language={language} />
           <span className="font-semibold">{getCurrencySymbol(currency)}</span>
           <ChevronDown className="w-4 h-4" />
         </Button>
@@ -52,7 +53,7 @@ export function PublicLanguageCurrencySelector({
           onClick={() => onLanguageChange("en")}
           className="flex items-center gap-2"
         >
-          <span className="text-lg">🇺🇸</span>
+          <LanguageFlag language="en" />
           <span>English</span>
           {language === "en" && <span className="ml-auto">✓</span>}
         </DropdownMenuItem>
@@ -60,7 +61,7 @@ export function PublicLanguageCurrencySelector({
           onClick={() => onLanguageChange("pt")}
           className="flex items-center gap-2"
         >
-          <span className="text-lg">🇧🇷</span>
+          <LanguageFlag language="pt" />
           <span>Português</span>
           {language === "pt" && <span className="ml-auto">✓</span>}
         </DropdownMenuItem>

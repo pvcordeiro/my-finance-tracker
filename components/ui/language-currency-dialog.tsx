@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { currencies, type CurrencyCode } from "@/lib/i18n";
+import { LanguageFlag } from "@/components/ui/language-flag";
 
 interface LanguageCurrencyDialogProps {
   open: boolean;
@@ -38,8 +39,8 @@ export function LanguageCurrencyDialog({
   },
 }: LanguageCurrencyDialogProps) {
   const languages = [
-    { code: "en", name: "English", flag: "🇺🇸" },
-    { code: "pt", name: "Português", flag: "🇧🇷" },
+    { code: "en", name: "English" },
+    { code: "pt", name: "Português" },
   ];
 
   return (
@@ -69,10 +70,10 @@ export function LanguageCurrencyDialog({
                   )}
                   onClick={() => onLanguageChange(lang.code as "en" | "pt")}
                 >
-                  <span className="text-2xl mr-3">{lang.flag}</span>
+                  <LanguageFlag language={lang.code} className="mr-3 h-8 w-12" />
                   <span className="flex-1 font-medium">{lang.name}</span>
                   {language === lang.code && (
-                    <Check className="w-5 h-5 text-primary" />
+                      <Check className="w-5 h-5 text-primary-contrast" />
                   )}
                 </Button>
               ))}
@@ -121,7 +122,7 @@ export function LanguageCurrencyDialog({
                     }`)}
                   </span>
                   {currency === curr.code && (
-                    <Check className="w-5 h-5 text-primary" />
+                      <Check className="w-5 h-5 text-primary-contrast" />
                   )}
                 </Button>
               ))}

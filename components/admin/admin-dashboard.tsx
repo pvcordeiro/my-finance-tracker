@@ -34,7 +34,6 @@ import {
   UserMinus,
   Calendar,
   ChevronDown,
-  Calculator,
   User,
   Edit,
   MoreHorizontal,
@@ -420,13 +419,6 @@ export function AdminDashboard() {
                     <User className="w-4 h-4 mr-2" />
                     {t("settings.accountSettings")}
                   </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => router.push("/")}
-                    className="cursor-pointer"
-                  >
-                    <Calculator className="w-4 h-4 mr-2" />
-                    {t("admin.backToApp")}
-                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={() => setLanguageDialogOpen(true)}
@@ -483,7 +475,7 @@ export function AdminDashboard() {
                     <Card>
                       <CardContent className="pt-6">
                         <div className="flex items-center space-x-2">
-                          <Users className="w-4 h-4 text-primary" />
+                          <Users className="w-4 h-4 text-primary-contrast" />
                           <div>
                             <p className="text-sm font-medium">
                               {t("admin.totalUsers")}
@@ -1106,7 +1098,7 @@ export function AdminDashboard() {
               onClick={() => setActiveTab("users")}
               className={`flex flex-col items-center justify-center flex-1 py-2 px-1 transition-colors min-h-[44px] ${
                 activeTab === "users"
-                  ? "text-primary"
+                  ? "text-primary-contrast"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -1116,7 +1108,7 @@ export function AdminDashboard() {
               onClick={() => setActiveTab("groups")}
               className={`flex flex-col items-center justify-center flex-1 py-2 px-1 transition-colors min-h-[44px] ${
                 activeTab === "groups"
-                  ? "text-primary"
+                  ? "text-primary-contrast"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -1126,7 +1118,7 @@ export function AdminDashboard() {
               onClick={() => setActiveTab("settings")}
               className={`flex flex-col items-center justify-center flex-1 py-2 px-1 transition-colors min-h-[44px] ${
                 activeTab === "settings"
-                  ? "text-primary"
+                  ? "text-primary-contrast"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >

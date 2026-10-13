@@ -7,7 +7,7 @@ import { FinanceLogo } from "@/components/ui/finance-logo";
 
 interface MinimalPageHeaderProps {
   title: string;
-  /** Tailwind class for the title text color. Defaults to "text-primary". */
+  /** Tailwind class for the title text color. Defaults to "text-primary-contrast". */
   titleColor?: string;
 }
 
@@ -16,7 +16,7 @@ interface MinimalPageHeaderProps {
  * Rendered above <OfflineBlockedPage /> when the device is offline so the layout
  * is consistent with the online version without pulling in the full page shell.
  */
-export function MinimalPageHeader({ title, titleColor = "text-primary" }: MinimalPageHeaderProps) {
+export function MinimalPageHeader({ title, titleColor = "text-primary-contrast" }: MinimalPageHeaderProps) {
   const router = useRouter();
   const isOnline = useOnline();
 

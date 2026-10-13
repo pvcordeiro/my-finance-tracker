@@ -87,11 +87,11 @@ export function BankAmount({
         <div className="flex flex-col gap-6">
           <div className="flex items-end justify-between">
             <div className="flex flex-col gap-0.5">
-              <Label className="text-xs font-semibold uppercase tracking-wider text-primary/70">
+              <Label className="text-xs font-semibold uppercase tracking-wider text-primary-contrast">
                 {t("dashboard.currentBalance")}
               </Label>
               <span
-                className={`text-3xl sm:text-4xl font-bold text-primary transition-all duration-300 ${
+                className={`text-3xl sm:text-4xl font-bold text-primary-contrast transition-all duration-300 ${
                   flashActive
                     ? currentFlashType === "add"
                       ? "flash-success"
@@ -105,7 +105,7 @@ export function BankAmount({
                 />
               </span>
             </div>
-            <Banknote className="w-5 h-5 text-primary/40 flex-shrink-0 mb-1" />
+            <Banknote className="w-5 h-5 text-primary-contrast flex-shrink-0 mb-1" />
           </div>
 
           <div className="border-t pt-4">

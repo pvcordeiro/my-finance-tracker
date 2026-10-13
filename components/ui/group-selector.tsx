@@ -157,7 +157,7 @@ export function GroupSelectorDialog({ open, onOpenChange }: GroupSelectorProps) 
                     {t("common.loading")}
                   </span>
                 ) : isCurrent ? (
-                  <span className="flex shrink-0 items-center gap-1 text-xs font-medium text-primary">
+                  <span className="flex shrink-0 items-center gap-1 text-xs font-medium text-primary-contrast">
                     <Check className="h-4 w-4" />
                     {t("settings.current")}
                   </span>

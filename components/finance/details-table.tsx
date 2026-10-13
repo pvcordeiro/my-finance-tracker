@@ -470,7 +470,7 @@ export function DetailsTable({ data }: DetailsTableProps) {
                         key={month.label}
                         className={cn(
                           "text-center px-2 py-2 font-semibold min-w-[70px] relative text-soft-shadow",
-                          isCurrent && "text-primary bg-primary/5"
+                           isCurrent && "text-primary-contrast bg-primary/5"
                         )}
                       >
                         {month.label}
@@ -673,7 +673,7 @@ export function DetailsTable({ data }: DetailsTableProps) {
                         key={month.label}
                         className={cn(
                           "text-center px-2 py-2 font-semibold min-w-[70px] relative text-soft-shadow",
-                          isCurrent && "text-primary bg-primary/5"
+                           isCurrent && "text-primary-contrast bg-primary/5"
                         )}
                       >
                         {month.label}

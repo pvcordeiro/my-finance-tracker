@@ -18,6 +18,7 @@ import { Eye, EyeOff, UserPlus, LogIn, AlertTriangle, CheckCircle } from "lucide
 import { LoadingSpinner } from "@/components/ui/loading";
 import { useLanguage } from "@/hooks/use-language";
 import { FinanceLogo } from "@/components/ui/finance-logo";
+import { LanguageFlag } from "@/components/ui/language-flag";
 import { LanguageCurrencyDialog } from "@/components/ui/language-currency-dialog";
 
 interface LoginFormProps {
@@ -139,7 +140,7 @@ export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
           className="flex items-center gap-2"
           onClick={() => setLanguageDialogOpen(true)}
         >
-          <span className="text-lg">{language === "pt" ? "🇧🇷" : "🇺🇸"}</span>
+          <LanguageFlag language={language} />
           <span className="font-semibold">{currencySymbol}</span>
         </Button>
       </div>
@@ -307,7 +308,7 @@ export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
                   type="button"
                   variant="ghost"
                   onClick={toggleMode}
-                  className="text-sm text-muted-foreground hover:text-primary hover:text-white"
+                  className="text-sm text-muted-foreground hover:text-primary-contrast"
                   disabled={checkingRegistration}
                 >
                   {checkingRegistration

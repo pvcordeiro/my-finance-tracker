@@ -154,7 +154,7 @@ export function BalanceAlert({ projectedMonths }: BalanceAlertProps) {
               className={
                 isNegativeAlert
                   ? "flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-finance-negative/15 text-finance-negative"
-                  : "flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300"
+                   : "pending-warning-icon flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
               }
             >
               {isNegativeAlert ? (

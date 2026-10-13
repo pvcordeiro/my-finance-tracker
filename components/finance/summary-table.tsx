@@ -243,7 +243,7 @@ export function SummaryTable({ data }: SummaryTableProps) {
                       row.isCurrentMonth && "bg-primary/5 border-primary/20"
                     )}
                   >
-                    <td className={cn("px-3 py-2 font-medium", row.isCurrentMonth && "text-primary")}>
+                    <td className={cn("px-3 py-2 font-medium", row.isCurrentMonth && "text-primary-contrast")}>
                       {row.month}
                     </td>
                     <td className="px-3 py-2 text-right text-finance-positive font-medium">

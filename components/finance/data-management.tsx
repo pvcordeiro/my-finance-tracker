@@ -165,7 +165,7 @@ export function DataManagement({
         <CardContent className="space-y-6">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 rounded-lg border bg-muted/30 p-4">
             <div className="text-center">
-              <div className="text-2xl font-bold text-primary">
+              <div className="text-2xl font-bold text-primary-contrast">
                 {stats.totalEntries}
               </div>
               <div className="text-sm text-muted-foreground">
@@ -189,7 +189,7 @@ export function DataManagement({
               </div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-primary">
+              <div className="text-2xl font-bold text-primary-contrast">
                 {stats.dataSize}
               </div>
               <div className="text-sm text-muted-foreground">
@@ -199,7 +199,6 @@ export function DataManagement({
           </div>
           {/* Export */}
           <div className="space-y-2">
-            <Label>{t("manage.exportData")}</Label>
             <Button
               onClick={exportData}
               className="w-full transition-all duration-200 hover:scale-[1.02]"
@@ -207,18 +206,17 @@ export function DataManagement({
               <Download className="w-4 h-4 mr-2" />
               {t("manage.downloadBackup")}
             </Button>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-center text-sm text-muted-foreground">
               {t("manage.exportBackupDescription")}
             </p>
           </div>
 
           {/* Import */}
           <div className="space-y-2">
-            <Label>{t("manage.importData")}</Label>
             <Button
               type="button"
               variant="outline"
-              className="w-full justify-start gap-2"
+              className="w-full justify-center gap-2"
               onClick={() => importInputRef.current?.click()}
             >
               <FileSpreadsheet className="h-4 w-4" />
@@ -236,14 +234,13 @@ export function DataManagement({
               tabIndex={-1}
               aria-hidden="true"
             />
-            <p className="text-sm text-muted-foreground">
+            <p className="text-center text-sm text-muted-foreground">
               {t("manage.importBackupDescription")}
             </p>
           </div>
 
           {/* Clear Data */}
           <div className="space-y-2 pt-4 border-t">
-            <Label className="text-destructive">{t("manage.dangerZone")}</Label>
             <Button
               variant="destructive"
               onClick={handleClearData}
@@ -252,7 +249,7 @@ export function DataManagement({
               <Trash2 className="w-4 h-4 mr-2" />
               {t("manage.clearAllData")}
             </Button>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-center text-sm text-muted-foreground">
               {t("manage.clearDataDescription")}
             </p>
           </div>

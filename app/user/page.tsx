@@ -25,7 +25,6 @@ import {
   LogOut,
   ChevronDown,
   Shield,
-  Calculator,
   ChevronRight,
   Sun,
   Moon,
@@ -184,15 +183,15 @@ export default function UserSettingsPage() {
 
   const getAccentColor = () => {
     const accentColors: Record<string, string> = {
-      blue: "hsl(217, 91%, 60%)",
-      purple: "hsl(270, 91%, 60%)",
-      yellow: "hsl(65, 100%, 50%)",
-      orange: "hsl(25, 95%, 53%)",
-      pink: "hsl(330, 85%, 60%)",
-      magenta: "hsl(300, 76%, 60%)",
-      cyan: "hsl(190, 76%, 50%)",
-      indigo: "hsl(240, 76%, 60%)",
-      amber: "hsl(45, 93%, 53%)",
+                  blue: "hsl(217, 91%, 60%)",
+                  purple: "hsl(270, 91%, 60%)",
+                  yellow: "hsl(65, 100%, 50%)",
+                  orange: "hsl(25, 95%, 53%)",
+                  pink: "hsl(330, 85%, 60%)",
+                  magenta: "hsl(300, 76%, 60%)",
+                  cyan: "hsl(190, 76%, 50%)",
+                  indigo: "hsl(240, 76%, 60%)",
+                  amber: "hsl(45, 93%, 53%)",
     };
     return accentColors[currentAccent] || accentColors.blue;
   };
@@ -223,7 +222,7 @@ export default function UserSettingsPage() {
             >
               <FinanceLogo className="h-8 w-8 sm:h-10 sm:w-10" />
               <div>
-                <h1 className="text-lg sm:text-xl font-bold text-primary">
+                <h1 className="text-lg sm:text-xl font-bold text-primary-contrast">
                   {t("settings.accountSettings")}
                 </h1>
                 <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
@@ -254,13 +253,6 @@ export default function UserSettingsPage() {
                       {t("admin.title")}
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuItem
-                    onClick={() => router.push("/")}
-                    className="cursor-pointer"
-                  >
-                    <Calculator className="w-4 h-4 mr-2" />
-                    {t("navigation.home")}
-                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={() => setLanguageDialogOpen(true)}

@@ -15,6 +15,7 @@
   /* Primary = Blue Accent Color */
   --primary: 217 91% 60%;             /* Vibrant blue accent */
   --primary-foreground: 0 0% 100%;    /* White text on blue */
+  --primary-contrast: 217 91% 32%;    /* Readable accent text on light surfaces */
   
   /* Secondary = Cool medium gray for nested areas */
   --secondary: 210 10% 86%;           /* Cool darker gray for nested sections */
@@ -64,6 +65,7 @@
   /* Primary = Blue Accent Color */
   --primary: 217 91% 65%;             /* Brighter blue for dark mode */
   --primary-foreground: 210 8% 10%;   /* Cool dark text on blue */
+  --primary-contrast: 217 91% 76%;    /* Readable accent text on dark surfaces */
   
   /* Secondary = Cool lighter gray for nested areas */
   --secondary: 210 8% 14%;            /* Cool lighter for nested sections */
@@ -257,6 +259,27 @@
   [role="button"]:focus-visible {
     outline: 2px solid hsl(var(--primary));
     outline-offset: 2px;
+  }
+}
+
+@layer utilities {
+  /* The primary fill follows the user's accent; text uses its contrast-safe mate. */
+  .text-primary-contrast {
+    color: hsl(var(--primary-contrast));
+  }
+
+  .hover-text-primary-contrast:hover {
+    color: hsl(var(--primary-contrast));
+  }
+
+  .pending-warning-icon {
+    background-color: #fef3c7;
+    color: #854d0e;
+  }
+
+  .dark .pending-warning-icon {
+    background-color: #451a03;
+    color: #fcd34d;
   }
 }
 

@@ -51,7 +51,7 @@ export function PendingOccurrences({
         className="flex-row cursor-pointer items-center justify-between gap-3 bg-amber-500/[0.07] px-4 py-3 transition-colors hover:bg-amber-500/[0.12] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:px-5"
       >
         <div className="flex min-w-0 items-center gap-3">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300">
+          <span className="pending-warning-icon flex h-9 w-9 shrink-0 items-center justify-center rounded-full">
             <Clock3 className="h-4 w-4" />
           </span>
           <div className="min-w-0">

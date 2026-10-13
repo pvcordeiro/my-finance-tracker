@@ -453,7 +453,7 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
                       <PrivacyNumber
                           value={calculateTotal(entry.amounts)}
                       />
-                      {entry.recurrent && <span className="ml-2 inline-flex rounded-full bg-primary/10 px-2 py-0.5 align-middle text-[10px] font-medium text-primary">{t("entries.recurrentBadge")}</span>}
+                      {entry.recurrent && <span className="ml-2 inline-flex rounded-full bg-primary/10 px-2 py-0.5 align-middle text-[10px] font-medium text-primary-contrast">{t("entries.recurrentBadge")}</span>}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">

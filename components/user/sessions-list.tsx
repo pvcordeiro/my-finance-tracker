@@ -223,7 +223,7 @@ export function SessionsList() {
                 {getDeviceName(session.device_name)}
               </h3>
               {session.is_current && (
-                <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full">
+                <span className="text-xs bg-primary/20 text-primary-contrast px-2 py-0.5 rounded-full">
                   {t("settings.current")}
                 </span>
               )}

@@ -50,7 +50,7 @@ export function MobileBottomNav() {
                 isDisabled
                   ? "text-muted-foreground/40 pointer-events-none"
                   : isActive
-                  ? "text-primary"
+                  ? "text-primary-contrast"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >

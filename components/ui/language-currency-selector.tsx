@@ -4,6 +4,7 @@ import { useLanguage } from "@/hooks/use-language";
 import { Button } from "@/components/ui/button";
 import { Globe } from "lucide-react";
 import { LanguageCurrencyDialog } from "./language-currency-dialog";
+import { LanguageFlag } from "./language-flag";
 
 interface LanguageCurrencySelectorProps {
   variant?: "default" | "outline" | "ghost";
@@ -47,7 +48,7 @@ export function LanguageCurrencySelector({
         className="flex items-center gap-2"
         onClick={handleOpenDialog}
       >
-        <span className="text-lg">{language === "pt" ? "🇧🇷" : "🇺🇸"}</span>
+        <LanguageFlag language={language} />
         <span className="font-semibold">{currencySymbol}</span>
       </Button>
 

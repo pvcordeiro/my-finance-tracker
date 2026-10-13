@@ -15,7 +15,6 @@ const ACCENT_COLORS: Record<
     darkModeLightness?: string;
     accentLightLightness?: string;
     accentDarkLightness?: string;
-    lightPrimaryForeground?: string;
   }
 > = {
   blue: { hue: "217" },
@@ -23,7 +22,6 @@ const ACCENT_COLORS: Record<
   yellow: {
     hue: "65",
     lightModeLightness: "42%",
-    lightPrimaryForeground: "210 10% 5%",
   },
   orange: { hue: "25" },
   pink: { hue: "330" },
@@ -33,9 +31,56 @@ const ACCENT_COLORS: Record<
   amber: {
     hue: "45",
     lightModeLightness: "42%",
-    lightPrimaryForeground: "210 10% 5%",
   },
 };
+
+function hslToRgb(hue: number, saturation: number, lightness: number) {
+  const h = ((hue % 360) + 360) % 360 / 360;
+  const s = saturation / 100;
+  const l = lightness / 100;
+  const channel = (n: number) => {
+    const k = (n + h * 12) % 12;
+    const a = s * Math.min(l, 1 - l);
+    return l - a * Math.max(-1, Math.min(k - 3, Math.min(9 - k, 1)));
+  };
+  return [channel(0), channel(8), channel(4)];
+}
+
+function relativeLuminance(rgb: number[]) {
+  const [r, g, b] = rgb.map((value) => {
+    const channel = value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+    return channel;
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+function getContrastRatio(first: number[], second: number[]) {
+  const [lighter, darker] = [relativeLuminance(first), relativeLuminance(second)].sort(
+    (a, b) => b - a
+  );
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+function getContrastTextLightness(hue: string, saturation: number, isDark: boolean) {
+  const background = isDark
+    ? [26 / 255, 28 / 255, 30 / 255]
+    : [241 / 255, 242 / 255, 243 / 255];
+  const preferred = isDark ? 74 : 30;
+  let best = preferred;
+  let bestDistance = Number.POSITIVE_INFINITY;
+
+  for (let lightness = 0; lightness <= 100; lightness++) {
+    if (getContrastRatio(hslToRgb(Number(hue), saturation, lightness), background) < 4.5) {
+      continue;
+    }
+    const distance = Math.abs(lightness - preferred);
+    if (distance < bestDistance) {
+      best = lightness;
+      bestDistance = distance;
+    }
+  }
+  return best;
+}
 
 function ThemeManager() {
   const { setTheme } = useTheme();
@@ -65,8 +110,18 @@ function ThemeManager() {
     root.style.setProperty("--primary", `${color.hue} 91% ${lightness}`);
     root.style.setProperty("--ring", `${color.hue} 91% ${lightness}`);
     root.style.setProperty(
+      "--primary-contrast",
+      `${color.hue} 91% ${getContrastTextLightness(color.hue, 91, isDark)}%`
+    );
+    const primaryRgb = hslToRgb(Number(color.hue), 91, Number.parseFloat(lightness));
+    const darkForeground = [0.04, 0.05, 0.06];
+    const lightForeground = [1, 1, 1];
+    const useDarkForeground =
+      getContrastRatio(primaryRgb, darkForeground) >=
+      getContrastRatio(primaryRgb, lightForeground);
+    root.style.setProperty(
       "--primary-foreground",
-      isDark ? "210 8% 10%" : color.lightPrimaryForeground || "0 0% 100%"
+      useDarkForeground ? "210 10% 5%" : "0 0% 100%"
     );
     root.style.setProperty(
       "--accent",
