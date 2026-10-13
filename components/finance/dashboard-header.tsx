@@ -29,7 +29,10 @@ import { LanguageCurrencySelector } from "@/components/ui/language-currency-sele
 import { LanguageCurrencyDialog } from "@/components/ui/language-currency-dialog";
 import { useOnline } from "@/hooks/use-online";
 import { OFFLINE_BANNER_HEIGHT } from "@/components/pwa/offline-banner";
-import { GroupSelector } from "@/components/ui/group-selector";
+import {
+  GroupSelectorDialog,
+  GroupSelectorMenuItem,
+} from "@/components/ui/group-selector";
 
 export function DashboardHeader() {
   const { user, logout } = useAuth();
@@ -42,6 +45,7 @@ export function DashboardHeader() {
   const isMobile = useIsMobile();
   const isOnline = useOnline();
   const [languageDialogOpen, setLanguageDialogOpen] = useState(false);
+  const [groupDialogOpen, setGroupDialogOpen] = useState(false);
 
   const handleLogout = async () => {
     await logout();
@@ -147,7 +151,6 @@ export function DashboardHeader() {
                 </span>
               )}
             </Button>
-            <GroupSelector />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -179,6 +182,9 @@ export function DashboardHeader() {
                   <User className="w-4 h-4 mr-2" />
                   {t("settings.accountSettings")}
                 </DropdownMenuItem>
+                {user?.groups && user.groups.length > 1 && (
+                  <GroupSelectorMenuItem onOpenChange={setGroupDialogOpen} />
+                )}
                 <DropdownMenuItem
                   onClick={() => router.push("/manage?tab=management")}
                   className="cursor-pointer"
@@ -204,6 +210,12 @@ export function DashboardHeader() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            {user?.groups && user.groups.length > 1 && (
+              <GroupSelectorDialog
+                open={groupDialogOpen}
+                onOpenChange={setGroupDialogOpen}
+              />
+            )}
           </div>
         </div>
 
