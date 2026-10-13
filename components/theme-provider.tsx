@@ -9,17 +9,32 @@ import {
 
 const ACCENT_COLORS: Record<
   string,
-  { hue: string; lightModeLightness?: string; darkModeLightness?: string }
+  {
+    hue: string;
+    lightModeLightness?: string;
+    darkModeLightness?: string;
+    accentLightLightness?: string;
+    accentDarkLightness?: string;
+    lightPrimaryForeground?: string;
+  }
 > = {
   blue: { hue: "217" },
   purple: { hue: "270" },
-  yellow: { hue: "65", lightModeLightness: "42%" },
+  yellow: {
+    hue: "65",
+    lightModeLightness: "42%",
+    lightPrimaryForeground: "210 10% 5%",
+  },
   orange: { hue: "25" },
   pink: { hue: "330" },
   magenta: { hue: "300" },
   cyan: { hue: "190", lightModeLightness: "38%" },
   indigo: { hue: "240" },
-  amber: { hue: "45", lightModeLightness: "42%" },
+  amber: {
+    hue: "45",
+    lightModeLightness: "42%",
+    lightPrimaryForeground: "210 10% 5%",
+  },
 };
 
 function ThemeManager() {
@@ -49,6 +64,22 @@ function ThemeManager() {
 
     root.style.setProperty("--primary", `${color.hue} 91% ${lightness}`);
     root.style.setProperty("--ring", `${color.hue} 91% ${lightness}`);
+    root.style.setProperty(
+      "--primary-foreground",
+      isDark ? "210 8% 10%" : color.lightPrimaryForeground || "0 0% 100%"
+    );
+    root.style.setProperty(
+      "--accent",
+      `${color.hue} ${isDark ? "70%" : "85%"} ${
+        isDark
+          ? color.accentDarkLightness || "22%"
+          : color.accentLightLightness || "88%"
+      }`
+    );
+    root.style.setProperty(
+      "--accent-foreground",
+      `${color.hue} ${isDark ? "85%" : "95%"} ${isDark ? "88%" : "25%"}`
+    );
   }, [currentAccent]);
 
   const applyUserPreferences = React.useCallback(async (skipTheme = false) => {

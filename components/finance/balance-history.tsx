@@ -12,6 +12,7 @@ import { ChevronDown, History, Plus, Minus, Edit3 } from "lucide-react";
 import { format } from "date-fns";
 import { enUS, ptBR } from "date-fns/locale";
 import { PrivacyNumber } from "@/components/ui/privacy-number";
+import { PrivacyText } from "@/components/ui/privacy-text";
 import { useLanguage } from "@/hooks/use-language";
 
 interface BalanceHistoryEntry {
@@ -165,14 +166,14 @@ export function BalanceHistory({
 
                       {entry.note && (
                         <div className="text-sm text-foreground mt-2 bg-muted/50 rounded px-2 py-1">
-                          {entry.note}
+                          <PrivacyText value={entry.note} />
                         </div>
                       )}
 
                       {entry.username && (
                         <div className="text-xs text-muted-foreground mt-1">
                           {t("dashboard.by")}{" "}
-                          <span className="font-bold">{entry.username}</span>
+                          <span className="font-bold"><PrivacyText value={entry.username} /></span>
                         </div>
                       )}
                     </div>

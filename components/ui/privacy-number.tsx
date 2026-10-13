@@ -20,7 +20,7 @@ export function PrivacyNumber({
   format,
 }: PrivacyNumberProps) {
   const { privacyMode, isRevealed, isLoading } = usePrivacy();
-  const { formatCurrency } = useLanguage();
+  const { formatCurrency, t } = useLanguage();
 
   const shouldHide = privacyMode && !isRevealed && !isLoading;
 
@@ -49,15 +49,17 @@ export function PrivacyNumber({
     <span
       className={cn("inline-block relative", className)}
       style={{ width: skeletonWidth, minWidth: "3em" }}
+      role="img"
+      aria-label={t("settings.hiddenForPrivacy")}
     >
       <span
-        className="absolute inset-0 rounded animate-pulse opacity-40"
+        className="absolute inset-0 rounded opacity-40"
         style={{
           background: "currentColor",
         }}
-        aria-label="Hidden for privacy"
+        aria-hidden="true"
       />
-      <span className="invisible">{fullText}</span>
+      <span className="invisible" aria-hidden="true">{fullText}</span>
     </span>
   );
 }

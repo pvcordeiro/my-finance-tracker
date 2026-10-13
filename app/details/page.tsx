@@ -7,9 +7,11 @@ import { DashboardHeader } from "@/components/finance/dashboard-header";
 import { DetailsTable } from "@/components/finance/details-table";
 import { AuthGate } from "@/components/auth/auth-gate";
 import { useLanguage } from "@/hooks/use-language";
+import { LoadingState } from "@/components/ui/loading";
+import { Button } from "@/components/ui/button";
 
 function DetailsPageContent() {
-  const { data } = useFinanceData();
+  const { data, isLoading, loadError, refreshData } = useFinanceData();
   const { t } = useLanguage();
 
   return (
@@ -23,7 +25,20 @@ function DetailsPageContent() {
             </h1>
           </div>
         </div>
-        <DetailsTable data={data} />
+        {isLoading ? (
+          <LoadingState message={t("common.loadingFinancialData")} />
+        ) : loadError ? (
+          <div className="rounded-xl border border-destructive/30 bg-card p-6 text-center">
+            <p className="text-sm text-muted-foreground">
+              {t("common.failedToLoadFinancialData")}
+            </p>
+            <Button className="mt-4" variant="outline" onClick={() => void refreshData()}>
+              {t("common.retry")}
+            </Button>
+          </div>
+        ) : (
+          <DetailsTable data={data} />
+        )}
       </main>
     </div>
   );

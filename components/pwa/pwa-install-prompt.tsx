@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Download, X, Smartphone } from "lucide-react";
 import { useLanguage } from "@/hooks/use-language";
+import { usePathname } from "next/navigation";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -13,12 +14,14 @@ const DISMISSED_KEY = "finance-tracker-pwa-install-dismissed";
 
 export function PWAInstallPrompt() {
   const { t } = useLanguage();
+  const pathname = usePathname();
   const [deferredPrompt, setDeferredPrompt] =
     useState<BeforeInstallPromptEvent | null>(null);
   const [visible, setVisible] = useState(false);
   const [animating, setAnimating] = useState(false);
 
   useEffect(() => {
+    if (process.env.NODE_ENV !== "production") return;
     if (
       typeof window === "undefined" ||
       !("serviceWorker" in navigator) ||
@@ -64,7 +67,15 @@ export function PWAInstallPrompt() {
     }
   };
 
-  if (!visible) return null;
+  if (
+    process.env.NODE_ENV !== "production" ||
+    pathname === "/verify-email" ||
+    pathname === "/email-confirmed" ||
+    pathname === "/reset-password" ||
+    !visible
+  ) {
+    return null;
+  }
 
   return (
     <>

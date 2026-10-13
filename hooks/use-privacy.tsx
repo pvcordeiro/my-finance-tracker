@@ -5,6 +5,7 @@ import {
   useContext,
   useState,
   useEffect,
+  useRef,
   ReactNode,
 } from "react";
 
@@ -21,6 +22,7 @@ export function PrivacyProvider({ children }: { children: ReactNode }) {
   const [privacyMode, setPrivacyMode] = useState(false);
   const [isRevealed, setIsRevealed] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const revealTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const fetchPrivacyMode = async () => {
@@ -57,15 +59,18 @@ export function PrivacyProvider({ children }: { children: ReactNode }) {
         "privacyModeUpdated",
         handlePrivacyUpdate as EventListener
       );
+      if (revealTimeout.current) clearTimeout(revealTimeout.current);
     };
   }, []);
 
   const revealTemporarily = () => {
     if (!privacyMode) return;
 
+    if (revealTimeout.current) clearTimeout(revealTimeout.current);
     setIsRevealed(true);
-    setTimeout(() => {
+    revealTimeout.current = setTimeout(() => {
       setIsRevealed(false);
+      revealTimeout.current = null;
     }, 5000);
   };
 

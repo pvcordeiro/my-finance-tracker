@@ -220,6 +220,7 @@ export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder={t("auth.enterPassword")}
                     required
+                    autoComplete={isRegisterMode ? "new-password" : "current-password"}
                     className="pr-10 transition-all duration-200 focus:ring-2 focus:ring-primary/20"
                   />
                   <Button
@@ -228,6 +229,7 @@ export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
                     size="sm"
                     className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
                     onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
                   >
                     {showPassword ? (
                       <EyeOff className="w-4 h-4 text-muted-foreground" />

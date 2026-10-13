@@ -5,6 +5,15 @@ import { getSessionFromRequest, validateSession, verifyRequestOrigin } from "@/l
 import { rateLimit, getClientIp } from "@/lib/rate-limit.ts";
 import { accountActionEmail, emailConfigured, publicAppUrl, sendAccountEmail, validateSenderConfiguration } from "@/lib/email";
 
+const unexpiredToken = "expires_at > strftime('%Y-%m-%dT%H:%M:%fZ', 'now')";
+
+function noStoreJson(body, init) {
+  return NextResponse.json(body, {
+    ...init,
+    headers: { ...init?.headers, "Cache-Control": "no-store" },
+  });
+}
+
 export async function POST(request) {
   try {
     if (!verifyRequestOrigin(request)) return NextResponse.json({ error: "Invalid request origin." }, { status: 403 });
@@ -95,35 +104,35 @@ export async function GET(request) {
         pendingVerified: false,
       });
     }
-    if (token.length < 32 || token.length > 128) return NextResponse.json({ error: "Invalid or expired verification link." }, { status: 400 });
+    if (token.length < 32 || token.length > 128) return noStoreJson({ error: "Invalid or expired verification link." }, { status: 400 });
     const hash = crypto.createHash("sha256").update(token).digest("hex");
-    const valid = getDatabase().prepare("SELECT 1 FROM auth_tokens WHERE token_hash = ? AND purpose = 'verify-email' AND expires_at > datetime('now')").get(hash);
-    if (!valid) return NextResponse.json({ error: "Invalid or expired verification link." }, { status: 400 });
-    return NextResponse.json({ valid: true });
+    const valid = getDatabase().prepare(`SELECT 1 FROM auth_tokens WHERE token_hash = ? AND purpose = 'verify-email' AND ${unexpiredToken}`).get(hash);
+    if (!valid) return noStoreJson({ error: "Invalid or expired verification link." }, { status: 400 });
+    return noStoreJson({ valid: true });
   } catch (error) {
     console.error("Email verification link check failed:", error);
-    return NextResponse.json({ error: "Unable to check verification link." }, { status: 500 });
+    return noStoreJson({ error: "Unable to check verification link." }, { status: 500 });
   }
 }
 
 export async function PUT(request) {
   try {
-    if (!verifyRequestOrigin(request)) return NextResponse.json({ error: "Invalid request origin." }, { status: 403 });
+    if (!verifyRequestOrigin(request)) return noStoreJson({ error: "Invalid request origin." }, { status: 403 });
     const { token = "" } = await request.json();
-    if (typeof token !== "string" || token.length < 32 || token.length > 128) return NextResponse.json({ error: "Invalid or expired verification link." }, { status: 400 });
+    if (typeof token !== "string" || token.length < 32 || token.length > 128) return noStoreJson({ error: "Invalid or expired verification link." }, { status: 400 });
     const hash = crypto.createHash("sha256").update(token).digest("hex");
     const db = getDatabase();
-    const row = db.prepare("SELECT id, user_id, target_email FROM auth_tokens WHERE token_hash = ? AND purpose = 'verify-email' AND expires_at > datetime('now')").get(hash);
-    if (!row) return NextResponse.json({ error: "Invalid or expired verification link." }, { status: 400 });
-    if (!row.target_email) return NextResponse.json({ error: "This verification link has no email address attached." }, { status: 400 });
+    const row = db.prepare(`SELECT id, user_id, target_email FROM auth_tokens WHERE token_hash = ? AND purpose = 'verify-email' AND ${unexpiredToken}`).get(hash);
+    if (!row) return noStoreJson({ error: "Invalid or expired verification link." }, { status: 400 });
+    if (!row.target_email) return noStoreJson({ error: "This verification link has no email address attached." }, { status: 400 });
     const owner = db.prepare("SELECT email, pending_email FROM users WHERE id = ?").get(row.user_id);
     const requestedEmail = row.target_email.toLowerCase();
-    if (owner?.pending_email?.toLowerCase() !== requestedEmail && owner?.email?.toLowerCase() !== requestedEmail) return NextResponse.json({ error: "This email change was replaced by a newer request." }, { status: 409 });
+    if (owner?.pending_email?.toLowerCase() !== requestedEmail && owner?.email?.toLowerCase() !== requestedEmail) return noStoreJson({ error: "This email change was replaced by a newer request." }, { status: 409 });
     const conflict = db.prepare("SELECT id FROM users WHERE (email = ? COLLATE NOCASE OR pending_email = ? COLLATE NOCASE) AND id != ?").get(requestedEmail, requestedEmail, row.user_id);
-    if (conflict) return NextResponse.json({ error: "That email is already linked to another account." }, { status: 409 });
+    if (conflict) return noStoreJson({ error: "That email is already linked to another account." }, { status: 409 });
     const accepted = db.transaction(() => {
       const current = db.prepare("SELECT email, pending_email FROM users WHERE id = ?").get(row.user_id);
-      const currentToken = db.prepare("SELECT id, target_email FROM auth_tokens WHERE id = ? AND token_hash = ? AND purpose = 'verify-email' AND expires_at > datetime('now')").get(row.id, hash);
+      const currentToken = db.prepare(`SELECT id, target_email FROM auth_tokens WHERE id = ? AND token_hash = ? AND purpose = 'verify-email' AND ${unexpiredToken}`).get(row.id, hash);
       if (!currentToken || currentToken.target_email?.toLowerCase() !== requestedEmail) return false;
       if (current?.pending_email?.toLowerCase() === requestedEmail) {
         db.prepare("UPDATE users SET email = pending_email, pending_email = NULL, email_verified_at = CURRENT_TIMESTAMP WHERE id = ? AND pending_email IS NOT NULL").run(row.user_id);
@@ -133,10 +142,10 @@ export async function PUT(request) {
       db.prepare("DELETE FROM auth_tokens WHERE user_id = ? AND purpose = 'verify-email'").run(row.user_id);
       return true;
     })();
-    if (!accepted) return NextResponse.json({ error: "This email change was replaced by a newer request." }, { status: 409 });
-    return NextResponse.json({ success: true });
+    if (!accepted) return noStoreJson({ error: "This email change was replaced by a newer request." }, { status: 409 });
+    return noStoreJson({ success: true });
   } catch (error) {
     console.error("Email verification failed:", error);
-    return NextResponse.json({ error: "Unable to verify email." }, { status: 500 });
+    return noStoreJson({ error: "Unable to verify email." }, { status: 500 });
   }
 }

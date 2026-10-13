@@ -37,6 +37,9 @@ export const translations = {
       offlineTitle: "Not available offline",
       offlineDescription: "This page requires an internet connection. Go back to browse your cached data.",
       goToSummary: "Go to summary",
+      retry: "Retry",
+      loadingFinancialData: "Loading financial data…",
+      failedToLoadFinancialData: "We couldn't load your financial data.",
     },
     auth: {
       login: "Login",
@@ -93,6 +96,14 @@ export const translations = {
       signingIn: "Signing in...",
       createAccount: "Create Account",
       signIn: "Sign In",
+      emailVerificationTitle: "Email verification",
+      verifyingEmail: "Verifying your email address…",
+      emailConfirmed: "Email confirmed",
+      emailConfirmedDescription: "Your email is confirmed. You can close this tab.",
+      emailVerificationInvalidOrExpired:
+        "This verification link is invalid, expired, or has already been used.",
+      emailVerificationFailed:
+        "We couldn't verify your email. Please try again.",
     },
     dashboard: {
       title: "Finance Tracker",
@@ -205,8 +216,8 @@ export const translations = {
       markPendingResolved: "Mark as paid / received",
       pendingMonth: "Due {month} {year}",
       dismissPending: "Not pending",
-      dismissPendingIncome: "Not expected",
-      dismissPendingExpense: "Not due",
+      dismissPendingIncome: "Not received",
+      dismissPendingExpense: "Not paid",
       pendingOccurrencesHelp: "Unpaid or unreceived items from earlier months stay here until resolved or dismissed.",
       markPaid: "Mark as paid",
       markReceived: "Mark as received",
@@ -245,6 +256,11 @@ export const translations = {
     details: {
       title: "Details",
       subtitle: "View detailed breakdown of your income and expenses",
+      monthNavigation: "Month navigation",
+      previousMonth: "Previous month",
+      nextMonth: "Next month",
+      monthAndYear: "{month} {year}",
+      fullscreenCue: "View all 12 months in fullscreen.",
     },
     settings: {
       title: "Settings",
@@ -343,6 +359,14 @@ export const translations = {
       noGroupDescription: "You currently are not a member of any group. Until an administrator adds you to a group, you cannot save changes.",
       noGroupAskAdmin: "Ask an admin to add you to an existing group or create a new one",
       noGroupRefresh: "Refresh after being added to dismiss this notice",
+      failedToUpdatePrivacy: "Failed to update privacy settings",
+      revealTemporarily: "Reveal for 5 seconds",
+      hiddenForPrivacy: "Hidden for privacy",
+      chartsHiddenForPrivacy:
+        "Charts are hidden while privacy mode is enabled.",
+      group: "Group",
+      unknownGroup: "Unknown group",
+      selectedGroup: "the selected group",
     },
     admin: {
       title: "Admin Panel",
@@ -549,6 +573,9 @@ export const translations = {
       offlineTitle: "Não disponível offline",
       offlineDescription: "Esta página requer uma conexão com a internet. Volte para navegar pelos dados em cache.",
       goToSummary: "Ir para o resumo",
+      retry: "Tentar novamente",
+      loadingFinancialData: "Carregando dados financeiros…",
+      failedToLoadFinancialData: "Não foi possível carregar seus dados financeiros.",
     },
     auth: {
       login: "Entrar",
@@ -605,6 +632,14 @@ export const translations = {
       signingIn: "Entrando...",
       createAccount: "Criar Conta",
       signIn: "Entrar",
+      emailVerificationTitle: "Verificação de e-mail",
+      verifyingEmail: "Verificando seu endereço de e-mail…",
+      emailConfirmed: "E-mail confirmado",
+      emailConfirmedDescription: "Seu e-mail foi confirmado. Você pode fechar esta aba.",
+      emailVerificationInvalidOrExpired:
+        "Este link de verificação é inválido, expirou ou já foi usado.",
+      emailVerificationFailed:
+        "Não foi possível verificar seu e-mail. Tente novamente.",
     },
     dashboard: {
       title: "Controle Financeiro",
@@ -717,8 +752,8 @@ export const translations = {
       markPendingResolved: "Marcar como pago / recebido",
       pendingMonth: "Vencimento {month} de {year}",
       dismissPending: "Não está pendente",
-      dismissPendingIncome: "Não esperado",
-      dismissPendingExpense: "Não vence",
+      dismissPendingIncome: "Não recebido",
+      dismissPendingExpense: "Não pago",
       pendingOccurrencesHelp: "Itens não pagos ou não recebidos de meses anteriores ficam aqui até serem resolvidos ou dispensados.",
       markPaid: "Marcar como pago",
       markReceived: "Marcar como recebido",
@@ -757,6 +792,11 @@ export const translations = {
     details: {
       title: "Detalhes",
       subtitle: "Visualize o detalhamento de suas receitas e despesas",
+      monthNavigation: "Navegação por meses",
+      previousMonth: "Mês anterior",
+      nextMonth: "Próximo mês",
+      monthAndYear: "{month} de {year}",
+      fullscreenCue: "Veja todos os 12 meses em tela cheia.",
     },
     settings: {
       title: "Configurações",
@@ -854,6 +894,14 @@ export const translations = {
       noGroupDescription: "Você não é membro de nenhum grupo. Até que um administrador o adicione a um grupo, você não poderá salvar alterações.",
       noGroupAskAdmin: "Peça a um administrador para adicioná-lo a um grupo existente ou criar um novo",
       noGroupRefresh: "Atualize a página após ser adicionado para dispensar este aviso",
+      failedToUpdatePrivacy: "Falha ao atualizar as configurações de privacidade",
+      revealTemporarily: "Mostrar por 5 segundos",
+      hiddenForPrivacy: "Oculto por privacidade",
+      chartsHiddenForPrivacy:
+        "Os gráficos ficam ocultos enquanto o modo de privacidade está ativado.",
+      group: "Grupo",
+      unknownGroup: "Grupo desconhecido",
+      selectedGroup: "o grupo selecionado",
     },
     admin: {
       title: "Painel do Administrador",

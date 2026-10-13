@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, Users } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
@@ -12,55 +12,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { useLanguage } from "@/hooks/use-language";
+import { useOnline } from "@/hooks/use-online";
 
 export function GroupSelector() {
   const { t } = useLanguage();
   const { user, refreshUser } = useAuth();
+  const isOnline = useOnline();
   const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    if (!user) return;
-    const groups = user.groups || [];
-    const active = user.current_group_id || null;
-    if (groups.length === 1) {
-      const sole = groups[0];
-      if (active !== sole.group_id) {
-        fetch("/api/switch-group", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ groupId: sole.group_id }),
-          credentials: "include",
-        })
-          .then((res) => {
-            if (res.ok) refreshUser();
-          })
-          .catch(() => {
-            /* silent */
-          });
-      }
-      return;
-    }
-
-    if (
-      groups.length > 1 &&
-      active &&
-      !groups.some((g) => g.group_id === active)
-    ) {
-      const fallback = groups[0];
-      fetch("/api/switch-group", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ groupId: fallback.group_id }),
-        credentials: "include",
-      })
-        .then((res) => {
-          if (res.ok) refreshUser();
-        })
-        .catch(() => {
-          /* silent */
-        });
-    }
-  }, [user, refreshUser]);
 
   if (!user || !user.groups || user.groups.length <= 1) {
     return null;
@@ -69,7 +27,7 @@ export function GroupSelector() {
   const currentGroup = user.groups.find(
     (g) => g.group_id === user.current_group_id
   );
-  const currentGroupName = currentGroup?.name || "Unknown Group";
+  const currentGroupName = currentGroup?.name || t("settings.unknownGroup");
 
   const handleGroupSwitch = async (groupId: number) => {
     setIsLoading(true);
@@ -86,16 +44,17 @@ export function GroupSelector() {
       if (response.ok) {
         await refreshUser();
         toast.success(
-          "Switched to " +
-            (user.groups?.find((g) => g.group_id === groupId)?.name ||
-              "selected group")
+          `${t("settings.switchedTo")} ${
+            user.groups?.find((g) => g.group_id === groupId)?.name ||
+            t("settings.selectedGroup")
+          }`
         );
 
       } else {
-        toast.error("Failed to switch group");
+        toast.error(t("settings.failedToSwitch"));
       }
     } catch {
-      toast.error("Error switching group");
+      toast.error(t("settings.errorSwitching"));
     } finally {
       setIsLoading(false);
     }
@@ -109,11 +68,11 @@ export function GroupSelector() {
           size="sm"
           aria-label={`${currentGroupName}. ${t("common.groupSwitchInfo")}`}
           className="flex items-center gap-2"
-          disabled={isLoading}
+          disabled={isLoading || !isOnline}
         >
           <Users className="w-4 h-4" />
           <span className="hidden sm:inline">{currentGroupName}</span>
-          <span className="sm:hidden">Group</span>
+          <span className="sm:hidden">{t("settings.group")}</span>
           <ChevronDown className="w-4 h-4" />
         </Button>
       </DropdownMenuTrigger>
@@ -125,12 +84,13 @@ export function GroupSelector() {
             className={`cursor-pointer ${
               group.group_id === user.current_group_id ? "bg-accent" : ""
             }`}
+            disabled={group.group_id === user.current_group_id}
           >
             <Users className="w-4 h-4 mr-2" />
             {group.name}
             {group.group_id === user.current_group_id && (
               <span className="ml-auto text-xs text-muted-foreground">
-                Current
+                {t("settings.current")}
               </span>
             )}
           </DropdownMenuItem>

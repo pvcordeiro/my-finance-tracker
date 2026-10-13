@@ -11,11 +11,12 @@ export function NoGroupOverlay({ className }: { className?: string }) {
   const { t } = useLanguage();
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
+  const isPublicActionRoute = ["/user", "/verify-email", "/email-confirmed", "/reset-password"].includes(pathname);
 
   useEffect(() => setMounted(true), []);
   useEffect(() => {
     if (!mounted) return;
-    if (pathname === "/user") return;
+    if (isPublicActionRoute) return;
     if (user && Array.isArray(user.groups) && user.groups.length === 0) {
       const previousOverflow = document.body.style.overflow;
       document.body.style.overflow = "hidden";
@@ -23,10 +24,10 @@ export function NoGroupOverlay({ className }: { className?: string }) {
         document.body.style.overflow = previousOverflow;
       };
     }
-  }, [mounted, user, pathname]);
+  }, [mounted, user, isPublicActionRoute]);
 
   if (!mounted || isLoading) return null;
-  if (pathname === "/user") return null;
+  if (isPublicActionRoute) return null;
   if (!user) return null;
   const hasGroups = Array.isArray(user.groups) && user.groups.length > 0;
   if (hasGroups) return null;

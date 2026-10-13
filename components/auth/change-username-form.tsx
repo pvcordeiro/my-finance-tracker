@@ -47,15 +47,17 @@ export function ChangeUsernameForm() {
   return (
     <form onSubmit={submit} className="space-y-4 max-w-md">
       <div>
-        <label className="block text-sm font-medium mb-1">
+        <label htmlFor="new-username" className="block text-sm font-medium mb-1">
           {t("settings.newUsername")}
         </label>
         <Input
+          id="new-username"
           type="text"
           value={newUsername}
           onChange={(e) => setNewUsername(e.target.value)}
           required
           maxLength={50}
+          autoComplete="username"
         />
         <p className="text-xs text-muted-foreground mt-1">
           {t("settings.usernameCharacterLimit")}

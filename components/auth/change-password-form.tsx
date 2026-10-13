@@ -49,36 +49,42 @@ export function ChangePasswordForm() {
   return (
     <form onSubmit={submit} className="space-y-4 max-w-md">
       <div>
-        <label className="block text-sm font-medium mb-1">
+        <label htmlFor="current-password" className="block text-sm font-medium mb-1">
           {t("settings.currentPassword")}
         </label>
         <Input
+          id="current-password"
           type="password"
           value={currentPassword}
           onChange={(e) => setCurrentPassword(e.target.value)}
           required
+          autoComplete="current-password"
         />
       </div>
       <div>
-        <label className="block text-sm font-medium mb-1">
+        <label htmlFor="new-password" className="block text-sm font-medium mb-1">
           {t("settings.newPassword")}
         </label>
         <Input
+          id="new-password"
           type="password"
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
           required
+          autoComplete="new-password"
         />
       </div>
       <div>
-        <label className="block text-sm font-medium mb-1">
+        <label htmlFor="confirm-new-password" className="block text-sm font-medium mb-1">
           {t("settings.confirmNewPassword")}
         </label>
         <Input
+          id="confirm-new-password"
           type="password"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
           required
+          autoComplete="new-password"
         />
       </div>
       <Button type="submit" disabled={isLoading}>

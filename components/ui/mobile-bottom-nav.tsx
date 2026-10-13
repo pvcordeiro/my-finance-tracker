@@ -23,7 +23,15 @@ export function MobileBottomNav() {
     { href: "/details", label: t("navigation.details"), icon: FileSpreadsheet, offlineDisabled: false },
   ];
 
-  if (!isMobile || !user || pathname === "/login" || pathname === "/admin")
+  if (
+    !isMobile ||
+    !user ||
+    pathname === "/login" ||
+    pathname === "/admin" ||
+    pathname === "/verify-email" ||
+    pathname === "/email-confirmed" ||
+    pathname === "/reset-password"
+  )
     return null;
 
   return (

@@ -14,6 +14,7 @@ import { PWAInstallPrompt } from "@/components/pwa/pwa-install-prompt";
 import { OfflineBanner } from "@/components/pwa/offline-banner";
 import { LanguageProvider } from "@/hooks/use-language";
 import { SerwistProvider } from "./serwist";
+import { DevelopmentServiceWorkerCleanup } from "@/components/pwa/development-service-worker-cleanup";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -66,7 +67,8 @@ html {
       <body
         className={`${dmSans.variable} font-sans antialiased bg-background text-foreground`}
       >
-        <SerwistProvider swUrl="/serwist/sw.js">
+        <SerwistProvider>
+          <DevelopmentServiceWorkerCleanup />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

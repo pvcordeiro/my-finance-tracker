@@ -69,11 +69,11 @@ export function SummaryTable({ data }: SummaryTableProps) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>{t("dashboard.financialSummary")}</CardTitle>
+            <CardTitle>{t("common.financialSummary")}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8 text-muted-foreground">
-            {t("common.noData")}
+            {t("common.noDataAvailable")}
           </div>
         </CardContent>
       </Card>

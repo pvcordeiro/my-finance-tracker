@@ -2,15 +2,18 @@
 
 import { useEffect, useState } from "react";
 import { WifiOff } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 /** Height of the banner strip — used by layouts to add matching top-padding. */
 export const OFFLINE_BANNER_HEIGHT = 36;
 
 export function OfflineBanner() {
+  const pathname = usePathname();
   const [isOffline, setIsOffline] = useState(false);
   const [hasEverBeenOffline, setHasEverBeenOffline] = useState(false);
 
   useEffect(() => {
+    if (process.env.NODE_ENV !== "production") return;
     // Initialize from current state (don't assume online on mount)
     if (!navigator.onLine) {
       setIsOffline(true);
@@ -36,7 +39,15 @@ export function OfflineBanner() {
   }, []);
 
   // Don't render anything until we've actually gone offline at least once
-  if (!hasEverBeenOffline) return null;
+  if (
+    process.env.NODE_ENV !== "production" ||
+    pathname === "/verify-email" ||
+    pathname === "/email-confirmed" ||
+    pathname === "/reset-password" ||
+    !hasEverBeenOffline
+  ) {
+    return null;
+  }
 
   return (
     <>
@@ -88,4 +99,3 @@ export function OfflineBanner() {
     </>
   );
 }
-

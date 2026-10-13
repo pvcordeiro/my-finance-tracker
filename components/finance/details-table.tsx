@@ -1,7 +1,19 @@
 "use client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, TrendingDown, Maximize2, Minimize2 } from "lucide-react";
-import { useState, useRef, useCallback, useEffect } from "react";
+import {
+  TrendingUp,
+  TrendingDown,
+  Maximize2,
+  Minimize2,
+} from "lucide-react";
+import {
+  useState,
+  useRef,
+  useCallback,
+  useEffect,
+  type KeyboardEvent,
+} from "react";
+import { flushSync } from "react-dom";
 import { cn } from "@/lib/utils";
 import type { FinanceData } from "@/hooks/use-finance-data";
 import { PrivacyNumber } from "@/components/ui/privacy-number";
@@ -10,6 +22,212 @@ import { useLanguage } from "@/hooks/use-language";
 
 interface DetailsTableProps {
   data: FinanceData;
+}
+
+interface RollingMonth {
+  label: string;
+  fullLabel: string;
+  year: number;
+  month: number;
+}
+
+interface MobileMonthCarouselProps {
+  type: "income" | "expense";
+  entries: FinanceData["incomes"];
+  bankAmount: number;
+  months: RollingMonth[];
+  currentMonth: number;
+  currentYear: number;
+}
+
+function MobileMonthCarousel({
+  type,
+  entries,
+  bankAmount,
+  months,
+  currentMonth,
+  currentYear,
+}: MobileMonthCarouselProps) {
+  const { t } = useLanguage();
+  const viewportRef = useRef<HTMLDivElement | null>(null);
+  const scrollFrameRef = useRef<number | null>(null);
+  const [activeMonthIndex, setActiveMonthIndex] = useState(0);
+  const isIncome = type === "income";
+  const colorClass = isIncome ? "text-finance-positive" : "text-finance-negative";
+  const emptyState = isIncome
+    ? t("entries.noIncomeEntriesFound")
+    : t("entries.noExpenseEntriesFound");
+
+  useEffect(() => {
+    setActiveMonthIndex(0);
+  }, [months[0]?.month, months[0]?.year]);
+
+  useEffect(() => {
+    const alignActiveMonth = () => {
+      const viewport = viewportRef.current;
+      if (!viewport) return;
+      viewport.scrollTo({
+        left: viewport.clientWidth * activeMonthIndex,
+        behavior: "auto",
+      });
+    };
+
+    window.addEventListener("resize", alignActiveMonth);
+    return () => window.removeEventListener("resize", alignActiveMonth);
+  }, [activeMonthIndex]);
+
+  useEffect(() => {
+    return () => {
+      if (scrollFrameRef.current !== null) {
+        cancelAnimationFrame(scrollFrameRef.current);
+      }
+    };
+  }, []);
+
+  const goToMonth = useCallback(
+    (nextIndex: number) => {
+      const index = Math.max(0, Math.min(nextIndex, months.length - 1));
+      const viewport = viewportRef.current;
+      setActiveMonthIndex(index);
+      if (!viewport) return;
+      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      viewport.scrollTo({
+        left: viewport.clientWidth * index,
+        behavior: reduceMotion ? "auto" : "smooth",
+      });
+    },
+    [months.length]
+  );
+
+  const handleScroll = () => {
+    if (scrollFrameRef.current !== null) return;
+    scrollFrameRef.current = requestAnimationFrame(() => {
+      const viewport = viewportRef.current;
+      if (viewport?.clientWidth) {
+        const index = Math.max(
+          0,
+          Math.min(
+            Math.round(viewport.scrollLeft / viewport.clientWidth),
+            months.length - 1
+          )
+        );
+        setActiveMonthIndex((current) => (current === index ? current : index));
+      }
+      scrollFrameRef.current = null;
+    });
+  };
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      goToMonth(activeMonthIndex - 1);
+    } else if (event.key === "ArrowRight") {
+      event.preventDefault();
+      goToMonth(activeMonthIndex + 1);
+    } else if (event.key === "Home") {
+      event.preventDefault();
+      goToMonth(0);
+    } else if (event.key === "End") {
+      event.preventDefault();
+      goToMonth(months.length - 1);
+    }
+  };
+
+  return (
+    <div className="space-y-3 md:hidden">
+      <div className="min-w-0 text-center">
+        <p className="truncate text-sm font-semibold" aria-live="polite">
+          {t("details.monthAndYear")
+            .replace("{month}", months[activeMonthIndex]?.fullLabel || "")
+            .replace("{year}", String(months[activeMonthIndex]?.year || ""))}
+        </p>
+        <p className="text-xs text-muted-foreground">
+          {t("entries.monthOf")
+            .replace("{current}", String(activeMonthIndex + 1))
+            .replace("{total}", String(months.length))}
+        </p>
+      </div>
+
+      <div
+        ref={viewportRef}
+        className="flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain rounded-lg border border-border bg-card shadow-sm"
+        role="region"
+        aria-label={t("details.monthNavigation")}
+        tabIndex={0}
+        onScroll={handleScroll}
+        onKeyDown={handleKeyDown}
+      >
+        {months.map((month, monthIndex) => {
+          const isCurrent =
+            month.year === currentYear && month.month === currentMonth;
+          const monthTotal = entries.reduce(
+            (total, entry) => total + (entry.amounts[monthIndex] || 0),
+            0
+          );
+
+          return (
+            <section
+              key={`${month.year}-${month.month}`}
+              className="w-full shrink-0 snap-start p-3"
+            >
+              <div className="overflow-hidden rounded-md border border-border/70">
+                <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 bg-muted px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  <span>{t("entries.description")}</span>
+                  <span>{t("entries.amount")}</span>
+                </div>
+                {isIncome && isCurrent && bankAmount > 0 && (
+                  <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 border-t border-border px-3 py-2.5 text-sm">
+                    <span className="font-medium">{t("dashboard.currentBalance")}</span>
+                    <span className="font-semibold text-finance-positive tabular-nums">
+                      <PrivacyNumber value={bankAmount} />
+                    </span>
+                  </div>
+                )}
+                {entries.map((entry) => {
+                  const amount = entry.amounts[monthIndex] || 0;
+                  return (
+                    <div
+                      key={entry.id}
+                      className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 border-t border-border px-3 py-2.5 text-sm"
+                    >
+                      <span className="min-w-0 truncate font-medium">
+                        <PrivacyText
+                          value={entry.description || t("entries.noDescription")}
+                        />
+                      </span>
+                      {amount > 0 ? (
+                        <span className={cn("font-semibold tabular-nums", colorClass)}>
+                          <PrivacyNumber value={amount} />
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground/70">-</span>
+                      )}
+                    </div>
+                  );
+                })}
+                {entries.length === 0 && (
+                  <p className="border-t border-border px-3 py-8 text-center text-sm text-muted-foreground">
+                    {emptyState}
+                  </p>
+                )}
+                {entries.length > 0 && (
+                  <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 border-t-2 border-border bg-muted/50 px-3 py-2.5 text-sm font-semibold">
+                    <span>{t("common.total")}</span>
+                    <span className={cn("tabular-nums", colorClass)}>
+                      <PrivacyNumber value={monthTotal} />
+                    </span>
+                  </div>
+                )}
+              </div>
+            </section>
+          );
+        })}
+      </div>
+      <p className="text-center text-xs text-muted-foreground">
+        {t("details.fullscreenCue")}
+      </p>
+    </div>
+  );
 }
 
 export function DetailsTable({ data }: DetailsTableProps) {
@@ -33,11 +251,25 @@ export function DetailsTable({ data }: DetailsTableProps) {
     return t(`months.${monthKeys[monthIndex]}`);
   };
 
-  const getRollingMonths = (): Array<{
-    label: string;
-    year: number;
-    month: number;
-  }> => {
+  const getFullMonthLabel = (monthIndex: number): string => {
+    const monthKeys = [
+      "january",
+      "february",
+      "march",
+      "april",
+      "mayFull",
+      "june",
+      "july",
+      "august",
+      "september",
+      "october",
+      "november",
+      "december",
+    ];
+    return t(`months.${monthKeys[monthIndex]}`);
+  };
+
+  const getRollingMonths = (): RollingMonth[] => {
     const now = new Date();
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
@@ -48,6 +280,7 @@ export function DetailsTable({ data }: DetailsTableProps) {
       const year = currentYear + Math.floor((currentMonth + i) / 12);
       months.push({
         label: getMonthLabel(monthIndex),
+        fullLabel: getFullMonthLabel(monthIndex),
         year,
         month: monthIndex,
       });
@@ -102,7 +335,9 @@ export function DetailsTable({ data }: DetailsTableProps) {
         which === "income"
           ? incomeWrapperRef.current
           : expenseWrapperRef.current;
-      setFullscreen(which);
+      // The regular phone view hides this table. Commit its fullscreen classes
+      // before the browser checks whether the requested target is visible.
+      flushSync(() => setFullscreen(which));
       if (target && target.requestFullscreen) {
         try {
           await target.requestFullscreen();
@@ -169,17 +404,22 @@ export function DetailsTable({ data }: DetailsTableProps) {
           </div>
         </CardHeader>
         <CardContent>
+          <MobileMonthCarousel
+            type="income"
+            entries={data.incomes}
+            bankAmount={data.bankAmount}
+            months={months}
+            currentMonth={currentMonth}
+            currentYear={currentYear}
+          />
           <div className="relative">
-            {/* Right-edge scroll affordance — only visible on mobile when not fullscreen */}
-            {fullscreenState !== "income" && (
-              <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-card to-transparent z-30 md:hidden" />
-            )}
-          <div
+           <div
             ref={incomeWrapperRef}
             className={cn(
               "overflow-x-auto rounded-lg border border-border shadow-sm transition-[width_height] bg-card",
               fullscreenState === "income" &&
-                "fixed inset-0 z-50 !m-0 w-screen h-screen rounded-none border-0 flex flex-col p-0 bg-background"
+                "fixed inset-0 z-50 !m-0 w-screen h-screen rounded-none border-0 flex flex-col p-0 bg-background",
+              fullscreenState !== "income" && "hidden md:block"
             )}
             data-fullscreen={fullscreenState === "income" || undefined}
           >
@@ -367,17 +607,22 @@ export function DetailsTable({ data }: DetailsTableProps) {
           </div>
         </CardHeader>
         <CardContent>
+          <MobileMonthCarousel
+            type="expense"
+            entries={data.expenses}
+            bankAmount={data.bankAmount}
+            months={months}
+            currentMonth={currentMonth}
+            currentYear={currentYear}
+          />
           <div className="relative">
-            {/* Right-edge scroll affordance — only visible on mobile when not fullscreen */}
-            {fullscreenState !== "expense" && (
-              <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-card to-transparent z-30 md:hidden" />
-            )}
-          <div
+           <div
             ref={expenseWrapperRef}
             className={cn(
               "overflow-x-auto rounded-lg border border-border shadow-sm transition-[width_height] bg-card",
               fullscreenState === "expense" &&
-                "fixed inset-0 z-50 !m-0 w-screen h-screen rounded-none border-0 flex flex-col p-0 bg-background"
+                "fixed inset-0 z-50 !m-0 w-screen h-screen rounded-none border-0 flex flex-col p-0 bg-background",
+              fullscreenState !== "expense" && "hidden md:block"
             )}
             data-fullscreen={fullscreenState === "expense" || undefined}
           >

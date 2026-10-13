@@ -8,6 +8,7 @@ import { DashboardHeader } from "@/components/finance/dashboard-header";
 import { SummaryTable } from "@/components/finance/summary-table";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { LoadingState } from "@/components/ui/loading";
+import { Button } from "@/components/ui/button";
 import { AuthGate } from "@/components/auth/auth-gate";
 import { useLanguage } from "@/hooks/use-language";
 
@@ -18,7 +19,7 @@ const FinancialChart = lazy(() =>
 );
 
 function SummaryPageContent() {
-  const { data } = useFinanceData();
+  const { data, isLoading, loadError, refreshData } = useFinanceData();
   const { t } = useLanguage();
 
   return (
@@ -32,12 +33,27 @@ function SummaryPageContent() {
             </h1>
           </div>
         </div>
-        <SummaryTable data={data} />
-        <Suspense
-          fallback={<LoadingState message={t("common.loadingChart")} />}
-        >
-          <FinancialChart data={data} />
-        </Suspense>
+        {isLoading ? (
+          <LoadingState message={t("common.loadingFinancialData")} />
+        ) : loadError ? (
+          <div className="rounded-xl border border-destructive/30 bg-card p-6 text-center">
+            <p className="text-sm text-muted-foreground">
+              {t("common.failedToLoadFinancialData")}
+            </p>
+            <Button className="mt-4" variant="outline" onClick={() => void refreshData()}>
+              {t("common.retry")}
+            </Button>
+          </div>
+        ) : (
+          <>
+            <SummaryTable data={data} />
+            <Suspense
+              fallback={<LoadingState message={t("common.loadingChart")} />}
+            >
+              <FinancialChart data={data} />
+            </Suspense>
+          </>
+        )}
       </main>
     </div>
   );

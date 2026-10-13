@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { usePrivacy } from "@/hooks/use-privacy";
+import Link from "next/link";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Edit, BarChart3, FileSpreadsheet } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -28,6 +29,7 @@ import { LanguageCurrencySelector } from "@/components/ui/language-currency-sele
 import { LanguageCurrencyDialog } from "@/components/ui/language-currency-dialog";
 import { useOnline } from "@/hooks/use-online";
 import { OFFLINE_BANNER_HEIGHT } from "@/components/pwa/offline-banner";
+import { GroupSelector } from "@/components/ui/group-selector";
 
 export function DashboardHeader() {
   const { user, logout } = useAuth();
@@ -96,9 +98,10 @@ export function DashboardHeader() {
     >
       <div className="container mx-auto px-4 py-3 sm:py-4 sm:pb-2">
         <div className="flex items-center justify-between">
-          <div
-            className="flex items-center gap-2 sm:gap-3 cursor-pointer"
-            onClick={() => router.push("/")}
+          <Link
+            href="/"
+            className="flex items-center gap-2 sm:gap-3"
+            aria-label={t("dashboard.title")}
           >
             <div className="w-8 h-8 sm:w-10 sm:h-10 bg-primary rounded-full flex items-center justify-center">
               <span className="text-lg sm:text-xl font-bold text-primary-foreground">
@@ -113,7 +116,7 @@ export function DashboardHeader() {
                 {t("dashboard.subtitle")}
               </p>
             </div>
-          </div>
+          </Link>
 
           <div className="flex items-center gap-2 sm:gap-4">
             <Button
@@ -144,6 +147,7 @@ export function DashboardHeader() {
                 </span>
               )}
             </Button>
+            <GroupSelector />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button

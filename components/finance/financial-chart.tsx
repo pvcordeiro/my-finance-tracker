@@ -15,14 +15,15 @@ import {
 import type { FinanceData } from "@/hooks/use-finance-data";
 import { usePrivacy } from "@/hooks/use-privacy";
 import { useLanguage } from "@/hooks/use-language";
+import { Button } from "@/components/ui/button";
 
 interface FinancialChartProps {
   data: FinanceData;
 }
 
 export function FinancialChart({ data }: FinancialChartProps) {
-  const { currencySymbol, t } = useLanguage();
-  const { privacyMode, isRevealed } = usePrivacy();
+  const { formatCurrency, t } = useLanguage();
+  const { privacyMode, isRevealed, revealTemporarily } = usePrivacy();
   const shouldHideChart = privacyMode && !isRevealed;
 
   const getMonthLabel = (monthIndex: number): string => {
@@ -95,7 +96,14 @@ export function FinancialChart({ data }: FinancialChartProps) {
             <CardTitle>{t("dashboard.incomeVsExpenses")}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[300px] w-full bg-muted/50 animate-pulse rounded-lg" />
+            <div className="flex h-[300px] flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border bg-muted/30 px-6 text-center">
+              <p className="text-sm text-muted-foreground">
+                {t("settings.chartsHiddenForPrivacy")}
+              </p>
+              <Button type="button" variant="outline" size="sm" onClick={revealTemporarily}>
+                {t("settings.revealTemporarily")}
+              </Button>
+            </div>
           </CardContent>
         </Card>
         <Card>
@@ -103,7 +111,14 @@ export function FinancialChart({ data }: FinancialChartProps) {
             <CardTitle>{t("dashboard.monthlyNetBalance")}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[300px] w-full bg-muted/50 animate-pulse rounded-lg" />
+            <div className="flex h-[300px] flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border bg-muted/30 px-6 text-center">
+              <p className="text-sm text-muted-foreground">
+                {t("settings.chartsHiddenForPrivacy")}
+              </p>
+              <Button type="button" variant="outline" size="sm" onClick={revealTemporarily}>
+                {t("settings.revealTemporarily")}
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -163,7 +178,7 @@ export function FinancialChart({ data }: FinancialChartProps) {
                   <YAxis className="text-xs" tickFormatter={formatYAxis} />
                   <Tooltip
                     formatter={(value, name) => [
-                      `${currencySymbol}${Number(value).toFixed(2)}`,
+                       formatCurrency(Number(value)),
                       name === "income"
                         ? t("dashboard.income")
                         : t("dashboard.expenses"),
@@ -223,7 +238,7 @@ export function FinancialChart({ data }: FinancialChartProps) {
                   <YAxis className="text-xs" tickFormatter={formatYAxis} />
                   <Tooltip
                     formatter={(value) => [
-                      `${currencySymbol}${Number(value).toFixed(2)}`,
+                       formatCurrency(Number(value)),
                       t("dashboard.balance"),
                     ]}
                     labelFormatter={(label) =>

@@ -31,14 +31,17 @@ const serwist = new Serwist({
     // App HTML pages — NetworkFirst so offline navigation serves cached shell
     {
       matcher({ request }) {
+        const url = new URL(request.url);
         return (
           request.mode === "navigate" &&
-          !request.url.includes("/api/") &&
-          !request.url.includes("/_next/")
+          !url.pathname.startsWith("/api/") &&
+          !url.pathname.startsWith("/_next/") &&
+          url.pathname !== "/verify-email" &&
+          url.pathname !== "/reset-password"
         );
       },
       handler: new NetworkFirst({
-        cacheName: "pages-cache",
+        cacheName: "pages-cache-v2",
         networkTimeoutSeconds: 5,
         plugins: [
           {
@@ -143,3 +146,16 @@ const serwist = new Serwist({
 });
 
 serwist.addEventListeners();
+
+// Retire earlier cache versions that could contain public action URLs with tokens.
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) =>
+      Promise.all(
+        cacheNames
+          .filter((cacheName) => cacheName === "pages-cache")
+          .map((cacheName) => caches.delete(cacheName))
+      )
+    )
+  );
+});

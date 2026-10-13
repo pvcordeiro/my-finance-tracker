@@ -26,7 +26,7 @@ export async function GET(request) {
         last_accessed,
         expires_at
       FROM sessions 
-      WHERE user_id = ? AND expires_at > datetime('now')
+      WHERE user_id = ? AND expires_at > strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
       ORDER BY last_accessed DESC
     `).all(session.id) ?? [];
 

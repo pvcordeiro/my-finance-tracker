@@ -6,6 +6,8 @@ import { accountActionEmail, emailConfigured, publicAppUrl, sendAccountEmail, va
 import { z } from "zod";
 import { verifyRequestOrigin } from "@/lib/session";
 
+const unexpiredToken = "expires_at > strftime('%Y-%m-%dT%H:%M:%fZ', 'now')";
+
 const requestSchema = z.object({ email: z.string().email().max(254) });
 const resetSchema = z.object({ token: z.string().min(32).max(128), password: z.string().min(8).max(200) });
 const generic = { message: "If an account with that email is verified, reset instructions will be sent." };
@@ -79,10 +81,10 @@ export async function PUT(request) {
     if (!parsed.success) return NextResponse.json({ error: "The link is invalid or expired, or the password does not meet requirements." }, { status: 400 });
     const tokenHash = crypto.createHash("sha256").update(parsed.data.token).digest("hex");
     const db = getDatabase();
-    const row = db.prepare("SELECT id, user_id FROM auth_tokens WHERE token_hash = ? AND purpose = 'password-reset' AND expires_at > datetime('now')").get(tokenHash);
+    const row = db.prepare(`SELECT id, user_id FROM auth_tokens WHERE token_hash = ? AND purpose = 'password-reset' AND ${unexpiredToken}`).get(tokenHash);
     if (!row) return NextResponse.json({ error: "The link is invalid or expired." }, { status: 400 });
     const updated = db.transaction(() => {
-      const stillValid = db.prepare("SELECT id FROM auth_tokens WHERE id = ? AND token_hash = ? AND purpose = 'password-reset' AND expires_at > datetime('now')").get(row.id, tokenHash);
+      const stillValid = db.prepare(`SELECT id FROM auth_tokens WHERE id = ? AND token_hash = ? AND purpose = 'password-reset' AND ${unexpiredToken}`).get(row.id, tokenHash);
       if (!stillValid) return false;
       db.prepare("DELETE FROM auth_tokens WHERE token_hash = ?").run(tokenHash);
       db.prepare("UPDATE users SET password_hash = ? WHERE id = ?").run(hashPassword(parsed.data.password), row.user_id);

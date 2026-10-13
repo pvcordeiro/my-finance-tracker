@@ -243,6 +243,10 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
       setGuidedDialogOpen(true);
     };
 
+    const handleHeaderAdd = () => {
+      onHeaderAdd?.();
+    };
+
     const handleGuidedSubmit = (
       description: string,
       amounts: number[],
@@ -335,24 +339,23 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
           type === "income" ? "income-card bg-finance-positive/5" : "expense-card bg-finance-negative/5"
         )}
       >
-        <Collapsible open={isOpen} onOpenChange={handleSectionToggle}>
-          <CollapsibleTrigger asChild>
-            <CardHeader className={cn(
-              "cursor-pointer touch-manipulation rounded-t-lg",
-            )}>
-              <CardTitle
-                className={cn(
-                  "flex items-center justify-between text-lg sm:text-xl",
+          <Collapsible open={isOpen} onOpenChange={handleSectionToggle}>
+          <CardHeader className="flex-row items-center space-y-0 gap-2 px-4 py-3 sm:px-6 sm:py-5">
+            <CollapsibleTrigger className="min-w-0 flex-1 rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset">
+              <div className="cursor-pointer touch-manipulation py-1">
+               <CardTitle
+                 className={cn(
+                  "flex min-w-0 items-center justify-between gap-2 text-base sm:text-xl",
                   type === "income"
                     ? "text-finance-positive"
                     : "text-finance-negative"
-                )}
-              >
-                <span>{title}</span>
-                <div className="flex items-center gap-3">
+                  )}
+                >
+                <span className="min-w-0 truncate">{title}</span>
+                <div className="flex shrink-0 items-center gap-2 sm:gap-3">
                   <span
                     className={cn(
-                      "font-semibold text-base sm:text-lg tracking-tight transition-all duration-300",
+                      "font-semibold text-sm sm:text-lg tracking-tight transition-all duration-300",
                       type === "income"
                         ? "text-finance-positive"
                         : "text-finance-negative",
@@ -367,24 +370,6 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
                       )}
                     />
                   </span>
-                  {onHeaderAdd && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onHeaderAdd();
-                      }}
-                      className={cn(
-                        "flex items-center justify-center h-8 w-8 rounded-full transition-colors touch-manipulation",
-                        type === "income"
-                          ? "text-finance-positive hover:bg-finance-positive/15"
-                          : "text-finance-negative hover:bg-finance-negative/15"
-                      )}
-                      aria-label={type === "income" ? "Add income" : "Add expense"}
-                    >
-                      <Plus className="w-5 h-5" />
-                    </button>
-                  )}
                   {isOpen ? (
                     <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                   ) : (
@@ -392,8 +377,30 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
                   )}
                 </div>
               </CardTitle>
-            </CardHeader>
-          </CollapsibleTrigger>
+              </div>
+            </CollapsibleTrigger>
+            {onHeaderAdd && (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={handleHeaderAdd}
+                className={cn(
+                  "h-9 shrink-0 gap-1.5 px-2.5 touch-manipulation sm:h-10 sm:px-3",
+                  type === "income"
+                    ? "border-finance-positive/35 text-finance-positive hover:bg-finance-positive/10 hover:text-finance-positive"
+                    : "border-finance-negative/35 text-finance-negative hover:bg-finance-negative/10 hover:text-finance-negative"
+                )}
+                aria-label={type === "income" ? t("entries.addIncome") : t("entries.addExpense")}
+              >
+                <Plus className="h-4 w-4" />
+                <span className="sm:hidden">{t("common.add")}</span>
+                <span className="hidden sm:inline">
+                  {type === "income" ? t("entries.addIncome") : t("entries.addExpense")}
+                </span>
+              </Button>
+            )}
+          </CardHeader>
           <CollapsibleContent>
             <CardContent className="space-y-4">
               {/* Search Input */}
@@ -462,9 +469,7 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
                               if (index >= 0) handleResolveCurrentMonth(e, entry);
                             }}
                             className="text-muted-foreground hover:text-foreground hover:bg-muted h-8 w-8 p-0 touch-manipulation"
-                            aria-label={`${t("entries.markCurrentMonth")}: ${
-                              entry.description || t("entries.unnamedEntry")
-                            }`}
+                            aria-label={t("entries.markCurrentMonth")}
                             disabled={
                               !entry.amounts.some(
                                  (amount, index) => amount && amount !== 0 && !entry.resolved?.[index] && !entry.dismissed?.[index]

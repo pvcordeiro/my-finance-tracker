@@ -118,6 +118,7 @@ export function useFinanceData() {
     [hasBankChanges, hasEntryChanges]
   );
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
 
   const [entryFlashState, setEntryFlashState] = useState<{
     incomes: { token: number; flashType: "increase" | "decrease" } | null;
@@ -134,12 +135,14 @@ export function useFinanceData() {
 
   useEffect(() => {
     if (user) {
+      setLoadError(false);
       loadDataFromServer();
     } else {
       setData(defaultData);
       setHasBankChanges(false);
       setHasEntryChanges(false);
       setIsLoading(false);
+      setLoadError(false);
     }
   }, [user]);
 
@@ -152,6 +155,7 @@ export function useFinanceData() {
       setHasBankChanges(false);
       setHasEntryChanges(false);
       setIsLoading(true);
+      setLoadError(false);
       void loadDataFromServer();
     };
     window.addEventListener("userGroupChanged", handleGroupChanged);
@@ -333,6 +337,7 @@ export function useFinanceData() {
       if (!bankResponse.ok) {
         if (bankResponse.status === 401) {
           console.log("Authentication required for bank amount");
+          setLoadError(true);
           return;
         }
         throw new Error(`Bank API error: ${bankResponse.status}`);
@@ -347,6 +352,7 @@ export function useFinanceData() {
       if (!entriesResponse.ok) {
         if (entriesResponse.status === 401) {
           console.log("Authentication required for entries");
+          setLoadError(true);
           return;
         }
         throw new Error(`Entries API error: ${entriesResponse.status}`);
@@ -390,6 +396,7 @@ export function useFinanceData() {
       };
 
       setData(loadedData);
+      setLoadError(false);
       setOriginalData(loadedData);
 
       // Persist to localStorage so offline mode can show real data
@@ -421,6 +428,7 @@ export function useFinanceData() {
     } catch (error) {
       console.error("Error loading data from server:", error);
       // When offline, fall back to the last known data from localStorage
+      let restoredCachedData = false;
       if (!navigator.onLine) {
         const cached = loadDataFromLocalStorage();
         if (cached) {
@@ -436,8 +444,10 @@ export function useFinanceData() {
               sum + entry.amounts.reduce((a: number, b: number) => a + b, 0),
             0
           );
+          restoredCachedData = true;
         }
       }
+      setLoadError(!restoredCachedData);
     } finally {
       setIsLoading(false);
     }
@@ -1072,6 +1082,7 @@ export function useFinanceData() {
     hasBankChanges,
     hasEntryChanges,
     isLoading,
+    loadError,
     saveBankAmount,
     commitEntryDescription,
     commitEntryAmount,
