@@ -32,6 +32,7 @@ import {
   GroupSelectorDialog,
   GroupSelectorMenuItem,
 } from "@/components/ui/group-selector";
+import { FinanceLogo } from "@/components/ui/finance-logo";
 
 export function DashboardHeader() {
   const { user, logout } = useAuth();
@@ -105,14 +106,7 @@ export function DashboardHeader() {
             className="flex items-center gap-2 sm:gap-3"
             aria-label={t("dashboard.title")}
           >
-            <div className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0 bg-primary rounded-full flex items-center justify-center">
-              <span
-                className="text-xl sm:text-2xl [text-shadow:0_1px_2px_rgba(0,0,0,0.65)]"
-                aria-hidden="true"
-              >
-                💸
-              </span>
-            </div>
+            <FinanceLogo className="h-8 w-8 sm:h-10 sm:w-10" />
             <div>
               <span className="text-lg sm:text-xl font-bold text-foreground block">
                 {t("dashboard.title")}

@@ -17,6 +17,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Eye, EyeOff, UserPlus, LogIn, AlertTriangle, CheckCircle } from "lucide-react";
 import { LoadingSpinner } from "@/components/ui/loading";
 import { useLanguage } from "@/hooks/use-language";
+import { FinanceLogo } from "@/components/ui/finance-logo";
 import { LanguageCurrencyDialog } from "@/components/ui/language-currency-dialog";
 
 interface LoginFormProps {
@@ -144,11 +145,7 @@ export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
       </div>
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="text-center space-y-4">
-          <div className="mx-auto w-12 h-12 bg-primary rounded-full flex items-center justify-center">
-            <span className="text-xl font-bold text-primary-foreground">
-              {currencySymbol}
-            </span>
-          </div>
+          <FinanceLogo className="mx-auto h-12 w-12" />
           <div>
             <CardTitle className="text-2xl font-bold">
               {isRegisterMode ? t("auth.registerTitle") : t("auth.loginTitle")}

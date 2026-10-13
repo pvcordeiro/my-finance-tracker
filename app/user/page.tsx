@@ -59,6 +59,7 @@ import { useLanguage } from "@/hooks/use-language";
 import { useOnline } from "@/hooks/use-online";
 import { OfflineBlockedPage } from "@/components/pwa/offline-blocked-page";
 import { MinimalPageHeader } from "@/components/pwa/minimal-page-header";
+import { FinanceLogo } from "@/components/ui/finance-logo";
 import { EmailRecoverySettings } from "@/components/user/email-recovery-settings";
 import { MinimumBalanceAlertSettings } from "@/components/user/minimum-balance-alert-settings";
 import { DataManagement } from "@/components/finance/data-management";
@@ -202,7 +203,7 @@ export default function UserSettingsPage() {
   if (!isOnline) {
     return (
       <div className="min-h-dvh finance-gradient page-nav-padding">
-        <MinimalPageHeader title={t("settings.accountSettings")} icon={<User className="w-4 h-4 sm:w-5 sm:h-5 text-primary-foreground" />} />
+        <MinimalPageHeader title={t("settings.accountSettings")} />
         <OfflineBlockedPage />
       </div>
     );
@@ -220,9 +221,7 @@ export default function UserSettingsPage() {
               className="flex items-center gap-2 sm:gap-3 cursor-pointer"
               onClick={() => router.push("/")}
             >
-              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-primary rounded-full flex items-center justify-center">
-                <User className="w-4 h-4 sm:w-5 sm:h-5 text-primary-foreground" />
-              </div>
+              <FinanceLogo className="h-8 w-8 sm:h-10 sm:w-10" />
               <div>
                 <h1 className="text-lg sm:text-xl font-bold text-primary">
                   {t("settings.accountSettings")}

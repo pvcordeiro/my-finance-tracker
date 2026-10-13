@@ -54,6 +54,7 @@ import { toast } from "sonner";
 import { useLanguage } from "@/hooks/use-language";
 import { LanguageCurrencySelector } from "@/components/ui/language-currency-selector";
 import { LanguageCurrencyDialog } from "@/components/ui/language-currency-dialog";
+import { FinanceLogo } from "@/components/ui/finance-logo";
 
 interface User {
   id: number;
@@ -388,9 +389,7 @@ export function AdminDashboard() {
               className="flex items-center gap-2 sm:gap-3 cursor-pointer"
               onClick={() => router.push("/")}
             >
-              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-destructive rounded-full flex items-center justify-center">
-                <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-destructive-foreground" />
-              </div>
+              <FinanceLogo className="h-8 w-8 sm:h-10 sm:w-10" />
               <div>
                 <h1 className="text-lg sm:text-xl font-bold text-destructive">
                   {t("admin.title")}
