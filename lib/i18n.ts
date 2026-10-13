@@ -135,6 +135,15 @@ export const translations = {
       by: "by",
       subtract: "Subtract",
       addNote: "Add note (optional)",
+      balanceAlertTitle: "Projected balance alert",
+      balanceAlertBelowMinimum:
+        "Your projected balance falls below your {threshold} minimum in {month} ({balance}), and is forecast to go negative in {negativeMonth} ({negativeBalance}). Review planned expenses.",
+      balanceAlertNegative:
+        "Your projected balance is forecast to go negative in {month} ({balance}). Review planned expenses.",
+      balanceAlertLow:
+        "Your projected balance in {month} is {balance}, below your {threshold} minimum. Keep an eye on planned expenses.",
+      balanceAlertProjectionNote:
+        "Based on your planned income and expenses.",
     },
     entries: {
       description: "Description",
@@ -313,6 +322,8 @@ export const translations = {
       failedToLoadSessions: "Failed to load sessions",
       sessionRevokedSuccessfully: "Session revoked successfully",
       failedToRevokeSession: "Failed to revoke session",
+      sessionAlreadyRemoved:
+        "Session was already inactive and has been removed from the list.",
       revokeSession: "Revoke Session",
       revokeSessionDescription:
         "Are you sure you want to revoke this session? This will log out the device and it will need to sign in again.",
@@ -367,6 +378,19 @@ export const translations = {
       group: "Group",
       unknownGroup: "Unknown group",
       selectedGroup: "the selected group",
+      minimumBalanceAlert: "Minimum balance alert",
+      minimumBalanceAlertDescription:
+        "Receive a warning when a projected month-end balance falls below this amount.",
+      minimumBalanceAlertSetupTitle: "Set a minimum balance",
+      minimumBalanceAlertSetupDescription:
+        "Choose a balance buffer to receive projected cash-flow warnings. You can change this later in Account Settings.",
+      minimumBalanceAlertInput: "Minimum balance",
+      minimumBalanceAlertIgnore: "Only warn when negative",
+      minimumBalanceAlertSave: "Save alert",
+      minimumBalanceAlertUpdated: "Minimum balance alert updated",
+      minimumBalanceAlertFailed: "Could not update minimum balance alert",
+      minimumBalanceAlertNegativeOnlyHint:
+        "Set this to 0 to warn only when a projected balance goes negative.",
     },
     admin: {
       title: "Admin Panel",
@@ -671,6 +695,15 @@ export const translations = {
       by: "por",
       subtract: "Subtrair",
       addNote: "Adicionar nota (opcional)",
+      balanceAlertTitle: "Alerta de saldo projetado",
+      balanceAlertBelowMinimum:
+        "Seu saldo projetado fica abaixo do mínimo de {threshold} em {month} ({balance}) e deve ficar negativo em {negativeMonth} ({negativeBalance}). Revise as despesas planejadas.",
+      balanceAlertNegative:
+        "Seu saldo projetado deve ficar negativo em {month} ({balance}). Revise as despesas planejadas.",
+      balanceAlertLow:
+        "Seu saldo projetado em {month} é {balance}, abaixo do mínimo de {threshold}. Acompanhe as despesas planejadas.",
+      balanceAlertProjectionNote:
+        "Com base nas suas receitas e despesas planejadas.",
     },
     entries: {
       description: "Descrição",
@@ -848,6 +881,8 @@ export const translations = {
       failedToLoadSessions: "Falha ao carregar sessões",
       sessionRevokedSuccessfully: "Sessão revogada com sucesso",
       failedToRevokeSession: "Falha ao revogar sessão",
+      sessionAlreadyRemoved:
+        "A sessão já estava inativa e foi removida da lista.",
       revokeSession: "Revogar Sessão",
       revokeSessionDescription:
         "Tem certeza de que deseja revogar esta sessão? Isso desconectará o dispositivo e ele precisará fazer login novamente.",
@@ -902,6 +937,19 @@ export const translations = {
       group: "Grupo",
       unknownGroup: "Grupo desconhecido",
       selectedGroup: "o grupo selecionado",
+      minimumBalanceAlert: "Alerta de saldo mínimo",
+      minimumBalanceAlertDescription:
+        "Receba um aviso quando o saldo projetado no fim do mês ficar abaixo deste valor.",
+      minimumBalanceAlertSetupTitle: "Defina um saldo mínimo",
+      minimumBalanceAlertSetupDescription:
+        "Escolha uma margem de saldo para receber alertas de fluxo de caixa projetado. Você pode alterar isso depois nas Configurações da Conta.",
+      minimumBalanceAlertInput: "Saldo mínimo",
+      minimumBalanceAlertIgnore: "Avisar apenas se ficar negativo",
+      minimumBalanceAlertSave: "Salvar alerta",
+      minimumBalanceAlertUpdated: "Alerta de saldo mínimo atualizado",
+      minimumBalanceAlertFailed: "Não foi possível atualizar o alerta de saldo mínimo",
+      minimumBalanceAlertNegativeOnlyHint:
+        "Defina como 0 para avisar apenas quando o saldo projetado ficar negativo.",
     },
     admin: {
       title: "Painel do Administrador",

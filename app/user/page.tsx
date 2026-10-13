@@ -60,6 +60,7 @@ import { useOnline } from "@/hooks/use-online";
 import { OfflineBlockedPage } from "@/components/pwa/offline-blocked-page";
 import { MinimalPageHeader } from "@/components/pwa/minimal-page-header";
 import { EmailRecoverySettings } from "@/components/user/email-recovery-settings";
+import { MinimumBalanceAlertSettings } from "@/components/user/minimum-balance-alert-settings";
 
 export default function UserSettingsPage() {
   const { user, isLoading, logout, refreshUser } = useAuth();
@@ -359,6 +360,7 @@ export default function UserSettingsPage() {
             )}
           </CardContent>
         </Card>
+        <MinimumBalanceAlertSettings />
         {user && user.groups && user.groups.length > 1 && (
           <Card>
             <CardHeader>

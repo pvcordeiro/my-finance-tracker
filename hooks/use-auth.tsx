@@ -16,6 +16,7 @@ interface User {
   current_group_id?: number | null;
   language?: string;
   currency?: string;
+  minimum_balance_alert?: number | null;
 }
 
 interface AuthContextType {

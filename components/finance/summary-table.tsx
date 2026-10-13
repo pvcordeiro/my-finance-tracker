@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import type { FinanceData } from "@/hooks/use-finance-data";
 import { PrivacyNumber } from "@/components/ui/privacy-number";
 import { useLanguage } from "@/hooks/use-language";
+import { BalanceAlert } from "@/components/finance/balance-alert";
 
 interface SummaryTableProps {
   data: FinanceData;
@@ -132,6 +133,7 @@ export function SummaryTable({ data }: SummaryTableProps) {
 
     return {
       month: month.label,
+      year: month.year,
       income: totalIncome,
       expenses: totalExpenses,
       net,
@@ -148,6 +150,13 @@ export function SummaryTable({ data }: SummaryTableProps) {
 
   return (
     <div className="space-y-4 sm:space-y-6">
+      <BalanceAlert
+        projectedMonths={monthlyData.map(({ month, year, balance }) => ({
+          label: month,
+          year,
+          balance,
+        }))}
+      />
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-border rounded-xl overflow-hidden border border-border">
         <div className="bg-card px-3 py-3 sm:px-4 sm:py-4">
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">

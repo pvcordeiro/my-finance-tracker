@@ -79,9 +79,16 @@ export function SessionsList() {
         credentials: "include",
       });
 
-      if (response.ok) {
-        toast.success(t("settings.sessionRevokedSuccessfully"));
-        setSessions(sessions.filter((s) => s.id !== sessionId));
+      if (response.ok || response.status === 404) {
+        setSessions((currentSessions) =>
+          currentSessions.filter((session) => session.id !== sessionId)
+        );
+
+        if (response.status === 404) {
+          toast.success(t("settings.sessionAlreadyRemoved"));
+        } else {
+          toast.success(t("settings.sessionRevokedSuccessfully"));
+        }
       } else {
         const data = await response.json();
         toast.error(data.error || t("settings.failedToRevokeSession"));
@@ -248,6 +255,7 @@ export function SessionsList() {
               onClick={() => handleRevokeClick(session)}
               disabled={revoking === session.id}
               className="text-muted-foreground hover:text-destructive"
+              aria-label={t("settings.revokeSession")}
             >
               <XCircleIcon className="w-4 h-4" />
             </Button>

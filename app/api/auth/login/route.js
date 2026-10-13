@@ -84,6 +84,7 @@ export async function POST(request) {
         id: user.id,
         username: user.username,
         is_admin: user.is_admin || false,
+        minimum_balance_alert: user.minimum_balance_alert,
         groups,
         current_group_id,
       },

@@ -32,6 +32,7 @@ export async function GET(request) {
         current_group_id: user.current_group_id,
         language: user.language || "en",
         currency: user.currency || "EUR",
+        minimum_balance_alert: user.minimum_balance_alert,
       },
     });
   } catch (error) {
