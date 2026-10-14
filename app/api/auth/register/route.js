@@ -26,19 +26,6 @@ export async function POST(request) {
       );
     }
 
-    const clientIp = getClientIp(request);
-    if (
-      !rateLimit(`register_${clientIp}`, {
-        maxRequests: 3,
-        windowMs: 60 * 60 * 1000,
-      })
-    ) {
-      return NextResponse.json(
-        { error: "Too many registration attempts. Please try again later." },
-        { status: 429 }
-      );
-    }
-
     const body = await request.json();
 
     const validation = registerSchema.safeParse(body);
@@ -59,6 +46,15 @@ export async function POST(request) {
 
     if (!currencyCodes.includes(currency)) {
       return NextResponse.json({ error: "Unsupported currency" }, { status: 400 });
+    }
+
+    // Allow multiple legitimate test accounts while keeping a per-IP hourly cap.
+    const clientIp = getClientIp(request);
+    if (!rateLimit(`register_${clientIp}`, { maxRequests: 10, windowMs: 60 * 60 * 1000 })) {
+      return NextResponse.json(
+        { error: "Too many registration attempts. Please try again later." },
+        { status: 429 }
+      );
     }
 
     if (process.env.ALLOW_UNVERIFIED_REGISTRATION !== "true" && !emailConfigured()) {
