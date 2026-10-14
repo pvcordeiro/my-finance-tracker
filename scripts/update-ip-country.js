@@ -1,7 +1,24 @@
 import { gunzipSync } from "node:zlib";
-import { getDatabase } from "../lib/database.js";
+import { createRequire } from "node:module";
+import path from "node:path";
 
-const db = getDatabase();
+const require = createRequire(import.meta.url);
+const { Database } = require("bun:sqlite");
+const db = new Database(path.join(process.cwd(), "data", "finance.db"));
+db.exec("PRAGMA journal_mode = WAL");
+db.exec("PRAGMA foreign_keys = ON");
+
+const countryTableSql = `
+  CREATE TABLE IF NOT EXISTS ip_country_ranges (
+    ip_version INTEGER NOT NULL CHECK (ip_version IN (4, 6)),
+    start_ip TEXT NOT NULL,
+    end_ip TEXT NOT NULL,
+    country TEXT NOT NULL,
+    PRIMARY KEY (ip_version, start_ip)
+  );
+`;
+
+db.exec(countryTableSql);
 if (process.argv.includes("--if-missing")) {
   const existingRanges = db.prepare("SELECT 1 FROM ip_country_ranges LIMIT 1").get();
   if (existingRanges) {
@@ -17,16 +34,6 @@ function getReleaseCandidates() {
     return date.toISOString().slice(0, 7);
   });
 }
-const countryTableSql = `
-  CREATE TABLE IF NOT EXISTS ip_country_ranges (
-    ip_version INTEGER NOT NULL CHECK (ip_version IN (4, 6)),
-    start_ip TEXT NOT NULL,
-    end_ip TEXT NOT NULL,
-    country TEXT NOT NULL,
-    PRIMARY KEY (ip_version, start_ip)
-  );
-`;
-
 function toIpNumber(address) {
   const octets = address.split(".").map(Number);
   if (octets.length === 4 && octets.every((part) => Number.isInteger(part) && part >= 0 && part <= 255)) {
