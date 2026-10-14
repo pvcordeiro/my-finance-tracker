@@ -68,6 +68,16 @@ docker-compose up -d
 | `BREVO_SMTP_USER`        | —                    | Brevo SMTP login                                               |
 | `BREVO_SMTP_KEY`         | —                    | Brevo SMTP key (not the Brevo API key)                         |
 | `EMAIL_FROM`             | —                    | Sender address verified and enabled in your Brevo account      |
+
+### Session location data
+
+Session locations are resolved locally from DB-IP's country-level ranges. Initialize or refresh the database monthly with:
+
+```bash
+docker-compose exec my-finance-tracker bun scripts/update-ip-country.js
+```
+
+The data is licensed under CC BY 4.0; the Account Settings page includes the required DB-IP attribution link. Locations are approximate and may not be available for private, local, or unlisted IP addresses.
 | `EMAIL_FROM_NAME`        | `My Finance Tracker` | Friendly display name shown to recipients                      |
 
 ### Volumes

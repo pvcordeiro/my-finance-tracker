@@ -14,7 +14,12 @@ export async function DELETE(request, { params }) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id: rawId } = await params;
+    const id = Number(rawId);
+    if (!Number.isSafeInteger(id) || id <= 0) {
+      return NextResponse.json({ error: "Session not found" }, { status: 404 });
+    }
+
     const db = getDatabase();
 
     const row = db.prepare(

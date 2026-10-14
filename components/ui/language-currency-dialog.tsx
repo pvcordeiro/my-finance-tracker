@@ -2,7 +2,7 @@
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
+  DialogFooter,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,9 @@ interface LanguageCurrencyDialogProps {
   currency: CurrencyCode;
   onLanguageChange: (lang: "en" | "pt") => void;
   onCurrencyChange: (curr: CurrencyCode) => void;
+  continueLabel?: string;
+  onContinue?: () => void;
+  hideCloseButton?: boolean;
   t?: (key: string) => string;
 }
 
@@ -29,6 +32,9 @@ export function LanguageCurrencyDialog({
   currency,
   onLanguageChange,
   onCurrencyChange,
+  continueLabel,
+  onContinue,
+  hideCloseButton = true,
   t = (key: string) => {
     const translations: Record<string, string> = {
       "settings.languageAndCurrency": "Language & Currency",
@@ -45,12 +51,16 @@ export function LanguageCurrencyDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px] max-h-[85dvh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{t("settings.languageAndCurrency")}</DialogTitle>
-        </DialogHeader>
-
-        <div className="space-y-6 py-4">
+      <DialogContent
+        className="sm:max-w-[425px] max-h-[85dvh] overflow-y-auto"
+        hideCloseButton={hideCloseButton}
+        onEscapeKeyDown={hideCloseButton ? (event) => event.preventDefault() : undefined}
+        onPointerDownOutside={hideCloseButton ? (event) => event.preventDefault() : undefined}
+      >
+        <DialogTitle className="sr-only">
+          {t("settings.languageAndCurrency")}
+        </DialogTitle>
+        <div className="space-y-6">
           {/* Language Selection */}
           <div className="space-y-3">
             <Label className="text-base font-semibold">
@@ -129,6 +139,14 @@ export function LanguageCurrencyDialog({
             </div>
           </div>
         </div>
+
+        {continueLabel && onContinue && (
+          <DialogFooter>
+            <Button type="button" onClick={onContinue}>
+              {continueLabel}
+            </Button>
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   );

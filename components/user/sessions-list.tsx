@@ -30,6 +30,7 @@ interface Session {
   token: string;
   user_agent: string;
   ip_address: string;
+  country?: string | null;
   device_name: string;
   created_at: string;
   last_accessed: string;
@@ -44,6 +45,7 @@ export function SessionsList({ tourPreview = false }: { tourPreview?: boolean })
   const [revoking, setRevoking] = useState<number | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [sessionToRevoke, setSessionToRevoke] = useState<Session | null>(null);
+  const [hasLocationData, setHasLocationData] = useState(false);
 
   const fetchSessions = useCallback(async () => {
     try {
@@ -54,6 +56,7 @@ export function SessionsList({ tourPreview = false }: { tourPreview?: boolean })
       if (response.ok) {
         const data = await response.json();
         setSessions(data.sessions || []);
+        setHasLocationData(Boolean(data.locationDataAvailable));
       } else {
         toast.error(t("settings.failedToLoadSessions"));
       }
@@ -79,16 +82,16 @@ export function SessionsList({ tourPreview = false }: { tourPreview?: boolean })
         credentials: "include",
       });
 
-      if (response.ok || response.status === 404) {
+      if (response.ok) {
         setSessions((currentSessions) =>
           currentSessions.filter((session) => session.id !== sessionId)
         );
-
-        if (response.status === 404) {
-          toast.success(t("settings.sessionAlreadyRemoved"));
-        } else {
-          toast.success(t("settings.sessionRevokedSuccessfully"));
-        }
+        toast.success(t("settings.sessionRevokedSuccessfully"));
+      } else if (response.status === 404) {
+        setSessions((currentSessions) =>
+          currentSessions.filter((session) => session.id !== sessionId)
+        );
+        toast.success(t("settings.sessionAlreadyRemoved"));
       } else {
         const data = await response.json();
         toast.error(data.error || t("settings.failedToRevokeSession"));
@@ -109,10 +112,10 @@ export function SessionsList({ tourPreview = false }: { tourPreview?: boolean })
 
   const getDeviceIcon = (deviceName: string) => {
     const name = deviceName?.toLowerCase() || "";
-    if (name.includes("mobile") || name.includes("android")) {
-      return <Smartphone className="w-5 h-5" />;
-    } else if (name.includes("tablet") || name.includes("ipad")) {
+    if (name.includes("tablet") || name.includes("ipad")) {
       return <Tablet className="w-5 h-5" />;
+    } else if (name.includes("mobile") || name.includes("android") || name.includes("iphone")) {
+      return <Smartphone className="w-5 h-5" />;
     } else if (
       name.includes("mac") ||
       name.includes("windows") ||
@@ -128,14 +131,20 @@ export function SessionsList({ tourPreview = false }: { tourPreview?: boolean })
 
     const name = deviceName.toLowerCase();
 
-    if (name.includes("mobile") && name.includes("android")) {
-      return t("settings.androidMobile");
+    if (name.startsWith("android phone")) {
+      const model = deviceName.match(/\(([^)]+)\)/)?.[1];
+      return model
+        ? `${t("settings.androidMobile")} (${model})`
+        : t("settings.androidMobile");
     }
-    if (name.includes("mobile") && name.includes("iphone")) {
+    if (name.startsWith("android tablet")) {
+      const model = deviceName.match(/\(([^)]+)\)/)?.[1];
+      return model
+        ? `${t("settings.androidTablet")} (${model})`
+        : t("settings.androidTablet");
+    }
+    if (name.includes("iphone")) {
       return t("settings.iPhoneMobile");
-    }
-    if (name.includes("mobile")) {
-      return t("settings.mobile");
     }
 
     if (name.includes("ipad")) {
@@ -265,7 +274,9 @@ export function SessionsList({ tourPreview = false }: { tourPreview?: boolean })
               <div className="flex items-center gap-1.5">
                 <MapPin className="w-3 h-3" />
                 <span>
-                  {session.ip_address || t("settings.unknownLocation")}
+                  {hasLocationData
+                    ? `${session.country || t("settings.unknownLocation")} · ${session.ip_address || t("settings.unknownLocation")}`
+                    : session.ip_address || t("settings.unknownLocation")}
                 </span>
               </div>
               <div className="flex items-center gap-1.5">

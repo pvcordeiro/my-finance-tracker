@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getDatabase } from "@/lib/database";
 import { validateSession, getSessionFromRequest } from "@/lib/session";
+import { formatCountryName, isPublicIp, lookupIpCountry } from "@/lib/ip-country";
 
 export async function GET(request) {
   try {
@@ -30,12 +31,23 @@ export async function GET(request) {
       ORDER BY last_accessed DESC
     `).all(session.id) ?? [];
 
-    const sessions = rows.map(({ token: _token, ...row }) => ({
-      ...row,
-      is_current: _token === sessionToken,
-    }));
+    const sessions = rows.map(({ token: _token, ...row }) => {
+      const countryCode = isPublicIp(row.ip_address)
+        ? lookupIpCountry(db, row.ip_address)
+        : null;
 
-    return NextResponse.json({ sessions });
+      return {
+        ...row,
+        country_code: countryCode,
+        country: formatCountryName(countryCode, request.headers.get("accept-language")?.split(",")[0] || "en"),
+        is_current: _token === sessionToken,
+      };
+    });
+
+    const locationDataAvailable = Boolean(
+      db.prepare("SELECT 1 FROM ip_country_ranges LIMIT 1").get()
+    );
+    return NextResponse.json({ sessions, locationDataAvailable });
   } catch (error) {
     console.error("Error fetching sessions:", error);
     return NextResponse.json(

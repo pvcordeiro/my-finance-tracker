@@ -151,7 +151,7 @@ export function SummaryTable({ data, tourPreview = false }: SummaryTableProps) {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div data-tour="tour-alert" className="min-h-12">
+      <div data-tour="tour-alert">
         <BalanceAlert
           tourPreview={tourPreview}
           projectedMonths={monthlyData.map(({ month, year, balance }) => ({

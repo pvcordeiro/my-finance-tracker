@@ -232,6 +232,7 @@ export default function UserSettingsPage() {
             {t("settings.managePersonalPreferences")}
           </p>
         </div>
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-2 xl:items-stretch">
         <Card data-tour="tour-appearance">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -313,7 +314,77 @@ export default function UserSettingsPage() {
             )}
           </CardContent>
         </Card>
-        <MinimumBalanceAlertSettings />
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Key className="w-5 h-5" />
+              {t("settings.updateCredentials")}
+            </CardTitle>
+            <CardDescription>
+              {t("settings.updateCredentialsDescription")}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {isMobile ? (
+              <>
+                <Collapsible open={usernameOpen} onOpenChange={setUsernameOpen}>
+                  <CollapsibleTrigger asChild>
+                    <Button variant="outline" className="w-full justify-between">
+                      <span className="flex items-center gap-2">
+                        <UserCog className="w-4 h-4" />
+                        <span className="text-sm font-medium">{t("auth.changeUsername")}</span>
+                      </span>
+                      <ChevronRight className={`w-4 h-4 transition-transform ${usernameOpen ? "rotate-90" : ""}`} />
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="pt-4">
+                    <p className="text-sm text-muted-foreground mb-3">{t("settings.changeUsernameDescription")}</p>
+                    <ChangeUsernameForm />
+                  </CollapsibleContent>
+                </Collapsible>
+                <Collapsible open={passwordOpen} onOpenChange={setPasswordOpen}>
+                  <CollapsibleTrigger asChild>
+                    <Button variant="outline" className="w-full justify-between">
+                      <span className="flex items-center gap-2">
+                        <Lock className="w-4 h-4" />
+                        <span className="text-sm font-medium">{t("auth.changePassword")}</span>
+                      </span>
+                      <ChevronRight className={`w-4 h-4 transition-transform ${passwordOpen ? "rotate-90" : ""}`} />
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="pt-4">
+                    <p className="text-sm text-muted-foreground mb-3">{t("settings.changePasswordDescription")}</p>
+                    <ChangePasswordForm />
+                  </CollapsibleContent>
+                </Collapsible>
+              </>
+            ) : (
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <section>
+                  <h3 className="mb-1 text-sm font-medium">{t("auth.changeUsername")}</h3>
+                  <p className="mb-3 text-sm text-muted-foreground">{t("settings.changeUsernameDescription")}</p>
+                  <ChangeUsernameForm />
+                </section>
+                <section>
+                  <h3 className="mb-1 text-sm font-medium">{t("auth.changePassword")}</h3>
+                  <p className="mb-3 text-sm text-muted-foreground">{t("settings.changePasswordDescription")}</p>
+                  <ChangePasswordForm />
+                </section>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+        </div>
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-2 xl:items-stretch">
+          <MinimumBalanceAlertSettings />
+          <Card>
+            <CardHeader>
+              <CardTitle>{t("auth.recoveryEmail")}</CardTitle>
+              <CardDescription>{t("auth.recoveryEmailDescription")}</CardDescription>
+            </CardHeader>
+            <CardContent><EmailRecoverySettings /></CardContent>
+          </Card>
+        </div>
         {user && user.groups && user.groups.length > 1 && (
           <Card data-tour="tour-group-selection">
             <CardHeader>
@@ -351,103 +422,6 @@ export default function UserSettingsPage() {
             </CardContent>
           </Card>
         )}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Key className="w-5 h-5" />
-              {t("settings.updateCredentials")}
-            </CardTitle>
-            <CardDescription>
-              {t("settings.updateCredentialsDescription")}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {isMobile ? (
-              <>
-                <Collapsible open={usernameOpen} onOpenChange={setUsernameOpen}>
-                  <CollapsibleTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-between"
-                    >
-                      <span className="flex items-center gap-2">
-                        <UserCog className="w-4 h-4" />
-                        <span className="text-sm font-medium">
-                          {t("auth.changeUsername")}
-                        </span>
-                      </span>
-                      <ChevronRight
-                        className={`w-4 h-4 transition-transform ${
-                          usernameOpen ? "rotate-90" : ""
-                        }`}
-                      />
-                    </Button>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="pt-4">
-                    <p className="text-sm text-muted-foreground mb-3">
-                      {t("settings.changeUsernameDescription")}
-                    </p>
-                    <ChangeUsernameForm />
-                  </CollapsibleContent>
-                </Collapsible>
-                <Collapsible open={passwordOpen} onOpenChange={setPasswordOpen}>
-                  <CollapsibleTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-between"
-                    >
-                      <span className="flex items-center gap-2">
-                        <Lock className="w-4 h-4" />
-                        <span className="text-sm font-medium">
-                          {t("auth.changePassword")}
-                        </span>
-                      </span>
-                      <ChevronRight
-                        className={`w-4 h-4 transition-transform ${
-                          passwordOpen ? "rotate-90" : ""
-                        }`}
-                      />
-                    </Button>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="pt-4">
-                    <p className="text-sm text-muted-foreground mb-3">
-                      {t("settings.changePasswordDescription")}
-                    </p>
-                    <ChangePasswordForm />
-                  </CollapsibleContent>
-                </Collapsible>
-              </>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="text-sm font-medium mb-1">
-                    {t("auth.changeUsername")}
-                  </h3>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    {t("settings.changeUsernameDescription")}
-                  </p>
-                  <ChangeUsernameForm />
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium mb-1">
-                    {t("auth.changePassword")}
-                  </h3>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    {t("settings.changePasswordDescription")}
-                  </p>
-                  <ChangePasswordForm />
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("auth.recoveryEmail")}</CardTitle>
-            <CardDescription>{t("auth.recoveryEmailDescription")}</CardDescription>
-          </CardHeader>
-          <CardContent><EmailRecoverySettings /></CardContent>
-        </Card>
         <div data-tour="tour-data-management">
         <DataManagement
           tourPreview={isGuidedTourActive}
@@ -472,6 +446,11 @@ export default function UserSettingsPage() {
             <SessionsList tourPreview={isGuidedTourActive} />
           </CardContent>
         </Card>
+        <p className="text-center text-xs text-muted-foreground">
+          <a href="https://db-ip.com" target="_blank" rel="noreferrer" className="underline underline-offset-4">
+            {t("settings.ipGeolocationAttribution")}
+          </a>
+        </p>
       </main>
 
       {/* Language/Currency Dialog */}
@@ -482,6 +461,9 @@ export default function UserSettingsPage() {
         currency={currency}
         onLanguageChange={handleLanguageChange}
         onCurrencyChange={handleCurrencyChange}
+        continueLabel={t("common.confirm")}
+        onContinue={() => setLanguageDialogOpen(false)}
+        hideCloseButton
         t={t}
       />
     </div>

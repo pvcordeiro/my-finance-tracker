@@ -16,6 +16,7 @@ import { LanguageProvider } from "@/hooks/use-language";
 import { SerwistProvider } from "./serwist";
 import { DevelopmentServiceWorkerCleanup } from "@/components/pwa/development-service-worker-cleanup";
 import { GuidedTour } from "@/components/finance/guided-tour";
+import { FirstLoginPreferences } from "@/components/auth/first-login-preferences";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -24,10 +25,32 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.APP_URL || "http://localhost:3000"),
   title: "Finance Tracker - Take Control of Your Finances",
   description:
     "Track income, manage expenses, and budget smarter with this modern finance tracker.",
   manifest: "/manifest.json",
+  openGraph: {
+    title: "Finance Tracker - Take Control of Your Finances",
+    description:
+      "Track income, manage expenses, and budget smarter with this modern finance tracker.",
+    type: "website",
+    images: [
+      {
+        url: "/icon-512.png",
+        width: 512,
+        height: 512,
+        alt: "Finance Tracker",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary",
+    title: "Finance Tracker - Take Control of Your Finances",
+    description:
+      "Track income, manage expenses, and budget smarter with this modern finance tracker.",
+    images: ["/icon-512.png"],
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -39,8 +62,13 @@ export const metadata: Metadata = {
         url: "/favicon.svg",
         type: "image/svg+xml",
       },
+      {
+        url: "/icon-192.png",
+        sizes: "192x192",
+        type: "image/png",
+      },
     ],
-    shortcut: ["/favicon.svg"],
+    shortcut: ["/icon-192.png"],
     apple: [
       {
         url: "/icon-192.png?v=3",
@@ -85,6 +113,7 @@ html {
                   <PWAInstallPrompt />
                   <OfflineBanner />
                   {children}
+                  <FirstLoginPreferences />
                   <GuidedTour />
                   <NoGroupOverlay />
                   <Suspense fallback={null}>

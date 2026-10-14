@@ -55,24 +55,6 @@ export function DashboardHeader({
   const isOnline = useOnline();
   const [languageDialogOpen, setLanguageDialogOpen] = useState(false);
   const [groupDialogOpen, setGroupDialogOpen] = useState(false);
-  const [notifiedMultiGroup, setNotifiedMultiGroup] = useState(false);
-
-  useEffect(() => {
-    if (!user?.groups || user.groups.length <= 1 || notifiedMultiGroup) return;
-    const notificationKey = `finance-tracker-multi-group-notice-${user.id}`;
-    if (localStorage.getItem(notificationKey) === "shown") {
-      setNotifiedMultiGroup(true);
-      return;
-    }
-    localStorage.setItem(notificationKey, "shown");
-    setNotifiedMultiGroup(true);
-    toast.info(t("guidedTour.groupAccessNotice"), {
-      action: {
-        label: t("settings.groupSelection"),
-        onClick: () => setGroupDialogOpen(true),
-      },
-    });
-  }, [user?.id, user?.groups?.length, notifiedMultiGroup, t]);
 
   const handleLogout = async () => {
     await logout();
@@ -244,6 +226,9 @@ export function DashboardHeader({
         currency={currency}
         onLanguageChange={setLanguage}
         onCurrencyChange={setCurrency}
+        continueLabel={t("common.confirm")}
+        onContinue={() => setLanguageDialogOpen(false)}
+        hideCloseButton
         t={t}
       />
     </header>

@@ -59,6 +59,9 @@ export function LanguageCurrencySelector({
         currency={currency}
         onLanguageChange={setLanguage}
         onCurrencyChange={setCurrency}
+        continueLabel={t("common.confirm")}
+        onContinue={() => setDialogOpen(false)}
+        hideCloseButton
         t={t}
       />
     </>

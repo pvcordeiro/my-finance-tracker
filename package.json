@@ -8,6 +8,7 @@
     "dev": "next dev",
     "lint": "next lint",
     "start": "next start",
+    "update-ip-country": "bun scripts/update-ip-country.js",
     "test": "bun test"
   },
   "packageManager": "bun@1.2.20",

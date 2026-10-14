@@ -58,6 +58,7 @@ export function GuidedTour() {
   const [panelMeasuring, setPanelMeasuring] = useState(false);
   const [targetNotReady, setTargetNotReady] = useState(false);
   const [locateKey, setLocateKey] = useState(0);
+  const [firstLoginPreferencesCompletedFor, setFirstLoginPreferencesCompletedFor] = useState<number | null>(null);
   const autoStartedUser = useRef<number | null>(null);
   const panelRef = useRef<HTMLElement | null>(null);
   const availableSteps = user?.groups && user.groups.length > 1
@@ -75,6 +76,15 @@ export function GuidedTour() {
       (/Mac/i.test(platform) && navigator.maxTouchPoints > 1)
     );
     setIsPhone(/Android|iPhone|iPod|Mobile/i.test(navigator.userAgent));
+  }, []);
+
+  useEffect(() => {
+    const completeFirstLoginPreferences = (event: Event) => {
+      const userId = (event as CustomEvent<number>).detail;
+      if (typeof userId === "number") setFirstLoginPreferencesCompletedFor(userId);
+    };
+    window.addEventListener("firstLoginPreferencesCompleted", completeFirstLoginPreferences);
+    return () => window.removeEventListener("firstLoginPreferencesCompleted", completeFirstLoginPreferences);
   }, []);
 
   const begin = useCallback(() => {
@@ -117,21 +127,30 @@ export function GuidedTour() {
       return;
     }
     if (user.is_admin) {
-      if (isOnline && user.admin_tour_completed !== true && autoStartedUser.current !== -user.id) {
+      const needsPreferences =
+        user.minimum_balance_alert == null && user.admin_tour_completed !== true;
+      if (
+        isOnline &&
+        (!needsPreferences || firstLoginPreferencesCompletedFor === user.id) &&
+        user.admin_tour_completed !== true &&
+        autoStartedUser.current !== -user.id
+      ) {
         autoStartedUser.current = -user.id;
         beginAdminTour();
       }
       return;
     }
+    const needsPreferences = user.minimum_balance_alert == null && user.tour_completed !== true;
     if (
       isOnline &&
       user.tour_completed !== true &&
+      (!needsPreferences || firstLoginPreferencesCompletedFor === user.id) &&
       autoStartedUser.current !== user.id
     ) {
       autoStartedUser.current = user.id;
       begin();
     }
-  }, [user, isOnline, begin, beginAdminTour]);
+  }, [user, isOnline, begin, beginAdminTour, firstLoginPreferencesCompletedFor]);
 
   useEffect(() => {
     const startTour = () => begin();

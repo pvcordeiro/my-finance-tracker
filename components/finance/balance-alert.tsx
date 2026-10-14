@@ -14,6 +14,7 @@ import {
 import { CurrencyAmountInput } from "@/components/ui/currency-amount-input";
 import { Label } from "@/components/ui/label";
 import { useLanguage } from "@/hooks/use-language";
+import { useAuth } from "@/hooks/use-auth";
 import { useOnline } from "@/hooks/use-online";
 import { usePrivacy } from "@/hooks/use-privacy";
 import { getProjectedBalanceAlert } from "@/lib/balance-alert";
@@ -38,6 +39,7 @@ function interpolate(template: string, values: Record<string, string>) {
 
 export function BalanceAlert({ projectedMonths, tourPreview = false }: BalanceAlertProps) {
   const { currencySymbol, formatCurrency, t } = useLanguage();
+  const { user } = useAuth();
   const isOnline = useOnline();
   const { privacyMode, isRevealed } = usePrivacy();
   const [threshold, setThreshold] = useState<number | null>(null);
@@ -192,7 +194,13 @@ export function BalanceAlert({ projectedMonths, tourPreview = false }: BalanceAl
         </section>
       )}
 
-      <AlertDialog open={setupRequired && !tourActive}>
+      <AlertDialog
+        open={
+          setupRequired &&
+          !tourActive &&
+          (user?.tour_completed === true || user?.admin_tour_completed === true)
+        }
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t("settings.minimumBalanceAlertSetupTitle")}</AlertDialogTitle>

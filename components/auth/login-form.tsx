@@ -338,6 +338,9 @@ export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
         currency={currency}
         onLanguageChange={setLanguage}
         onCurrencyChange={setCurrency}
+        continueLabel={t("common.confirm")}
+        onContinue={() => setLanguageDialogOpen(false)}
+        hideCloseButton
         t={t}
       />
     </div>

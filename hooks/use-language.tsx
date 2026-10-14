@@ -8,6 +8,7 @@ import {
   ReactNode,
 } from "react";
 import { translations, currencies, currencyCodes, type CurrencyCode } from "@/lib/i18n";
+import { useAuth } from "@/hooks/use-auth";
 
 type Language = keyof typeof translations;
 type Currency = CurrencyCode;
@@ -17,6 +18,7 @@ interface LanguageContextType {
   setLanguage: (lang: Language) => void;
   currency: Currency;
   setCurrency: (curr: Currency) => void;
+  saveAccountPreferences: () => Promise<boolean>;
   t: (key: string) => string;
   formatCurrency: (amount: number) => string;
   currencySymbol: string;
@@ -28,6 +30,7 @@ const LanguageContext = createContext<LanguageContextType | undefined>(
 );
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
   const [language, setLanguageState] = useState<Language>("en");
   const [currency, setCurrencyState] = useState<Currency>("EUR");
 
@@ -43,6 +46,39 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  useEffect(() => {
+    if (!user) return;
+
+    if (user.language === "en" || user.language === "pt") {
+      setLanguageState(user.language);
+      localStorage.setItem("language", user.language);
+    }
+    if (user.currency && currencyCodes.includes(user.currency as Currency)) {
+      setCurrencyState(user.currency as Currency);
+      localStorage.setItem("currency", user.currency);
+    }
+  }, [user?.id, user?.language, user?.currency]);
+
+  const persistAccountPreferences = async (preferences: Record<string, string>) => {
+    if (!user) return false;
+    try {
+      const response = await fetch("/api/user/language-currency", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(preferences),
+      });
+      if (!response.ok) throw new Error("Unable to save account preferences");
+      return true;
+    } catch (error) {
+      console.error("Failed to save language and currency preferences:", error);
+      return false;
+    }
+  };
+
+  const saveAccountPreferences = () =>
+    persistAccountPreferences({ language, currency });
+
   const setLanguage = (lang: Language) => {
     if (lang !== "en" && lang !== "pt") {
       console.warn(`Invalid language: ${lang}. Defaulting to "en".`);
@@ -50,6 +86,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     }
     setLanguageState(lang);
     localStorage.setItem("language", lang);
+    void persistAccountPreferences({ language: lang });
   };
 
   const setCurrency = (curr: Currency) => {
@@ -59,6 +96,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     }
     setCurrencyState(curr);
     localStorage.setItem("currency", curr);
+    void persistAccountPreferences({ currency: curr });
   };
 
   const t = (path: string): string => {
@@ -99,6 +137,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
         setLanguage,
         currency,
         setCurrency,
+        saveAccountPreferences,
         t,
         formatCurrency,
         currencySymbol,

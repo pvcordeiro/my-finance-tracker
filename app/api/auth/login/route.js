@@ -84,6 +84,8 @@ export async function POST(request) {
         id: user.id,
         username: user.username,
         is_admin: user.is_admin || false,
+        language: user.language || "en",
+        currency: user.currency || "EUR",
         minimum_balance_alert: user.minimum_balance_alert,
         tour_completed: Boolean(user.tour_completed),
         admin_tour_completed: Boolean(user.admin_tour_completed),
