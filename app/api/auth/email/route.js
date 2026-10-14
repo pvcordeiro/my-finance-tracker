@@ -44,15 +44,11 @@ export async function POST(request) {
     }
     const link = `${publicAppUrl()}/verify-email?token=${encodeURIComponent(token)}`;
     const message = accountActionEmail({
-      eyebrow: "Account verification",
-      title: "Confirm your recovery email",
-      message: "One quick click and this address can help you get back into your account if you ever forget your password.",
-      actionLabel: "Verify email address",
+      language: session.language,
+      kind: "recovery",
       actionUrl: link,
-      expiry: "This link is valid for 30 minutes.",
-      ignoreNote: "Didn’t ask to change your email? You can safely ignore this message. Your current verified email remains active.",
     });
-    await sendAccountEmail({ to: email, subject: "Verify your Finance Tracker email", ...message });
+    await sendAccountEmail({ to: email, ...message });
     const issue = db.transaction(() => {
       const latest = db.prepare("SELECT email, pending_email FROM users WHERE id = ?").get(session.id);
       const conflict = db.prepare("SELECT id FROM users WHERE (email = ? COLLATE NOCASE OR pending_email = ? COLLATE NOCASE) AND id != ?").get(email, email, session.id);

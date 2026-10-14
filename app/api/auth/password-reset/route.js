@@ -26,7 +26,7 @@ export async function POST(request) {
     const parsed = requestSchema.safeParse(body);
     if (!parsed.success) return NextResponse.json(generic);
     const db = getDatabase();
-    const user = db.prepare("SELECT id, email FROM users WHERE email = ? AND email_verified_at IS NOT NULL").get(parsed.data.email.trim().toLowerCase());
+    const user = db.prepare("SELECT id, email, language FROM users WHERE email = ? AND email_verified_at IS NOT NULL").get(parsed.data.email.trim().toLowerCase());
     if (!user) return NextResponse.json(generic);
 
     if (!rateLimit(`password-reset-user:${user.id}`, { maxRequests: 3, windowMs: 60 * 60 * 1000 })) return NextResponse.json(generic);
@@ -45,17 +45,12 @@ export async function POST(request) {
     const link = `${publicAppUrl()}/reset-password?token=${encodeURIComponent(token)}`;
     try {
       const message = accountActionEmail({
-        eyebrow: "Password reset",
-        title: "Let’s get you back in",
-        message: "We received a request to reset your Finance Tracker password. Use the button below to choose a new one.",
-        actionLabel: "Create a new password",
+        language: user.language,
+        kind: "passwordReset",
         actionUrl: link,
-        expiry: "This one-time link is valid for 30 minutes.",
-        ignoreNote: "If you didn’t request a password reset, you can ignore this email—your password will stay the same.",
       });
       await sendAccountEmail({
         to: user.email,
-        subject: "Reset your Finance Tracker password",
         ...message,
       });
       db.prepare("DELETE FROM auth_tokens WHERE user_id = ? AND purpose = 'password-reset' AND token_hash != ?").run(user.id, tokenHash);

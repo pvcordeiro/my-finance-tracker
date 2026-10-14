@@ -17,6 +17,8 @@ WORKDIR /app
 
 RUN apk add --no-cache curl su-exec
 
+RUN apk add --no-cache gzip
+
 RUN addgroup -g 1001 -S nodejs && \
 	adduser -S nextjs -u 1001
 

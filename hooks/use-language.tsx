@@ -8,6 +8,7 @@ import {
   ReactNode,
 } from "react";
 import { translations, currencies, currencyCodes, type CurrencyCode } from "@/lib/i18n";
+import { languageFromLocale } from "@/lib/language";
 import { useAuth } from "@/hooks/use-auth";
 
 type Language = keyof typeof translations;
@@ -37,9 +38,17 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const savedLanguage = localStorage.getItem("language");
     const savedCurrency = localStorage.getItem("currency");
+    const manuallySelectedLanguage =
+      localStorage.getItem("language-manually-selected") === "true";
 
-    if (savedLanguage && (savedLanguage === "en" || savedLanguage === "pt")) {
+    if (
+      manuallySelectedLanguage &&
+      savedLanguage &&
+      (savedLanguage === "en" || savedLanguage === "pt")
+    ) {
       setLanguageState(savedLanguage as Language);
+    } else {
+      setLanguageState(languageFromLocale(navigator.language));
     }
     if (savedCurrency && currencyCodes.includes(savedCurrency as Currency)) {
       setCurrencyState(savedCurrency as Currency);
@@ -86,6 +95,9 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     }
     setLanguageState(lang);
     localStorage.setItem("language", lang);
+    if (!user) {
+      localStorage.setItem("language-manually-selected", "true");
+    }
     void persistAccountPreferences({ language: lang });
   };
 

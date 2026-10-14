@@ -1,6 +1,15 @@
 import { gunzipSync } from "node:zlib";
 import { getDatabase } from "../lib/database.js";
 
+const db = getDatabase();
+if (process.argv.includes("--if-missing")) {
+  const existingRanges = db.prepare("SELECT 1 FROM ip_country_ranges LIMIT 1").get();
+  if (existingRanges) {
+    console.log("IP country ranges are already installed; skipping initial import.");
+    process.exit(0);
+  }
+}
+
 function getReleaseCandidates() {
   const now = new Date();
   return [0, 1, 2].map((monthsAgo) => {
@@ -68,7 +77,6 @@ if (rows.length < 100_000) {
   throw new Error(`Downloaded country range file appears incomplete (${rows.length} rows)`);
 }
 
-const db = getDatabase();
 db.exec(countryTableSql);
 db.exec("DROP TABLE IF EXISTS ip_country_ranges_next");
 db.exec(countryTableSql.replaceAll("ip_country_ranges", "ip_country_ranges_next"));

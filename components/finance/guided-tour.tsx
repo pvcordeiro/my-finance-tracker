@@ -290,21 +290,41 @@ export function GuidedTour() {
       if (keepAdminMobileStepInPlace) {
         // Keep the first two admin-tour sections at the top of the page on phones.
         // Their targets are tall, so centering them would hide the section heading.
-      } else if (mobileLayout && activeStep.title === "guidedTour.dataTitle") {
-        const panelBottom = Math.max(headerBottom + 12, 16) + targetPanelHeight + 18;
-        window.scrollTo({
-          top: Math.max(0, window.scrollY + targetBoundsBeforeScroll.top - panelBottom),
-          behavior: reduceMotion ? "auto" : "smooth",
-        });
-      } else if (mobileLayout && (!hasAbovePanelRoom && !hasBelowPanelRoom || activeStep.title === "guidedTour.recurringTitle")) {
-        const visibleAreaTop = headerBottom + 12;
-        const visibleAreaBottom = window.innerHeight - navInset;
-        const targetCenter = (positionBounds.top + positionBounds.bottom) / 2;
-        const desiredCenter = visibleAreaTop + targetPanelHeight + 18 + Math.max(0, visibleAreaBottom - visibleAreaTop - targetPanelHeight - 18) / 2;
-        window.scrollTo({
-          top: Math.max(0, window.scrollY + targetCenter - desiredCenter),
-          behavior: reduceMotion ? "auto" : "smooth",
-        });
+      } else if (mobileLayout) {
+        const visualViewport = window.visualViewport;
+        const visibleTop = visualViewport?.offsetTop ?? 0;
+        const visibleBottom = visibleTop + (visualViewport?.height ?? window.innerHeight);
+        const panelTop = visibleBottom - 12 - targetPanelHeight;
+        const contentTop = Math.max(headerBottom + 12, visibleTop + 12);
+        const contentBottom = panelTop - 18;
+        const targetHeight = positionBounds.bottom - positionBounds.top;
+        const targetFitsAbovePanel = targetHeight <= contentBottom - contentTop;
+        let delta = 0;
+        if (activeStep.title === "guidedTour.privacyTitle") {
+          // The privacy control lives in the sticky header; keep it visible near the top.
+          delta = positionBounds.top < visibleTop + 8
+            ? positionBounds.top - (visibleTop + 8)
+            : 0;
+        } else if (
+          activeStep.title === "guidedTour.dataTitle" ||
+          activeStep.title === "guidedTour.sessionsTitle"
+        ) {
+          // Keep the section heading and its highlighted card visible above the docked guide.
+          delta = positionBounds.top - contentTop;
+        } else if (targetHeight > contentBottom - contentTop) {
+          // For tall sections (for example data management), reveal their beginning.
+          delta = positionBounds.top - contentTop;
+        } else if (positionBounds.bottom > contentBottom) {
+          delta = positionBounds.bottom - contentBottom;
+        } else if (positionBounds.top < contentTop) {
+          delta = positionBounds.top - contentTop;
+        }
+        if (delta !== 0) {
+          window.scrollTo({
+            top: Math.max(0, window.scrollY + delta),
+            behavior: reduceMotion ? "auto" : "smooth",
+          });
+        }
       } else {
         primaryTarget.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center", inline: "nearest" });
       }
@@ -400,10 +420,81 @@ export function GuidedTour() {
         const anchorCenterY = anchor.top + anchor.height / 2;
         const clamp = (value: number, max: number, size: number) =>
           Math.max(16, Math.min(value, max - size - 16));
-        if (isAdminTour && (!mobileLayout || stepIndex === 0 || stepIndex === 1)) {
+        if (isAdminTour && !mobileLayout) {
           const footerTop = document.querySelector<HTMLElement>("[data-tour-fixed-footer]")?.getBoundingClientRect().top ?? viewportHeight;
           const bottom = Math.min(viewportHeight - 16, footerTop - 16);
           const top = Math.max(16, bottom - panelHeight);
+          const left = clamp((viewportWidth - panelWidth) / 2, viewportWidth, panelWidth);
+          setPanelOffset({
+            x: left + panelWidth / 2 - viewportWidth / 2,
+            y: top + panelHeight / 2 - viewportHeight / 2,
+          });
+          return;
+        }
+        if (mobileLayout && activeStep.title === "guidedTour.privacyTitle") {
+          const visibleTop = window.visualViewport?.offsetTop ?? 0;
+          const headerBottom = document.querySelector<HTMLElement>("[data-tour-fixed-header]")?.getBoundingClientRect().bottom ?? visibleTop + 64;
+          const top = headerBottom + 12;
+          const left = clamp((viewportWidth - panelWidth) / 2, viewportWidth, panelWidth);
+          setPanelOffset({
+            x: left + panelWidth / 2 - viewportWidth / 2,
+            y: top + panelHeight / 2 - viewportHeight / 2,
+          });
+          return;
+        }
+        if (mobileLayout && activeStep.title === "guidedTour.alertTitle") {
+          const visibleTop = window.visualViewport?.offsetTop ?? 0;
+          const visibleBottom = visibleTop + (window.visualViewport?.height ?? viewportHeight);
+          const target = resolvedTargets.find((node) => node.dataset.tour === "tour-alert");
+          const bounds = target?.getBoundingClientRect();
+          if (bounds) {
+            const belowTop = bounds.bottom + gap;
+            const aboveTop = bounds.top - panelHeight - gap;
+            const top = belowTop + panelHeight <= visibleBottom - 12
+              ? belowTop
+              : Math.max(visibleTop + 12, aboveTop);
+            const left = clamp((viewportWidth - panelWidth) / 2, viewportWidth, panelWidth);
+            setPanelOffset({
+              x: left + panelWidth / 2 - viewportWidth / 2,
+              y: top + panelHeight / 2 - viewportHeight / 2,
+            });
+            return;
+          }
+        }
+        if (mobileLayout) {
+          const visualViewport = window.visualViewport;
+          const visibleTop = visualViewport?.offsetTop ?? 0;
+          const visibleBottom = visibleTop + (visualViewport?.height ?? viewportHeight);
+          const bottomInset = 12;
+          const bottomAnchoredTop = visibleBottom - bottomInset - panelHeight;
+          const contentTop = Math.max(
+            (document.querySelector("header")?.getBoundingClientRect().bottom ?? 64) + 12,
+            visibleTop + 12
+          );
+          const aboveTargetTop = anchor.top - panelHeight - gap;
+          let preferredTop = bottomAnchoredTop;
+          if (activeStep.title === "guidedTour.privacyTitle") {
+            const headerBottom = document.querySelector("header")?.getBoundingClientRect().bottom ?? visibleTop + 64;
+            preferredTop = headerBottom + 16;
+          } else if (activeStep.title === "guidedTour.alertTitle") {
+            const belowTargetTop = anchor.top + anchor.height + gap;
+            const fitsBelow = belowTargetTop + panelHeight <= visibleBottom - bottomInset;
+            const fitsAbove = aboveTargetTop >= contentTop;
+            preferredTop = fitsBelow
+              ? belowTargetTop
+              : fitsAbove
+                ? aboveTargetTop
+                : bottomAnchoredTop;
+          } else {
+            const targetIsAtBottom =
+              anchor.top + anchor.height + panelHeight + gap > visibleBottom - bottomInset;
+            const canPlaceAbove = aboveTargetTop >= contentTop;
+            if (targetIsAtBottom && canPlaceAbove) preferredTop = aboveTargetTop;
+          }
+          const top = Math.max(
+            visibleTop + 16,
+            Math.min(preferredTop, visibleBottom - bottomInset - panelHeight)
+          );
           const left = clamp((viewportWidth - panelWidth) / 2, viewportWidth, panelWidth);
           setPanelOffset({
             x: left + panelWidth / 2 - viewportWidth / 2,
@@ -504,12 +595,16 @@ export function GuidedTour() {
         if (reduceMotion || (elapsed > 180 && stableFrames >= 4) || elapsed > 1400) {
           window.addEventListener("resize", updateRect);
           window.addEventListener("scroll", updateRect, true);
+          window.visualViewport?.addEventListener("resize", updateRect);
+          window.visualViewport?.addEventListener("scroll", updateRect);
           const resizeObserver = new ResizeObserver(updateRect);
           resolvedTargets.forEach((target) => resizeObserver.observe(target));
           if (panelRef.current) resizeObserver.observe(panelRef.current);
           cleanup = () => {
             window.removeEventListener("resize", updateRect);
             window.removeEventListener("scroll", updateRect, true);
+            window.visualViewport?.removeEventListener("resize", updateRect);
+            window.visualViewport?.removeEventListener("scroll", updateRect);
             resizeObserver.disconnect();
           };
           setPanelMeasuring(true);

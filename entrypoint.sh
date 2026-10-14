@@ -39,6 +39,11 @@ fi
 
 chown -R nextjs:nodejs /app/data
 
+echo "🌍 Checking country lookup data..."
+if ! su-exec nextjs bun /app/scripts/update-ip-country.js --if-missing; then
+  echo "⚠️  Country lookup data could not be initialized. Session locations will show IP addresses until it is imported."
+fi
+
 echo ""
 echo "🚀 Starting application..."
 echo "==========================================="

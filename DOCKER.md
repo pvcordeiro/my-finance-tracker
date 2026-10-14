@@ -71,7 +71,7 @@ docker-compose up -d
 
 ### Session location data
 
-Session locations are resolved locally from DB-IP's country-level ranges. Initialize or refresh the database monthly with:
+On startup, session locations are resolved locally from DB-IP's country-level ranges. If the ranges are missing, the container downloads and imports them automatically (internet access is required on first startup). Refresh the database monthly with:
 
 ```bash
 docker-compose exec my-finance-tracker bun scripts/update-ip-country.js

@@ -6,6 +6,7 @@ import { rateLimit, getClientIp } from "../../../../lib/rate-limit.ts";
 import { accountActionEmail, emailConfigured, publicAppUrl, sendAccountEmail, validateSenderConfiguration } from "../../../../lib/email.js";
 import { verifyRequestOrigin } from "../../../../lib/session.js";
 import { currencyCodes } from "../../../../lib/i18n.ts";
+import { languageFromAcceptLanguage } from "../../../../lib/language.ts";
 
 export async function POST(request) {
   try {
@@ -40,7 +41,7 @@ export async function POST(request) {
       username,
       password,
       email,
-      language = "en",
+      language = languageFromAcceptLanguage(request.headers.get("accept-language")),
       currency = "EUR",
     } = validation.data;
 
@@ -101,17 +102,12 @@ export async function POST(request) {
       try {
         const verificationUrl = `${publicAppUrl()}/verify-email?token=${encodeURIComponent(token)}`;
         const message = accountActionEmail({
-          eyebrow: "Welcome to My Finance Tracker",
-          title: "Verify your email to get started",
-          message: "Confirm this email address to finish creating your account and keep a safe way to get back in.",
-          actionLabel: "Verify my email",
+          language,
+          kind: "verification",
           actionUrl: verificationUrl,
-          expiry: "This one-time link is valid for 30 minutes.",
-          ignoreNote: "If you didn’t create an account, you can safely ignore this email.",
         });
         await sendAccountEmail({
           to: email.toLowerCase(),
-          subject: "Verify your Finance Tracker email",
           ...message,
         });
       } catch (error) {
