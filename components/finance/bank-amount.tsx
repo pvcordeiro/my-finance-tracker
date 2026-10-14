@@ -10,6 +10,9 @@ import { PrivacyNumber } from "@/components/ui/privacy-number";
 import { useLanguage } from "@/hooks/use-language";
 
 interface BankAmountProps {
+  "data-tour"?: string;
+  tourReadOnly?: boolean;
+  readOnly?: boolean;
   amount: number;
   onAdd: (delta: number, note?: string) => void;
   onSubtract: (delta: number, note?: string) => void;
@@ -18,6 +21,9 @@ interface BankAmountProps {
 }
 
 export function BankAmount({
+  "data-tour": dataTour,
+  tourReadOnly = false,
+  readOnly = false,
   amount,
   onAdd,
   onSubtract,
@@ -82,9 +88,9 @@ export function BankAmount({
     }
   };
   return (
-    <Card className="bg-primary/5 border-primary/20">
+    <Card data-tour={dataTour} className="bg-primary/5 border-primary/20">
       <CardContent className="p-4 sm:p-6">
-        <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-6">
           <div className="flex items-end justify-between">
             <div className="flex flex-col gap-0.5">
               <Label className="text-xs font-semibold uppercase tracking-wider text-primary-contrast">
@@ -130,6 +136,7 @@ export function BankAmount({
                     }
                     className="text-lg h-10"
                     placeholder="0.00"
+                    disabled={readOnly || tourReadOnly}
                   />
                 </div>
                 {noteFieldEnabled && (
@@ -144,13 +151,13 @@ export function BankAmount({
                 )}
               </div>
               <div className="grid grid-cols-2 gap-2">
-                <Button
-                  type="button"
+                  <Button
+                    type="button"
                   variant="outline"
                   size="default"
                   className="w-full border-finance-positive text-finance-positive hover:bg-card active:scale-[0.98] transition-transform"
                   onClick={handleAdd}
-                  disabled={!inputValue || inputValue <= 0}
+                    disabled={readOnly || tourReadOnly || !inputValue || inputValue <= 0}
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   {t("common.add")}
@@ -161,7 +168,7 @@ export function BankAmount({
                   size="default"
                   className="w-full border-finance-negative text-finance-negative hover:bg-card active:scale-[0.98] transition-transform"
                   onClick={handleSubtract}
-                  disabled={!inputValue || inputValue <= 0}
+                    disabled={readOnly || tourReadOnly || !inputValue || inputValue <= 0}
                 >
                   <Minus className="w-4 h-4 mr-2" />
                   {t("dashboard.subtract")}

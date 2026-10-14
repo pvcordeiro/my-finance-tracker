@@ -32,12 +32,18 @@ import { useRef } from "react";
 
 interface DataManagementProps {
   data: FinanceData;
+  tourPreview?: boolean;
+  readOnly?: boolean;
+  isGuidedTourActive?: boolean;
   onImportComplete: () => Promise<void>;
   onClearData: () => Promise<void>;
 }
 
 export function DataManagement({
   data,
+  tourPreview = false,
+  readOnly = false,
+  isGuidedTourActive = false,
   onImportComplete,
   onClearData,
 }: DataManagementProps) {
@@ -151,10 +157,13 @@ export function DataManagement({
   };
 
   const stats = getDataStats();
+  const tourStats = tourPreview
+    ? { totalEntries: 5, totalIncomes: 2, totalExpenses: 3, dataSize: "8.4 KB" }
+    : stats;
 
   return (
     <>
-      <Card>
+    <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Database className="h-5 w-5" />
@@ -166,7 +175,7 @@ export function DataManagement({
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 rounded-lg border bg-muted/30 p-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-primary-contrast">
-                {stats.totalEntries}
+                {tourStats.totalEntries}
               </div>
               <div className="text-sm text-muted-foreground">
                 {t("manage.totalEntries")}
@@ -174,7 +183,7 @@ export function DataManagement({
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-finance-positive">
-                {stats.totalIncomes}
+                {tourStats.totalIncomes}
               </div>
               <div className="text-sm text-muted-foreground">
                 {t("manage.incomeEntries")}
@@ -182,7 +191,7 @@ export function DataManagement({
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-finance-negative">
-                {stats.totalExpenses}
+                {tourStats.totalExpenses}
               </div>
               <div className="text-sm text-muted-foreground">
                 {t("manage.expenseEntries")}
@@ -190,7 +199,7 @@ export function DataManagement({
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-primary-contrast">
-                {stats.dataSize}
+                {tourStats.dataSize}
               </div>
               <div className="text-sm text-muted-foreground">
                 {t("manage.dataSize")}
@@ -199,8 +208,10 @@ export function DataManagement({
           </div>
           {/* Export */}
           <div className="space-y-2">
-            <Button
-              onClick={exportData}
+              <Button
+              data-tour="tour-data-export"
+                onClick={() => { if (!readOnly) void exportData(); }}
+                disabled={readOnly}
               className="w-full transition-all duration-200 hover:scale-[1.02]"
             >
               <Download className="w-4 h-4 mr-2" />
@@ -213,11 +224,12 @@ export function DataManagement({
 
           {/* Import */}
           <div className="space-y-2">
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full justify-center gap-2"
-              onClick={() => importInputRef.current?.click()}
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full justify-center gap-2"
+                onClick={() => { if (!readOnly) importInputRef.current?.click(); }}
+                disabled={readOnly}
             >
               <FileSpreadsheet className="h-4 w-4" />
               {t("manage.chooseImportFile")}
@@ -243,7 +255,8 @@ export function DataManagement({
           <div className="space-y-2 pt-4 border-t">
             <Button
               variant="destructive"
-              onClick={handleClearData}
+              onClick={() => { if (!readOnly) handleClearData(); }}
+              disabled={readOnly}
               className="w-full transition-all duration-200 hover:scale-[1.02]"
             >
               <Trash2 className="w-4 h-4 mr-2" />
@@ -256,7 +269,7 @@ export function DataManagement({
         </CardContent>
       </Card>
 
-      <AlertDialog open={clearDialogOpen} onOpenChange={setClearDialogOpen}>
+      <AlertDialog open={clearDialogOpen && !isGuidedTourActive} onOpenChange={setClearDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t("manage.clearAllData")}</AlertDialogTitle>
@@ -277,7 +290,7 @@ export function DataManagement({
       </AlertDialog>
 
       <AlertDialog
-        open={importDialogOpen}
+        open={importDialogOpen && !isGuidedTourActive}
         onOpenChange={(open) => {
           if (isImporting) return;
           setImportDialogOpen(open);

@@ -8,9 +8,10 @@ import { BalanceAlert } from "@/components/finance/balance-alert";
 
 interface SummaryTableProps {
   data: FinanceData;
+  tourPreview?: boolean;
 }
 
-export function SummaryTable({ data }: SummaryTableProps) {
+export function SummaryTable({ data, tourPreview = false }: SummaryTableProps) {
   const { t, formatCurrency, currencySymbol } = useLanguage();
 
   function compactNumber(value: number): string {
@@ -150,13 +151,16 @@ export function SummaryTable({ data }: SummaryTableProps) {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <BalanceAlert
-        projectedMonths={monthlyData.map(({ month, year, balance }) => ({
-          label: month,
-          year,
-          balance,
-        }))}
-      />
+      <div data-tour="tour-alert" className="min-h-12">
+        <BalanceAlert
+          tourPreview={tourPreview}
+          projectedMonths={monthlyData.map(({ month, year, balance }) => ({
+            label: month,
+            year,
+            balance,
+          }))}
+        />
+      </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-border rounded-xl overflow-hidden border border-border">
         <div className="bg-card px-3 py-3 sm:px-4 sm:py-4">
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">

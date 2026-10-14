@@ -53,6 +53,9 @@ export interface FinanceEntry {
 }
 
 interface EntryFormProps {
+  "data-tour"?: string;
+  readOnly?: boolean;
+  tourCompact?: boolean;
   title: string;
   entries: FinanceEntry[];
   onAddEntry: () => void;
@@ -99,6 +102,9 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
   function EntryForm(
     {
       title,
+      "data-tour": dataTour,
+      readOnly = false,
+      tourCompact = false,
       entries,
       onUpdateEntry,
       onRemoveEntry,
@@ -326,6 +332,7 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
 
     return (
       <Card
+        data-tour={dataTour}
         ref={(node) => {
           sectionRef.current = node;
           if (typeof ref === "function") {
@@ -339,8 +346,8 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
           type === "income" ? "income-card bg-finance-positive/5" : "expense-card bg-finance-negative/5"
         )}
       >
-          <Collapsible open={isOpen} onOpenChange={handleSectionToggle}>
-          <CardHeader className="flex-row items-center space-y-0 gap-2 px-4 py-3 sm:px-6 sm:py-5">
+          <Collapsible open={tourCompact ? false : isOpen} onOpenChange={handleSectionToggle}>
+        <CardHeader className="flex-row items-center space-y-0 gap-2 px-4 py-3 sm:px-6 sm:py-5">
             <CollapsibleTrigger className="min-w-0 flex-1 rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset">
               <div className="cursor-pointer touch-manipulation py-1">
                <CardTitle
@@ -402,7 +409,7 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
             )}
           </CardHeader>
           <CollapsibleContent>
-            <CardContent className="space-y-4">
+              <CardContent className="space-y-4">
               {/* Search Input */}
               {entries.length > 0 && (
                 <div className="relative">
@@ -427,12 +434,13 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
                     else entryCardRefs.current.delete(entry.id);
                   }}
                   className={cn(
-                    "flex items-center justify-between rounded-lg border border-border px-3 py-2.5 cursor-pointer transition-colors",
+                    "flex items-center justify-between rounded-lg border border-border px-3 py-2.5 transition-colors",
+                    !readOnly && "cursor-pointer",
                     "hover:border-primary/40 hover:bg-muted/40",
                     flashingEntries.has(entry.id) &&
                       (type === "income" ? "flash-success" : "flash-error")
                   )}
-                  onClick={() => handleEntryClick(entry)}
+                  onClick={() => { if (!readOnly) handleEntryClick(entry); }}
                 >
                   <div className="flex flex-col pr-2 max-w-[60%] sm:max-w-[70%]">
                     <span className="font-medium text-sm sm:text-base truncate">
@@ -465,16 +473,17 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
                             size="sm"
                             onClick={(e) => {
                               e.stopPropagation();
+                              if (readOnly) return;
                               const index = getNextUnresolvedOccurrence(entry)?.monthIndex ?? -1;
                               if (index >= 0) handleResolveCurrentMonth(e, entry);
                             }}
                             className="text-muted-foreground hover:text-foreground hover:bg-muted h-8 w-8 p-0 touch-manipulation"
                             aria-label={t("entries.markCurrentMonth")}
-                            disabled={
+                    disabled={readOnly || (
                               !entry.amounts.some(
                                  (amount, index) => amount && amount !== 0 && !entry.resolved?.[index] && !entry.dismissed?.[index]
                               )
-                            }
+                            )}
                           >
                             <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
                           </Button>
@@ -518,11 +527,11 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
               )}
             </CardContent>
           </CollapsibleContent>
-        </Collapsible>
+          </Collapsible>
 
         {/* Resolve Value Confirmation Dialog */}
-        <AlertDialog
-          open={resolveDialogOpen}
+          <AlertDialog
+          open={!readOnly && resolveDialogOpen}
           onOpenChange={setResolveDialogOpen}
         >
           <AlertDialogContent>
@@ -575,7 +584,7 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
 
         {/* Entry Edit Dialog */}
         <EntryEditDialog
-          open={editDialogOpen}
+          open={!readOnly && editDialogOpen}
           onOpenChange={setEditDialogOpen}
           entry={selectedEntry}
           type={type}

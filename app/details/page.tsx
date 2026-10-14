@@ -9,9 +9,12 @@ import { AuthGate } from "@/components/auth/auth-gate";
 import { useLanguage } from "@/hooks/use-language";
 import { LoadingState } from "@/components/ui/loading";
 import { Button } from "@/components/ui/button";
+import { useGuidedTourMode } from "@/hooks/use-guided-tour-mode";
+import { guidedTourFinanceData } from "@/lib/guided-tour-data";
 
 function DetailsPageContent() {
   const { data, isLoading, loadError, refreshData } = useFinanceData();
+  const isGuidedTourActive = useGuidedTourMode();
   const { t } = useLanguage();
 
   return (
@@ -37,7 +40,7 @@ function DetailsPageContent() {
             </Button>
           </div>
         ) : (
-          <DetailsTable data={data} />
+          <DetailsTable data={isGuidedTourActive ? guidedTourFinanceData : data} tourPreview={isGuidedTourActive} readOnly={isGuidedTourActive} />
         )}
       </main>
     </div>

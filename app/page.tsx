@@ -11,6 +11,8 @@ import { LoadingState } from "@/components/ui/loading";
 import { Button } from "@/components/ui/button";
 import { AuthGate } from "@/components/auth/auth-gate";
 import { useLanguage } from "@/hooks/use-language";
+import { useGuidedTourMode } from "@/hooks/use-guided-tour-mode";
+import { guidedTourFinanceData } from "@/lib/guided-tour-data";
 
 const FinancialChart = lazy(() =>
   import("@/components/finance/financial-chart").then((mod) => ({
@@ -20,6 +22,8 @@ const FinancialChart = lazy(() =>
 
 function SummaryPageContent() {
   const { data, isLoading, loadError, refreshData } = useFinanceData();
+  const isGuidedTourActive = useGuidedTourMode();
+  const visibleData = isGuidedTourActive ? guidedTourFinanceData : data;
   const { t } = useLanguage();
 
   return (
@@ -46,11 +50,11 @@ function SummaryPageContent() {
           </div>
         ) : (
           <>
-            <SummaryTable data={data} />
+            <SummaryTable data={visibleData} tourPreview={isGuidedTourActive} />
             <Suspense
               fallback={<LoadingState message={t("common.loadingChart")} />}
             >
-              <FinancialChart data={data} />
+              <FinancialChart data={visibleData} tourPreview={isGuidedTourActive} />
             </Suspense>
           </>
         )}

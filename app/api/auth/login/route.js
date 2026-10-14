@@ -85,6 +85,8 @@ export async function POST(request) {
         username: user.username,
         is_admin: user.is_admin || false,
         minimum_balance_alert: user.minimum_balance_alert,
+        tour_completed: Boolean(user.tour_completed),
+        admin_tour_completed: Boolean(user.admin_tour_completed),
         groups,
         current_group_id,
       },

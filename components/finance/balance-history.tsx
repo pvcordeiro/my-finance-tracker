@@ -14,6 +14,7 @@ import { enUS, ptBR } from "date-fns/locale";
 import { PrivacyNumber } from "@/components/ui/privacy-number";
 import { PrivacyText } from "@/components/ui/privacy-text";
 import { useLanguage } from "@/hooks/use-language";
+import { useGuidedTourMode } from "@/hooks/use-guided-tour-mode";
 
 interface BalanceHistoryEntry {
   id: number;
@@ -28,19 +29,40 @@ interface BalanceHistoryEntry {
 interface BalanceHistoryProps {
   groupId: number | null;
   refreshTrigger?: number;
+  tourPreview?: boolean;
 }
 
 export function BalanceHistory({
   groupId,
   refreshTrigger,
+  tourPreview = false,
 }: BalanceHistoryProps) {
   const { t, language } = useLanguage();
+  const tourMode = useGuidedTourMode();
   const [history, setHistory] = useState<BalanceHistoryEntry[]>([]);
   const [enabled, setEnabled] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (tourPreview) setIsOpen(true);
+  }, [tourPreview]);
+
+  useEffect(() => {
+    if (tourMode) {
+      setHistory([]);
+      setEnabled(false);
+      setLoading(false);
+    }
+  }, [tourMode]);
+
+  useEffect(() => {
+    if (tourMode || tourPreview) {
+      setHistory([]);
+      setEnabled(false);
+      setLoading(false);
+      return;
+    }
     if (!groupId) {
       setHistory([]);
       setEnabled(false);
@@ -68,20 +90,25 @@ export function BalanceHistory({
     };
 
     fetchHistory();
-  }, [groupId, refreshTrigger]);
+  }, [groupId, refreshTrigger, tourMode, tourPreview]);
 
-  if (!enabled || loading) {
+  if ((!enabled || loading) && !tourPreview) {
     return null;
   }
 
-  if (history.length === 0) {
+  if (history.length === 0 && !tourPreview) {
     return null;
   }
 
   const dateLocale = language === "pt" ? ptBR : enUS;
+  const previewEntries: BalanceHistoryEntry[] = [
+    { id: -1, old_amount: 1500, new_amount: 1800, delta: 300, note: t("guidedTour.recentChangeIncomeNote"), created_at: new Date().toISOString(), username: null },
+    { id: -2, old_amount: 1800, new_amount: 1680, delta: -120, note: t("guidedTour.recentChangeExpenseNote"), created_at: new Date(Date.now() - 3600000).toISOString(), username: null },
+  ];
+  const displayHistory = tourPreview ? previewEntries : history;
 
   return (
-    <Card className="bg-primary/5 border-primary/20">
+      <Card data-tour={tourPreview ? "tour-history" : undefined} className="bg-primary/5 border-primary/20">
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <CardHeader className="p-3 sm:p-6">
           <CollapsibleTrigger asChild>
@@ -96,7 +123,7 @@ export function BalanceHistory({
                 </span>
                 {!isOpen && (
                   <span className="text-xs font-normal text-muted-foreground ml-1">
-                    ({history.length})
+                    ({displayHistory.length})
                   </span>
                 )}
               </CardTitle>
@@ -111,7 +138,7 @@ export function BalanceHistory({
         <CollapsibleContent>
           <CardContent className="pt-0 p-4 sm:p-6 sm:pt-0">
             <div className="space-y-2">
-              {history.map((entry) => {
+              {displayHistory.map((entry) => {
                 const isPositive = entry.delta > 0;
                 const isNegative = entry.delta < 0;
 

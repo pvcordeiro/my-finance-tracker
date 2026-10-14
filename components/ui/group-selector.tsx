@@ -72,6 +72,7 @@ export function GroupSelectorMenuItem({
 
   return (
     <DropdownMenuItem
+      data-tour="tour-group-switch"
       onSelect={() => onOpenChange(true)}
       disabled={!isOnline}
       className="cursor-pointer"

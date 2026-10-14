@@ -33,6 +33,8 @@ export async function GET(request) {
         language: user.language || "en",
         currency: user.currency || "EUR",
         minimum_balance_alert: user.minimum_balance_alert,
+        tour_completed: user.tour_completed,
+        admin_tour_completed: user.admin_tour_completed,
       },
     });
   } catch (error) {

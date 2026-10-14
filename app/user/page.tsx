@@ -36,6 +36,7 @@ import {
   Laptop,
   Users,
   Check,
+  Compass,
 } from "lucide-react";
 import {
   Card,
@@ -45,7 +46,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { FullPageLoader } from "@/components/ui/loading";
-import { User } from "lucide-react";
+import { User, Route } from "lucide-react";
 import { AccentColorSwitcher } from "@/components/ui/accent-color-switcher";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { LanguageCurrencySelector } from "@/components/ui/language-currency-selector";
@@ -63,10 +64,14 @@ import { EmailRecoverySettings } from "@/components/user/email-recovery-settings
 import { MinimumBalanceAlertSettings } from "@/components/user/minimum-balance-alert-settings";
 import { DataManagement } from "@/components/finance/data-management";
 import type { CurrencyCode } from "@/lib/i18n";
+import { useGuidedTourMode } from "@/hooks/use-guided-tour-mode";
+import { guidedTourFinanceData } from "@/lib/guided-tour-data";
 
 export default function UserSettingsPage() {
   const { user, isLoading, logout, refreshUser } = useAuth();
   const { data, refreshData } = useFinanceData();
+  const isGuidedTourActive = useGuidedTourMode();
+  const visibleFinanceData = isGuidedTourActive ? guidedTourFinanceData : data;
   const { t, language, setLanguage, currency, setCurrency } = useLanguage();
   const router = useRouter();
   const isMobile = useIsMobile();
@@ -170,6 +175,26 @@ export default function UserSettingsPage() {
     }
   }, [isLoading, user, router]);
 
+  useEffect(() => {
+    const handleTourStep = (event: Event) => {
+      const targets = (event as CustomEvent<string[]>).detail || [];
+      setThemeOpen(false);
+      setAccentOpen(false);
+    };
+    const resetTourState = () => {
+      setThemeOpen(false);
+      setAccentOpen(false);
+    };
+    window.addEventListener("guidedTourStepChanged", handleTourStep);
+    window.addEventListener("guidedTourStepReady", handleTourStep);
+    window.addEventListener("guidedTourEnded", resetTourState);
+    return () => {
+      window.removeEventListener("guidedTourStepChanged", handleTourStep);
+      window.removeEventListener("guidedTourStepReady", handleTourStep);
+      window.removeEventListener("guidedTourEnded", resetTourState);
+    };
+  }, []);
+
   const getThemeIcon = () => {
     switch (theme) {
       case "light":
@@ -253,6 +278,13 @@ export default function UserSettingsPage() {
                       {t("admin.title")}
                     </DropdownMenuItem>
                   )}
+                  <DropdownMenuItem
+                    onClick={() => window.dispatchEvent(new Event("startGuidedTour"))}
+                    className="cursor-pointer"
+                  >
+                    <Compass className="w-4 h-4 mr-2" />
+                    {t("guidedTour.takeTour")}
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={() => setLanguageDialogOpen(true)}
@@ -278,7 +310,7 @@ export default function UserSettingsPage() {
         </div>
       </header>
       <main className="container mx-auto p-4 space-y-6">
-        <Card>
+        <Card data-tour="tour-appearance">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Palette className="w-5 h-5" />
@@ -311,7 +343,7 @@ export default function UserSettingsPage() {
                     </Button>
                   </CollapsibleTrigger>
                   <CollapsibleContent className="pt-4">
-                    <ThemeToggle />
+                    <div><ThemeToggle /></div>
                   </CollapsibleContent>
                 </Collapsible>
                 <Collapsible open={accentOpen} onOpenChange={setAccentOpen}>
@@ -337,7 +369,7 @@ export default function UserSettingsPage() {
                     </Button>
                   </CollapsibleTrigger>
                   <CollapsibleContent className="pt-4">
-                    <AccentColorSwitcher />
+                    <div><AccentColorSwitcher /></div>
                   </CollapsibleContent>
                 </Collapsible>
               </>
@@ -361,7 +393,7 @@ export default function UserSettingsPage() {
         </Card>
         <MinimumBalanceAlertSettings />
         {user && user.groups && user.groups.length > 1 && (
-          <Card>
+          <Card data-tour="tour-group-selection">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Users className="w-5 h-5" />
@@ -494,12 +526,17 @@ export default function UserSettingsPage() {
           </CardHeader>
           <CardContent><EmailRecoverySettings /></CardContent>
         </Card>
+        <div data-tour="tour-data-management">
         <DataManagement
-          data={data}
+          tourPreview={isGuidedTourActive}
+          readOnly={isGuidedTourActive}
+          isGuidedTourActive={isGuidedTourActive}
+          data={visibleFinanceData}
           onImportComplete={refreshData}
           onClearData={handleClearData}
         />
-        <Card>
+        </div>
+        <Card data-tour="tour-active-sessions">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Laptop className="w-5 h-5" />
@@ -510,7 +547,7 @@ export default function UserSettingsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <SessionsList />
+            <SessionsList tourPreview={isGuidedTourActive} />
           </CardContent>
         </Card>
       </main>

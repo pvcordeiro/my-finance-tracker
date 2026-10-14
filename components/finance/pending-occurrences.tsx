@@ -16,16 +16,20 @@ export function PendingOccurrences({
   onDismiss,
   isOpen: controlledIsOpen,
   onOpenChange,
+  tourReadOnly = false,
+  tourAutoExpand = false,
 }: {
   occurrences: PendingOccurrence[];
   onResolve: (occurrence: PendingOccurrence) => void;
   onDismiss?: (occurrence: PendingOccurrence) => void;
   isOpen?: boolean;
   onOpenChange?: (isOpen: boolean) => void;
+  tourReadOnly?: boolean;
+  tourAutoExpand?: boolean;
 }) {
   const { t } = useLanguage();
   const [localOpen, setLocalOpen] = useState(false);
-  const expanded = controlledIsOpen ?? localOpen;
+  const expanded = tourReadOnly && tourAutoExpand ? true : controlledIsOpen ?? localOpen;
   const setExpanded = (next: boolean) => {
     if (controlledIsOpen === undefined) setLocalOpen(next);
     onOpenChange?.(next);
@@ -33,9 +37,10 @@ export function PendingOccurrences({
   if (!occurrences.length) return null;
 
   const monthKeys = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+  const displayOccurrences = occurrences;
 
   return (
-    <Card className="overflow-hidden border-amber-500/30 bg-card shadow-none">
+    <Card data-tour={tourReadOnly ? "tour-pending" : undefined} className="overflow-hidden border-amber-500/30 bg-card shadow-none">
       <CardHeader
         role="button"
         tabIndex={0}
@@ -67,7 +72,7 @@ export function PendingOccurrences({
         </div>
       </CardHeader>
       {expanded && <CardContent className="space-y-2 p-3 sm:p-4">
-        {occurrences.map((occurrence) => {
+        {displayOccurrences.map((occurrence, index) => {
           const monthLabel = t(`months.${monthKeys[occurrence.month - 1]}`);
           const resolveLabel = occurrence.isIncome ? t("entries.markReceived") : t("entries.markPaid");
           return (
@@ -87,8 +92,8 @@ export function PendingOccurrences({
                 <PrivacyNumber value={occurrence.amount} />
               </span>
               <div className="flex w-full items-center justify-end gap-2 sm:w-auto">
-                {onDismiss && <Button size="sm" variant="outline" className="h-9 border-border bg-card px-2.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground sm:px-3 sm:text-sm" onClick={() => onDismiss(occurrence)}>{occurrence.isIncome ? t("entries.dismissPendingIncome") : t("entries.dismissPendingExpense")}</Button>}
-                <Button size="sm" variant="outline" className="h-9 border-finance-positive/35 px-2.5 text-xs text-finance-positive hover:bg-finance-positive/10 hover:text-finance-positive sm:px-3 sm:text-sm" onClick={() => onResolve(occurrence)} aria-label={resolveLabel}>
+                {onDismiss && <Button size="sm" variant="outline" className="h-9 border-border bg-card px-2.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground sm:px-3 sm:text-sm" onClick={() => { if (!tourReadOnly) onDismiss(occurrence); }} disabled={tourReadOnly}>{occurrence.isIncome ? t("entries.dismissPendingIncome") : t("entries.dismissPendingExpense")}</Button>}
+                  <Button size="sm" variant="outline" className="h-9 border-finance-positive/35 px-2.5 text-xs text-finance-positive hover:bg-finance-positive/10 hover:text-finance-positive sm:px-3 sm:text-sm" onClick={() => { if (!tourReadOnly) onResolve(occurrence); }} aria-label={resolveLabel} disabled={tourReadOnly}>
                   <Check className="h-4 w-4 sm:mr-1.5" />
                   <span>{resolveLabel}</span>
                 </Button>

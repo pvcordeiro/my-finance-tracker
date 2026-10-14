@@ -26,9 +26,12 @@ import { useLanguage } from "@/hooks/use-language";
 import { useOnline } from "@/hooks/use-online";
 import { OfflineBlockedPage } from "@/components/pwa/offline-blocked-page";
 import { PendingOccurrences } from "@/components/finance/pending-occurrences";
+import { guidedTourFinanceData } from "@/lib/guided-tour-data";
+import { useGuidedTourMode } from "@/hooks/use-guided-tour-mode";
 
 function HomePageContent() {
   const { currencySymbol, t } = useLanguage();
+  const isGuidedTourActive = useGuidedTourMode();
   const isOnline = useOnline();
   const { user } = useAuth();
   const router = useRouter();
@@ -50,9 +53,11 @@ function HomePageContent() {
     subtractFromBankAmount,
     entryFlashState,
   } = useFinanceData();
+  const visibleData = isGuidedTourActive ? guidedTourFinanceData : data;
   const [incomeOpen, setIncomeOpen] = useState(false);
   const [expenseOpen, setExpenseOpen] = useState(false);
   const [pendingOpen, setPendingOpen] = useState(false);
+  const [showHistoryTourExample, setShowHistoryTourExample] = useState(false);
   const [incomeGuidedDialogOpen, setIncomeGuidedDialogOpen] = useState(false);
   const [expenseGuidedDialogOpen, setExpenseGuidedDialogOpen] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -79,6 +84,31 @@ function HomePageContent() {
       router.replace("/user");
     }
   }, [router, searchParams]);
+
+  useEffect(() => {
+    const handleTourStep = (event: Event) => {
+      const targets = (event as CustomEvent<string[]>).detail || [];
+      const isHistoryStep = targets.includes("tour-history");
+      setShowHistoryTourExample(isHistoryStep);
+      setPendingOpen(targets.includes("tour-pending"));
+      setIncomeOpen(false);
+      setExpenseOpen(false);
+    };
+    const handleTourEnd = () => {
+      setShowHistoryTourExample(false);
+      setPendingOpen(false);
+      setIncomeOpen(false);
+      setExpenseOpen(false);
+    };
+    window.addEventListener("guidedTourStepChanged", handleTourStep);
+    window.addEventListener("guidedTourStepReady", handleTourStep);
+    window.addEventListener("guidedTourEnded", handleTourEnd);
+    return () => {
+      window.removeEventListener("guidedTourStepChanged", handleTourStep);
+      window.removeEventListener("guidedTourStepReady", handleTourStep);
+      window.removeEventListener("guidedTourEnded", handleTourEnd);
+    };
+  }, []);
 
   useEffect(() => {
     const applyGuidedData = async () => {
@@ -370,9 +400,12 @@ function HomePageContent() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:h-full">
               {/* Left Column - Bank Amount */}
               <div className="space-y-4 pt-2 lg:overflow-y-auto lg:pr-1 lg:h-full lg:pb-36">
-                <PendingOccurrences occurrences={data.pending || []} onResolve={resolveOccurrence} onDismiss={dismissOccurrence} isOpen={pendingOpen} onOpenChange={setPendingOpen} />
+                <PendingOccurrences occurrences={visibleData.pending || []} onResolve={resolveOccurrence} onDismiss={dismissOccurrence} isOpen={pendingOpen} onOpenChange={setPendingOpen} tourReadOnly={isGuidedTourActive} tourAutoExpand={pendingOpen} />
                 <BankAmount
-                  amount={data.bankAmount}
+                  data-tour="tour-balance"
+                  readOnly={isGuidedTourActive}
+                  tourReadOnly={isGuidedTourActive}
+                  amount={visibleData.bankAmount}
                   onAdd={handleAddToBankAmount}
                   onSubtract={handleSubtractFromBankAmount}
                   flashToken={
@@ -384,6 +417,7 @@ function HomePageContent() {
                 />
                 <BalanceHistory
                   groupId={user?.current_group_id || null}
+                  tourPreview={isGuidedTourActive && showHistoryTourExample}
                   refreshTrigger={
                     lastSaved?.kind === "bank" ? lastSaved.token : undefined
                   }
@@ -392,9 +426,12 @@ function HomePageContent() {
               {/* Right Column - Income and Expenses */}
               <div className="space-y-4 pt-2 lg:overflow-y-auto lg:pl-1 lg:h-full lg:pb-36">
                 <EntryForm
+                  data-tour="tour-income"
+                  tourCompact={isGuidedTourActive}
+                  readOnly={isGuidedTourActive}
                   ref={incomeSectionRef}
                   title={t("entries.income")}
-                  entries={data.incomes}
+                  entries={visibleData.incomes}
                   onAddEntry={() => addEntry("incomes")}
                   onGuidedAddEntry={handleGuidedAddIncome}
                   onUpdateEntry={(id, field, value, monthIndex) =>
@@ -441,7 +478,7 @@ function HomePageContent() {
                   isOpen={incomeOpen}
                   onToggle={() => setIncomeOpen(!incomeOpen)}
                   hideAddButton={true}
-                  onHeaderAdd={isOnline ? () => setIncomeGuidedDialogOpen(true) : undefined}
+                  onHeaderAdd={isOnline && !isGuidedTourActive ? () => setIncomeGuidedDialogOpen(true) : undefined}
                   guidedDialogOpen={incomeGuidedDialogOpen}
                   onGuidedDialogOpenChange={setIncomeGuidedDialogOpen}
                   flashEntryId={
@@ -496,9 +533,12 @@ function HomePageContent() {
                 />
 
                 <EntryForm
+                  data-tour="tour-expenses"
+                  tourCompact={isGuidedTourActive}
+                  readOnly={isGuidedTourActive}
                   ref={expenseSectionRef}
                   title={t("entries.expenses")}
-                  entries={data.expenses}
+                  entries={visibleData.expenses}
                   onAddEntry={() => addEntry("expenses")}
                   onGuidedAddEntry={handleGuidedAddExpense}
                   onUpdateEntry={(id, field, value, monthIndex) =>
@@ -545,7 +585,7 @@ function HomePageContent() {
                   isOpen={expenseOpen}
                   onToggle={() => setExpenseOpen(!expenseOpen)}
                   hideAddButton={true}
-                  onHeaderAdd={isOnline ? () => setExpenseGuidedDialogOpen(true) : undefined}
+                  onHeaderAdd={isOnline && !isGuidedTourActive ? () => setExpenseGuidedDialogOpen(true) : undefined}
                   guidedDialogOpen={expenseGuidedDialogOpen}
                   onGuidedDialogOpenChange={setExpenseGuidedDialogOpen}
                   flashEntryId={

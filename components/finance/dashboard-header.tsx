@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   LogOut,
@@ -13,7 +13,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { usePrivacy } from "@/hooks/use-privacy";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { Edit, BarChart3, FileSpreadsheet } from "lucide-react";
+import { Edit, BarChart3, FileSpreadsheet, Compass } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   DropdownMenu,
@@ -45,6 +45,24 @@ export function DashboardHeader() {
   const isOnline = useOnline();
   const [languageDialogOpen, setLanguageDialogOpen] = useState(false);
   const [groupDialogOpen, setGroupDialogOpen] = useState(false);
+  const [notifiedMultiGroup, setNotifiedMultiGroup] = useState(false);
+
+  useEffect(() => {
+    if (!user?.groups || user.groups.length <= 1 || notifiedMultiGroup) return;
+    const notificationKey = `finance-tracker-multi-group-notice-${user.id}`;
+    if (localStorage.getItem(notificationKey) === "shown") {
+      setNotifiedMultiGroup(true);
+      return;
+    }
+    localStorage.setItem(notificationKey, "shown");
+    setNotifiedMultiGroup(true);
+    toast.info(t("guidedTour.groupAccessNotice"), {
+      action: {
+        label: t("settings.groupSelection"),
+        onClick: () => setGroupDialogOpen(true),
+      },
+    });
+  }, [user?.id, user?.groups?.length, notifiedMultiGroup, t]);
 
   const handleLogout = async () => {
     await logout();
@@ -93,6 +111,7 @@ export function DashboardHeader() {
 
   return (
     <header
+      data-tour-fixed-header
       className="bg-background/90 backdrop-blur-sm border-b border-border/50 sticky z-50"
       style={{
         top: isOnline ? 0 : OFFLINE_BANNER_HEIGHT,
@@ -119,6 +138,7 @@ export function DashboardHeader() {
 
           <div className="flex items-center gap-2 sm:gap-4">
             <Button
+              data-tour="tour-privacy"
               variant="outline"
               size="sm"
               onClick={handlePrivacyToggle}
@@ -176,6 +196,13 @@ export function DashboardHeader() {
                 >
                   <User className="w-4 h-4 mr-2" />
                   {t("settings.accountSettings")}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => window.dispatchEvent(new Event("startGuidedTour"))}
+                  className="cursor-pointer"
+                >
+                  <Compass className="w-4 h-4 mr-2" />
+                  {t("guidedTour.replay")}
                 </DropdownMenuItem>
                 {user?.groups && user.groups.length > 1 && (
                   <GroupSelectorMenuItem onOpenChange={setGroupDialogOpen} />

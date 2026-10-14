@@ -19,9 +19,13 @@ import type { FinanceData } from "@/hooks/use-finance-data";
 import { PrivacyNumber } from "@/components/ui/privacy-number";
 import { PrivacyText } from "@/components/ui/privacy-text";
 import { useLanguage } from "@/hooks/use-language";
+import { useGuidedTourMode } from "@/hooks/use-guided-tour-mode";
+import { guidedTourFinanceData } from "@/lib/guided-tour-data";
 
 interface DetailsTableProps {
   data: FinanceData;
+  tourPreview?: boolean;
+  readOnly?: boolean;
 }
 
 interface RollingMonth {
@@ -38,6 +42,8 @@ interface MobileMonthCarouselProps {
   months: RollingMonth[];
   currentMonth: number;
   currentYear: number;
+  supportsFullscreen: boolean;
+  tourPreview: boolean;
 }
 
 function MobileMonthCarousel({
@@ -47,6 +53,8 @@ function MobileMonthCarousel({
   months,
   currentMonth,
   currentYear,
+  supportsFullscreen,
+  tourPreview,
 }: MobileMonthCarouselProps) {
   const { t } = useLanguage();
   const viewportRef = useRef<HTMLDivElement | null>(null);
@@ -183,7 +191,7 @@ function MobileMonthCarousel({
                     </span>
                   </div>
                 )}
-                {entries.map((entry) => {
+                {(tourPreview && entries.length === 0 ? [{ id: "tour-mobile-entry", description: isIncome ? t("guidedTour.incomeExampleName") : t("guidedTour.expenseExampleName"), amounts: Array.from({ length: 12 }, () => isIncome ? 2400 : 950) }] : entries).map((entry) => {
                   const amount = entry.amounts[monthIndex] || 0;
                   return (
                     <div
@@ -223,15 +231,31 @@ function MobileMonthCarousel({
           );
         })}
       </div>
-      <p className="text-center text-xs text-muted-foreground">
-        {t("details.fullscreenCue")}
-      </p>
+      {supportsFullscreen && (
+        <p className="text-center text-xs text-muted-foreground">
+          {t("details.fullscreenCue")}
+        </p>
+      )}
     </div>
   );
 }
 
-export function DetailsTable({ data }: DetailsTableProps) {
+export function DetailsTable({ data, tourPreview = false, readOnly = false }: DetailsTableProps) {
   const { t } = useLanguage();
+  const [supportsFullscreen, setSupportsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const nav = navigator as Navigator & { userAgentData?: { platform?: string } };
+    const platform = nav.userAgentData?.platform || navigator.platform || "";
+    const isAppleMobile = /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+      (/Mac/i.test(platform) && navigator.maxTouchPoints > 1);
+    const supportsFullscreen =
+      typeof document.documentElement.requestFullscreen === "function" &&
+      typeof Element.prototype.requestFullscreen === "function";
+    setSupportsFullscreen(supportsFullscreen && !isAppleMobile);
+  }, []);
+
+  const displayData = tourPreview ? guidedTourFinanceData : data;
 
   const getMonthLabel = (monthIndex: number): string => {
     const monthKeys = [
@@ -372,6 +396,7 @@ export function DetailsTable({ data }: DetailsTableProps) {
     <div className="space-y-8">
       {/* Income Details */}
       <Card
+        data-tour="tour-details-income"
         className={cn(
           "income-card shadow-sm relative",
           fullscreenState === "income" && "z-50"
@@ -384,15 +409,17 @@ export function DetailsTable({ data }: DetailsTableProps) {
             </span>
             <span className="tracking-tight">{t("entries.incomeDetails")}</span>
           </CardTitle>
-          <div className="md:hidden ml-auto -mt-1">
+          {supportsFullscreen && <div className="md:hidden ml-auto -mt-1">
             <button
               type="button"
+              data-tour="tour-income-fullscreen"
               aria-label={
                 fullscreenState === "income"
                   ? t("entries.exitFullscreen")
                   : t("entries.enterFullscreen")
               }
-              onClick={() => enterFullscreen("income")}
+              onClick={() => { if (!readOnly) void enterFullscreen("income"); }}
+              disabled={readOnly}
               className="inline-flex items-center justify-center rounded-md border border-border bg-card backdrop-blur px-2 py-1 text-foreground shadow-sm hover:bg-accent active:scale-[0.97] transition text-xs font-medium"
             >
               {fullscreenState === "income" ? (
@@ -401,16 +428,18 @@ export function DetailsTable({ data }: DetailsTableProps) {
                 <Maximize2 className="w-4 h-4" />
               )}
             </button>
-          </div>
+          </div>}
         </CardHeader>
         <CardContent>
           <MobileMonthCarousel
             type="income"
-            entries={data.incomes}
-            bankAmount={data.bankAmount}
+            entries={displayData.incomes}
+            bankAmount={displayData.bankAmount}
             months={months}
             currentMonth={currentMonth}
             currentYear={currentYear}
+            supportsFullscreen={supportsFullscreen}
+            tourPreview={tourPreview}
           />
           <div className="relative">
            <div
@@ -573,6 +602,7 @@ export function DetailsTable({ data }: DetailsTableProps) {
 
       {/* Expense Details */}
       <Card
+        data-tour="tour-details-expenses"
         className={cn(
           "expense-card shadow-sm relative",
           fullscreenState === "expense" && "z-50"
@@ -587,15 +617,17 @@ export function DetailsTable({ data }: DetailsTableProps) {
               {t("entries.expenseDetails")}
             </span>
           </CardTitle>
-          <div className="md:hidden ml-auto -mt-1">
+          {supportsFullscreen && <div className="md:hidden ml-auto -mt-1">
             <button
               type="button"
+              data-tour="tour-expense-fullscreen"
               aria-label={
                 fullscreenState === "expense"
                   ? t("entries.exitFullscreen")
                   : t("entries.enterFullscreen")
               }
-              onClick={() => enterFullscreen("expense")}
+              onClick={() => { if (!readOnly) void enterFullscreen("expense"); }}
+              disabled={readOnly}
               className="inline-flex items-center justify-center rounded-md border border-border bg-card backdrop-blur px-2 py-1 text-foreground shadow-sm hover:bg-accent active:scale-[0.97] transition text-xs font-medium"
             >
               {fullscreenState === "expense" ? (
@@ -604,16 +636,18 @@ export function DetailsTable({ data }: DetailsTableProps) {
                 <Maximize2 className="w-4 h-4" />
               )}
             </button>
-          </div>
+          </div>}
         </CardHeader>
         <CardContent>
           <MobileMonthCarousel
             type="expense"
-            entries={data.expenses}
-            bankAmount={data.bankAmount}
+            entries={displayData.expenses}
+            bankAmount={displayData.bankAmount}
             months={months}
             currentMonth={currentMonth}
             currentYear={currentYear}
+            supportsFullscreen={supportsFullscreen}
+            tourPreview={tourPreview}
           />
           <div className="relative">
            <div

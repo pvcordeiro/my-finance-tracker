@@ -37,7 +37,7 @@ interface Session {
   is_current: boolean;
 }
 
-export function SessionsList() {
+export function SessionsList({ tourPreview = false }: { tourPreview?: boolean }) {
   const { t, language } = useLanguage();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
@@ -158,6 +158,32 @@ export function SessionsList() {
     return deviceName;
   };
 
+  const tourSessions: Session[] = [
+    {
+      id: -1,
+      token: "tour-current-session",
+      user_agent: "Mozilla/5.0 Chrome/120.0.0.0 Safari/537.36",
+      ip_address: "192.168.1.24",
+      device_name: "Mac",
+      created_at: new Date().toISOString(),
+      last_accessed: new Date().toISOString(),
+      expires_at: new Date(Date.now() + 86400000).toISOString(),
+      is_current: true,
+    },
+    {
+      id: -2,
+      token: "tour-phone-session",
+      user_agent: "Mozilla/5.0 (Linux; Android 14) Chrome/120.0.0.0 Mobile Safari/537.36",
+      ip_address: "192.168.1.37",
+      device_name: "Mobile Device",
+      created_at: new Date(Date.now() - 86400000).toISOString(),
+      last_accessed: new Date(Date.now() - 3600000).toISOString(),
+      expires_at: new Date(Date.now() + 86400000).toISOString(),
+      is_current: false,
+    },
+  ];
+  const visibleSessions = tourPreview ? tourSessions : sessions;
+
   const getBrowserName = (userAgent: string) => {
     if (!userAgent) return t("settings.unknownBrowser");
     if (userAgent.includes("Chrome")) return "Chrome";
@@ -195,19 +221,22 @@ export function SessionsList() {
     );
   }
 
-  if (sessions.length === 0) {
+  if (sessions.length === 0 && !tourPreview) {
     return (
-      <div className="text-center py-8 text-muted-foreground">
-        {t("settings.noActiveSessions")}
+      <div className="space-y-3">
+        <div className="text-center py-5 text-sm text-muted-foreground">
+          {t("settings.noActiveSessions")}
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      {sessions.map((session) => (
+      {visibleSessions.map((session, index) => (
         <div
           key={session.id}
+          data-tour={tourPreview && index === 0 ? "tour-active-session-item" : undefined}
           className={`flex items-start gap-4 p-4 rounded-lg border ${
             session.is_current
               ? "border-primary/50 bg-primary/5"
@@ -228,7 +257,7 @@ export function SessionsList() {
                 </span>
               )}
             </div>
-            <div className="space-y-1 text-xs text-muted-foreground">
+      <div className="space-y-1 text-xs text-muted-foreground">
               <div className="flex items-center gap-1.5">
                 <Chrome className="w-3 h-3" />
                 <span>{getBrowserName(session.user_agent)}</span>
@@ -252,8 +281,8 @@ export function SessionsList() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => handleRevokeClick(session)}
-              disabled={revoking === session.id}
+              onClick={() => { if (!tourPreview) handleRevokeClick(session); }}
+              disabled={tourPreview || revoking === session.id}
               className="text-muted-foreground hover:text-destructive"
               aria-label={t("settings.revokeSession")}
             >

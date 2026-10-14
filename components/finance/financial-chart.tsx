@@ -19,12 +19,13 @@ import { Button } from "@/components/ui/button";
 
 interface FinancialChartProps {
   data: FinanceData;
+  tourPreview?: boolean;
 }
 
-export function FinancialChart({ data }: FinancialChartProps) {
+export function FinancialChart({ data, tourPreview = false }: FinancialChartProps) {
   const { formatCurrency, t } = useLanguage();
   const { privacyMode, isRevealed, revealTemporarily } = usePrivacy();
-  const shouldHideChart = privacyMode && !isRevealed;
+  const shouldHideChart = privacyMode && !isRevealed && !tourPreview;
 
   const getMonthLabel = (monthIndex: number): string => {
     const monthKeys = [
@@ -66,7 +67,7 @@ export function FinancialChart({ data }: FinancialChartProps) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>{t("dashboard.incomeVsExpenses")}</CardTitle>
+          <CardTitle>{t("dashboard.incomeVsExpenses")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-center py-8 text-muted-foreground">
@@ -93,7 +94,7 @@ export function FinancialChart({ data }: FinancialChartProps) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>{t("dashboard.incomeVsExpenses")}</CardTitle>
+          <CardTitle>{t("dashboard.incomeVsExpenses")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex h-[300px] flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border bg-muted/30 px-6 text-center">
@@ -162,7 +163,7 @@ export function FinancialChart({ data }: FinancialChartProps) {
       {/* Income vs Expenses Bar Chart */}
       <Card>
         <CardHeader>
-          <CardTitle>{t("dashboard.incomeVsExpenses")}</CardTitle>
+          <CardTitle data-tour="tour-charts">{t("dashboard.incomeVsExpenses")}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">

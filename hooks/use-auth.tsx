@@ -17,6 +17,8 @@ interface User {
   language?: string;
   currency?: string;
   minimum_balance_alert?: number | null;
+  tour_completed?: boolean;
+  admin_tour_completed?: boolean;
 }
 
 interface AuthContextType {
@@ -31,6 +33,8 @@ interface AuthContextType {
   ) => Promise<boolean>;
   logout: () => void;
   refreshUser: () => Promise<void>;
+  completeTour: () => Promise<boolean>;
+  completeAdminTour: () => Promise<boolean>;
   isLoading: boolean;
 }
 
@@ -49,6 +53,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (payload.type === "group-changed") {
           void refreshUser();
           window.dispatchEvent(new CustomEvent("userGroupChanged", { detail: payload }));
+        }
+        if (payload.type === "group-access-added") {
+          void refreshUser();
+          window.dispatchEvent(new CustomEvent("userGroupAccessAdded", { detail: payload }));
         }
       } catch (error) {
         console.error("Failed to process account update:", error);
@@ -232,9 +240,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const completeTour = async () => {
+    try {
+      const response = await fetch("/api/user/tour", {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!response.ok) return false;
+      setUser((current) => current ? { ...current, tour_completed: true } : current);
+      try {
+        const cached = localStorage.getItem("finance-tracker-user");
+        if (cached) {
+          localStorage.setItem(
+            "finance-tracker-user",
+            JSON.stringify({ ...JSON.parse(cached), tour_completed: true })
+          );
+        }
+      } catch {}
+      return true;
+    } catch (error) {
+      console.error("Failed to save guided tour completion:", error);
+      return false;
+    }
+  };
+
+  const completeAdminTour = async () => {
+    try {
+      const response = await fetch("/api/user/admin-tour", {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!response.ok) return false;
+      setUser((current) => current ? { ...current, admin_tour_completed: true } : current);
+      try {
+        const cached = localStorage.getItem("finance-tracker-user");
+        if (cached) {
+          localStorage.setItem(
+            "finance-tracker-user",
+            JSON.stringify({ ...JSON.parse(cached), admin_tour_completed: true })
+          );
+        }
+      } catch {}
+      return true;
+    } catch (error) {
+      console.error("Failed to save admin tour completion:", error);
+      return false;
+    }
+  };
+
   return (
     <AuthContext.Provider
-      value={{ user, login, register, logout, refreshUser, isLoading }}
+      value={{ user, login, register, logout, refreshUser, completeTour, completeAdminTour, isLoading }}
     >
       {children}
     </AuthContext.Provider>

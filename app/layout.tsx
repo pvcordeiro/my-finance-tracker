@@ -15,6 +15,7 @@ import { OfflineBanner } from "@/components/pwa/offline-banner";
 import { LanguageProvider } from "@/hooks/use-language";
 import { SerwistProvider } from "./serwist";
 import { DevelopmentServiceWorkerCleanup } from "@/components/pwa/development-service-worker-cleanup";
+import { GuidedTour } from "@/components/finance/guided-tour";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -84,6 +85,7 @@ html {
                   <PWAInstallPrompt />
                   <OfflineBanner />
                   {children}
+                  <GuidedTour />
                   <NoGroupOverlay />
                   <Suspense fallback={null}>
                     <MobileBottomNav />

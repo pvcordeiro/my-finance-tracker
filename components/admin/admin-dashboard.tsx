@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   Shield,
+  Compass,
   Users,
   UserCog,
   Settings,
@@ -97,6 +98,21 @@ export function AdminDashboard() {
   const [renameGroupName, setRenameGroupName] = useState("");
   const [activeTab, setActiveTab] = useState("users");
   const [languageDialogOpen, setLanguageDialogOpen] = useState(false);
+
+  useEffect(() => {
+    const onAdminTourStart = () => setActiveTab("users");
+    const onAdminTourStepChanged = (event: Event) => {
+      const targetName = (event as CustomEvent<string[]>).detail?.[0];
+      const tab = targetName === "admin-tour-groups" ? "groups" : targetName === "admin-tour-settings" ? "settings" : "users";
+      setActiveTab(tab);
+    };
+    window.addEventListener("adminTourStarted", onAdminTourStart);
+    window.addEventListener("adminGuidedTourStepChanged", onAdminTourStepChanged);
+    return () => {
+      window.removeEventListener("adminTourStarted", onAdminTourStart);
+      window.removeEventListener("adminGuidedTourStepChanged", onAdminTourStepChanged);
+    };
+  }, []);
 
   useEffect(() => {
     if (isMobile) {
@@ -379,6 +395,7 @@ export function AdminDashboard() {
   return (
     <div className="min-h-dvh finance-gradient page-nav-padding">
       <header
+        data-tour-fixed-header
         className="bg-background/90 backdrop-blur-sm border-b border-border/50 sticky z-50"
         style={{ top: 0, marginTop: 0 }}
       >
@@ -412,6 +429,14 @@ export function AdminDashboard() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    onClick={() => window.dispatchEvent(new Event("startAdminGuidedTour"))}
+                    className="cursor-pointer"
+                  >
+                    <Compass className="w-4 h-4 mr-2" />
+                    {t("guidedTour.adminTourReplay")}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={() => router.push("/user")}
                     className="cursor-pointer"
@@ -462,7 +487,7 @@ export function AdminDashboard() {
           )}
 
           <TabsContent value="users">
-            <Card>
+            <Card data-tour="admin-tour-users">
               <CardHeader>
                 <CardTitle>{t("admin.userManagement")}</CardTitle>
                 <CardDescription>
@@ -728,7 +753,7 @@ export function AdminDashboard() {
           </TabsContent>
 
           <TabsContent value="groups">
-            <Card>
+            <Card data-tour="admin-tour-groups">
               <CardHeader>
                 <CardTitle>{t("admin.groupManagement")}</CardTitle>
                 <CardDescription>
@@ -1034,7 +1059,7 @@ export function AdminDashboard() {
           </TabsContent>
 
           <TabsContent value="settings">
-            <Card>
+            <Card data-tour="admin-tour-settings">
               <CardHeader>
                 <CardTitle>{t("admin.systemSettings")}</CardTitle>
                 <CardDescription>
@@ -1092,7 +1117,7 @@ export function AdminDashboard() {
       </main>
 
       {isMobile && (
-        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border shadow-lg">
+        <nav data-tour-fixed-footer className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border shadow-lg">
           <div className="flex justify-around items-center h-16 px-4">
             <button
               onClick={() => setActiveTab("users")}

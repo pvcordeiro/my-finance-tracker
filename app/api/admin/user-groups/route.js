@@ -4,6 +4,7 @@ import {
   validateSession,
   getSessionFromRequest,
 } from "../../../../lib/session.js";
+import { notifyUserAccountChange } from "../../../../lib/sse-notifications.js";
 
 function verifyAdmin(request) {
   const sessionToken = getSessionFromRequest(request);
@@ -110,6 +111,13 @@ export async function POST(request) {
     db.prepare(
       `INSERT INTO user_groups (user_id, group_id, joined_at) VALUES (?, ?, CURRENT_TIMESTAMP)`
     ).run(numericUserId, numericGroupId);
+
+    const groupCount = db.prepare(
+      "SELECT COUNT(*) AS count FROM user_groups WHERE user_id = ?"
+    ).get(numericUserId)?.count ?? 0;
+    if (groupCount > 1) {
+      notifyUserAccountChange(numericUserId, { type: "group-access-added", groupId: numericGroupId });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

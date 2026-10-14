@@ -26,6 +26,7 @@ export interface ProjectedBalanceMonth {
 
 interface BalanceAlertProps {
   projectedMonths: ProjectedBalanceMonth[];
+  tourPreview?: boolean;
 }
 
 function interpolate(template: string, values: Record<string, string>) {
@@ -35,7 +36,7 @@ function interpolate(template: string, values: Record<string, string>) {
   );
 }
 
-export function BalanceAlert({ projectedMonths }: BalanceAlertProps) {
+export function BalanceAlert({ projectedMonths, tourPreview = false }: BalanceAlertProps) {
   const { currencySymbol, formatCurrency, t } = useLanguage();
   const isOnline = useOnline();
   const { privacyMode, isRevealed } = usePrivacy();
@@ -45,6 +46,20 @@ export function BalanceAlert({ projectedMonths }: BalanceAlertProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [saveError, setSaveError] = useState(false);
+  const [tourActive, setTourActive] = useState(false);
+
+  useEffect(() => {
+    const syncTourState = () => {
+      setTourActive(document.documentElement.dataset.guidedTourActive === "true");
+    };
+    syncTourState();
+    window.addEventListener("startGuidedTour", syncTourState);
+    window.addEventListener("guidedTourEnded", syncTourState);
+    return () => {
+      window.removeEventListener("startGuidedTour", syncTourState);
+      window.removeEventListener("guidedTourEnded", syncTourState);
+    };
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -107,8 +122,9 @@ export function BalanceAlert({ projectedMonths }: BalanceAlertProps) {
 
   if (!isLoaded) return null;
 
-  const normalizedThreshold = threshold ?? 0;
-  const alert = threshold === null
+  const effectiveThreshold = tourPreview ? 3500 : threshold;
+  const normalizedThreshold = effectiveThreshold ?? 0;
+  const alert = effectiveThreshold === null
     ? null
     : getProjectedBalanceAlert(projectedMonths, normalizedThreshold);
   const alertMonth = alert?.month;
@@ -176,7 +192,7 @@ export function BalanceAlert({ projectedMonths }: BalanceAlertProps) {
         </section>
       )}
 
-      <AlertDialog open={setupRequired}>
+      <AlertDialog open={setupRequired && !tourActive}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t("settings.minimumBalanceAlertSetupTitle")}</AlertDialogTitle>
