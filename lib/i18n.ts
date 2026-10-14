@@ -944,7 +944,7 @@ export const translations = {
       updateCredentialsDescription: "Altere seu nome de usuário e senha.",
       changeUsernameDescription:
         "Atualize seu nome de usuário público (usado para login).",
-      changePasswordDescription: "Atualize sua senha (mínimo de 6 caracteres).",
+      changePasswordDescription: "Atualize sua senha (mínimo de 8 caracteres).",
       activeSessions: "Sessões Ativas",
       activeSessionsDescription:
         "Gerencie suas sessões ativas em diferentes dispositivos.",

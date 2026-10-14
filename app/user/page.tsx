@@ -446,11 +446,6 @@ export default function UserSettingsPage() {
             <SessionsList tourPreview={isGuidedTourActive} />
           </CardContent>
         </Card>
-        <p className="text-center text-xs text-muted-foreground">
-          <a href="https://db-ip.com" target="_blank" rel="noreferrer" className="underline underline-offset-4">
-            {t("settings.ipGeolocationAttribution")}
-          </a>
-        </p>
       </main>
 
       {/* Language/Currency Dialog */}
