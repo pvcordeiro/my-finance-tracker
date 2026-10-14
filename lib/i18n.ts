@@ -540,6 +540,7 @@ export const translations = {
       failedToClearData: "Could not clear financial data.",
     },
     navigation: {
+      main: "Main navigation",
       home: "Home",
       manage: "Manage",
       details: "Details",
@@ -1176,6 +1177,7 @@ export const translations = {
       failedToClearData: "Não foi possível limpar os dados financeiros.",
     },
     navigation: {
+      main: "Navegação principal",
       home: "Início",
       manage: "Gerenciar",
       details: "Detalhes",

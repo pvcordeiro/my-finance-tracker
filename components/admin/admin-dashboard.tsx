@@ -31,6 +31,7 @@ import {
   Settings,
   Trash2,
   LogOut,
+  ArrowLeft,
   UserPlus,
   UserMinus,
   Calendar,
@@ -52,8 +53,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { useLanguage } from "@/hooks/use-language";
-import { LanguageCurrencySelector } from "@/components/ui/language-currency-selector";
-import { LanguageCurrencyDialog } from "@/components/ui/language-currency-dialog";
 import { FinanceLogo } from "@/components/ui/finance-logo";
 
 interface User {
@@ -79,7 +78,7 @@ interface Group {
 
 export function AdminDashboard() {
   const { user, logout } = useAuth();
-  const { t, language, currency, setLanguage, setCurrency } = useLanguage();
+  const { t } = useLanguage();
   const router = useRouter();
   const isMobile = useIsMobile();
   const [users, setUsers] = useState<User[]>([]);
@@ -97,7 +96,11 @@ export function AdminDashboard() {
   const [groupToRename, setGroupToRename] = useState<Group | null>(null);
   const [renameGroupName, setRenameGroupName] = useState("");
   const [activeTab, setActiveTab] = useState("users");
-  const [languageDialogOpen, setLanguageDialogOpen] = useState(false);
+
+  const handleLogout = async () => {
+    await logout();
+    window.location.href = "/login";
+  };
 
   useEffect(() => {
     const onAdminTourStart = () => setActiveTab("users");
@@ -438,21 +441,14 @@ export function AdminDashboard() {
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    onClick={() => router.push("/user")}
+                    onClick={() => router.push("/")}
                     className="cursor-pointer"
                   >
-                    <User className="w-4 h-4 mr-2" />
-                    {t("settings.accountSettings")}
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    {t("admin.backToApp")}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={() => setLanguageDialogOpen(true)}
-                    className="cursor-pointer"
-                  >
-                    <LanguageCurrencySelector showInDropdown />
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={logout} className="cursor-pointer">
+                  <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
                     <LogOut className="w-4 h-4 mr-2" />
                     {t("common.signOut")}
                   </DropdownMenuItem>
@@ -1247,16 +1243,6 @@ export function AdminDashboard() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Language/Currency Dialog */}
-      <LanguageCurrencyDialog
-        open={languageDialogOpen}
-        onOpenChange={setLanguageDialogOpen}
-        language={language}
-        currency={currency}
-        onLanguageChange={setLanguage}
-        onCurrencyChange={setCurrency}
-        t={t}
-      />
     </div>
   );
 }

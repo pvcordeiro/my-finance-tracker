@@ -12,9 +12,10 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { usePrivacy } from "@/hooks/use-privacy";
 import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation";
-import { Edit, BarChart3, FileSpreadsheet, Compass } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Compass } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { AppNavigation } from "@/components/ui/app-navigation";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,13 +35,22 @@ import {
 } from "@/components/ui/group-selector";
 import { FinanceLogo } from "@/components/ui/finance-logo";
 
-export function DashboardHeader() {
+interface DashboardHeaderProps {
+  title?: string;
+  subtitle?: string;
+  showPrivacyToggle?: boolean;
+}
+
+export function DashboardHeader({
+  title,
+  subtitle,
+  showPrivacyToggle = true,
+}: DashboardHeaderProps) {
   const { user, logout } = useAuth();
   const { privacyMode, isLoading: privacyLoading } = usePrivacy();
   const { t, language, currency, setLanguage, setCurrency } =
     useLanguage();
   const router = useRouter();
-  const pathname = usePathname();
   const isMobile = useIsMobile();
   const isOnline = useOnline();
   const [languageDialogOpen, setLanguageDialogOpen] = useState(false);
@@ -103,12 +113,6 @@ export function DashboardHeader() {
     }
   };
 
-  const navItems = [
-    { href: "/manage", label: t("navigation.manage"), icon: Edit },
-    { href: "/", label: t("dashboard.summary"), icon: BarChart3 },
-    { href: "/details", label: t("navigation.details"), icon: FileSpreadsheet },
-  ];
-
   return (
     <header
       data-tour-fixed-header
@@ -128,44 +132,46 @@ export function DashboardHeader() {
             <FinanceLogo className="h-8 w-8 sm:h-10 sm:w-10" />
             <div>
               <span className="text-lg sm:text-xl font-bold text-foreground block">
-                {t("dashboard.title")}
+                {title || t("dashboard.title")}
               </span>
               <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
-                {t("dashboard.subtitle")}
+                {subtitle || t("dashboard.subtitle")}
               </p>
             </div>
           </Link>
 
           <div className="flex items-center gap-2 sm:gap-4">
-            <Button
-              data-tour="tour-privacy"
-              variant="outline"
-              size="sm"
-              onClick={handlePrivacyToggle}
-              disabled={privacyLoading}
-              className="flex items-center gap-2"
-              aria-label={
-                privacyMode
-                  ? t("settings.disablePrivacy")
-                  : t("settings.enablePrivacy")
-              }
-              title={
-                privacyMode
-                  ? t("settings.disablePrivacy")
-                  : t("settings.enablePrivacy")
-              }
-            >
-              {privacyMode ? (
-                <EyeOff className="w-4 h-4" />
-              ) : (
-                <Eye className="w-4 h-4" />
-              )}
-              {!isMobile && (
-                <span className="text-sm">
-                  {privacyMode ? t("settings.private") : t("settings.visible")}
-                </span>
-              )}
-            </Button>
+            {showPrivacyToggle && (
+              <Button
+                data-tour="tour-privacy"
+                variant="outline"
+                size="sm"
+                onClick={handlePrivacyToggle}
+                disabled={privacyLoading}
+                className="flex items-center gap-2"
+                aria-label={
+                  privacyMode
+                    ? t("settings.disablePrivacy")
+                    : t("settings.enablePrivacy")
+                }
+                title={
+                  privacyMode
+                    ? t("settings.disablePrivacy")
+                    : t("settings.enablePrivacy")
+                }
+              >
+                {privacyMode ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
+                {!isMobile && (
+                  <span className="text-sm">
+                    {privacyMode ? t("settings.private") : t("settings.visible")}
+                  </span>
+                )}
+              </Button>
+            )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -190,14 +196,6 @@ export function DashboardHeader() {
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuItem
-                  onClick={() => router.push("/user")}
-                  className="cursor-pointer"
-                  disabled={!isOnline}
-                >
-                  <User className="w-4 h-4 mr-2" />
-                  {t("settings.accountSettings")}
-                </DropdownMenuItem>
-                <DropdownMenuItem
                   onClick={() => window.dispatchEvent(new Event("startGuidedTour"))}
                   className="cursor-pointer"
                 >
@@ -207,7 +205,6 @@ export function DashboardHeader() {
                 {user?.groups && user.groups.length > 1 && (
                   <GroupSelectorMenuItem onOpenChange={setGroupDialogOpen} />
                 )}
-                <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() => setLanguageDialogOpen(true)}
                   className="cursor-pointer"
@@ -235,24 +232,7 @@ export function DashboardHeader() {
 
         {/* Desktop Navigation */}
         {!isMobile && (
-          <nav className="hidden sm:flex justify-center gap-4 pt-2 border-t border-border/50 mt-2">
-            {navItems.map(({ href, label, icon: Icon }) => {
-              const isActive = pathname === href;
-              return (
-                <Button
-                  key={href}
-                  variant={isActive ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => router.push(href)}
-                  className="flex items-center gap-2"
-                  disabled={!isOnline && href === "/manage"}
-                >
-                  <Icon className="w-4 h-4" />
-                  {label}
-                </Button>
-              );
-            })}
-          </nav>
+          <AppNavigation placement="desktop" />
         )}
       </div>
 

@@ -255,6 +255,7 @@ export function GuidedTour() {
       const headerBottom = document.querySelector("header")?.getBoundingClientRect().bottom ?? 64;
       const targetPanelHeight = Math.min(panelRef.current?.offsetHeight || 248, window.innerHeight * (mobileLayout ? 0.62 : 0.7));
       const navInset = mobileLayout ? 76 : 16;
+      const keepAdminMobileStepInPlace = isAdminTour && mobileLayout && stepIndex < 2;
       const targetsToPosition = mobileLayout && activeStep.title === "guidedTour.recurringTitle"
         ? resolvedTargets.filter((target) => target.dataset.tour === "tour-income" || target.dataset.tour === "tour-expenses")
         : [primaryTarget];
@@ -267,7 +268,10 @@ export function GuidedTour() {
       }, { top: Number.POSITIVE_INFINITY, bottom: Number.NEGATIVE_INFINITY });
       const hasAbovePanelRoom = positionBounds.top - targetPanelHeight - 18 >= headerBottom + 8;
       const hasBelowPanelRoom = positionBounds.bottom + targetPanelHeight + 18 <= window.innerHeight - navInset;
-      if (mobileLayout && activeStep.title === "guidedTour.dataTitle") {
+      if (keepAdminMobileStepInPlace) {
+        // Keep the first two admin-tour sections at the top of the page on phones.
+        // Their targets are tall, so centering them would hide the section heading.
+      } else if (mobileLayout && activeStep.title === "guidedTour.dataTitle") {
         const panelBottom = Math.max(headerBottom + 12, 16) + targetPanelHeight + 18;
         window.scrollTo({
           top: Math.max(0, window.scrollY + targetBoundsBeforeScroll.top - panelBottom),
@@ -377,7 +381,7 @@ export function GuidedTour() {
         const anchorCenterY = anchor.top + anchor.height / 2;
         const clamp = (value: number, max: number, size: number) =>
           Math.max(16, Math.min(value, max - size - 16));
-        if (isAdminTour && stepIndex === 0) {
+        if (isAdminTour && (stepIndex === 0 || stepIndex === 1)) {
           const footerTop = document.querySelector<HTMLElement>("[data-tour-fixed-footer]")?.getBoundingClientRect().top ?? viewportHeight;
           const bottom = Math.min(viewportHeight - 16, footerTop - 16);
           const top = Math.max(16, bottom - panelHeight);

@@ -10,21 +10,11 @@ import { ChangePasswordForm } from "@/components/auth/change-password-form";
 import { ChangeUsernameForm } from "@/components/auth/change-username-form";
 import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
-import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import {
-  LogOut,
-  ChevronDown,
-  Shield,
   ChevronRight,
   Sun,
   Moon,
@@ -36,7 +26,6 @@ import {
   Laptop,
   Users,
   Check,
-  Compass,
 } from "lucide-react";
 import {
   Card,
@@ -46,10 +35,9 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { FullPageLoader } from "@/components/ui/loading";
-import { User, Route } from "lucide-react";
+import { Route } from "lucide-react";
 import { AccentColorSwitcher } from "@/components/ui/accent-color-switcher";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { LanguageCurrencySelector } from "@/components/ui/language-currency-selector";
 import { LanguageCurrencyDialog } from "@/components/ui/language-currency-dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTheme } from "next-themes";
@@ -58,8 +46,7 @@ import { toast } from "sonner";
 import { useLanguage } from "@/hooks/use-language";
 import { useOnline } from "@/hooks/use-online";
 import { OfflineBlockedPage } from "@/components/pwa/offline-blocked-page";
-import { MinimalPageHeader } from "@/components/pwa/minimal-page-header";
-import { FinanceLogo } from "@/components/ui/finance-logo";
+import { DashboardHeader } from "@/components/finance/dashboard-header";
 import { EmailRecoverySettings } from "@/components/user/email-recovery-settings";
 import { MinimumBalanceAlertSettings } from "@/components/user/minimum-balance-alert-settings";
 import { DataManagement } from "@/components/finance/data-management";
@@ -68,7 +55,7 @@ import { useGuidedTourMode } from "@/hooks/use-guided-tour-mode";
 import { guidedTourFinanceData } from "@/lib/guided-tour-data";
 
 export default function UserSettingsPage() {
-  const { user, isLoading, logout, refreshUser } = useAuth();
+  const { user, isLoading, refreshUser } = useAuth();
   const { data, refreshData } = useFinanceData();
   const isGuidedTourActive = useGuidedTourMode();
   const visibleFinanceData = isGuidedTourActive ? guidedTourFinanceData : data;
@@ -227,7 +214,7 @@ export default function UserSettingsPage() {
   if (!isOnline) {
     return (
       <div className="min-h-dvh finance-gradient page-nav-padding">
-        <MinimalPageHeader title={t("settings.accountSettings")} />
+        <DashboardHeader />
         <OfflineBlockedPage />
       </div>
     );
@@ -235,81 +222,16 @@ export default function UserSettingsPage() {
 
   return (
     <div className="min-h-dvh finance-gradient page-nav-padding">
-      <header
-        className="bg-background/90 backdrop-blur-sm border-b border-border/50 sticky z-50"
-        style={{ top: 0, marginTop: 0 }}
-      >
-        <div className="container mx-auto px-4 py-3 sm:py-4">
-          <div className="flex items-center justify-between">
-            <div
-              className="flex items-center gap-2 sm:gap-3 cursor-pointer"
-              onClick={() => router.push("/")}
-            >
-              <FinanceLogo className="h-8 w-8 sm:h-10 sm:w-10" />
-              <div>
-                <h1 className="text-lg sm:text-xl font-bold text-primary-contrast">
-                  {t("settings.accountSettings")}
-                </h1>
-                <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
-                  {t("settings.managePersonalPreferences")}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex items-center gap-2"
-                  >
-                    <User className="w-4 h-4" />
-                    <span>{user.username}</span>
-                    <ChevronDown className="w-4 h-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  {user.is_admin && (
-                    <DropdownMenuItem
-                      onClick={() => router.push("/admin")}
-                      className="cursor-pointer"
-                    >
-                      <Shield className="w-4 h-4 mr-2" />
-                      {t("admin.title")}
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuItem
-                    onClick={() => window.dispatchEvent(new Event("startGuidedTour"))}
-                    className="cursor-pointer"
-                  >
-                    <Compass className="w-4 h-4 mr-2" />
-                    {t("guidedTour.takeTour")}
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={() => setLanguageDialogOpen(true)}
-                    className="cursor-pointer"
-                  >
-                    <LanguageCurrencySelector showInDropdown />
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={async () => {
-                      await logout();
-                      router.push("/login");
-                    }}
-                    className="cursor-pointer"
-                  >
-                    <LogOut className="w-4 h-4 mr-2" />
-                    {t("common.signOut")}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
-        </div>
-      </header>
+      <DashboardHeader />
       <main className="container mx-auto p-4 space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold text-primary-contrast">
+            {t("settings.accountSettings")}
+          </h1>
+          <p className="text-muted-foreground">
+            {t("settings.managePersonalPreferences")}
+          </p>
+        </div>
         <Card data-tour="tour-appearance">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
