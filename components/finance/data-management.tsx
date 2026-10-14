@@ -226,8 +226,7 @@ export function DataManagement({
           <div className="space-y-2">
               <Button
                 type="button"
-                variant="outline"
-                className="w-full justify-center gap-2"
+                className="w-full transition-all duration-200 hover:scale-[1.02]"
                 onClick={() => { if (!readOnly) importInputRef.current?.click(); }}
                 disabled={readOnly}
             >

@@ -91,27 +91,29 @@ export function BankAmount({
     <Card data-tour={dataTour} className="bg-primary/5 border-primary/20">
       <CardContent className="p-4 sm:p-6">
           <div className="flex flex-col gap-6">
-          <div className="flex items-end justify-between">
+          <div>
             <div className="flex flex-col gap-0.5">
               <Label className="text-xs font-semibold uppercase tracking-wider text-primary-contrast">
                 {t("dashboard.currentBalance")}
               </Label>
-              <span
-                className={`text-3xl sm:text-4xl font-bold text-primary-contrast transition-all duration-300 ${
-                  flashActive
-                    ? currentFlashType === "add"
-                      ? "flash-success"
-                      : "flash-error"
-                    : ""
-                }`}
-              >
-                <PrivacyNumber
-                  value={amount}
-                  className="text-3xl sm:text-4xl font-bold"
-                />
-              </span>
+              <div className="flex items-center gap-3">
+                <span
+                  className={`text-3xl sm:text-4xl font-bold text-primary-contrast transition-all duration-300 ${
+                    flashActive
+                      ? currentFlashType === "add"
+                        ? "flash-success"
+                        : "flash-error"
+                      : ""
+                  }`}
+                >
+                  <PrivacyNumber
+                    value={amount}
+                    className="text-3xl sm:text-4xl font-bold"
+                  />
+                </span>
+                <Banknote className="h-5 w-5 shrink-0 text-primary-contrast/80" aria-hidden="true" />
+              </div>
             </div>
-            <Banknote className="w-5 h-5 text-primary-contrast flex-shrink-0 mb-1" />
           </div>
 
           <div className="border-t pt-4">

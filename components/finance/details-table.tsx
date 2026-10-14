@@ -42,7 +42,6 @@ interface MobileMonthCarouselProps {
   months: RollingMonth[];
   currentMonth: number;
   currentYear: number;
-  supportsFullscreen: boolean;
   tourPreview: boolean;
 }
 
@@ -53,7 +52,6 @@ function MobileMonthCarousel({
   months,
   currentMonth,
   currentYear,
-  supportsFullscreen,
   tourPreview,
 }: MobileMonthCarouselProps) {
   const { t } = useLanguage();
@@ -231,11 +229,6 @@ function MobileMonthCarousel({
           );
         })}
       </div>
-      {supportsFullscreen && (
-        <p className="text-center text-xs text-muted-foreground">
-          {t("details.fullscreenCue")}
-        </p>
-      )}
     </div>
   );
 }
@@ -438,7 +431,6 @@ export function DetailsTable({ data, tourPreview = false, readOnly = false }: De
             months={months}
             currentMonth={currentMonth}
             currentYear={currentYear}
-            supportsFullscreen={supportsFullscreen}
             tourPreview={tourPreview}
           />
           <div className="relative">
@@ -646,7 +638,6 @@ export function DetailsTable({ data, tourPreview = false, readOnly = false }: De
             months={months}
             currentMonth={currentMonth}
             currentYear={currentYear}
-            supportsFullscreen={supportsFullscreen}
             tourPreview={tourPreview}
           />
           <div className="relative">
