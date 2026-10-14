@@ -40,11 +40,7 @@ function LoginPageInner() {
     language: "en" | "pt",
     currency: string
   ) => {
-    const success = await register(username, password, email, language, currency);
-    if (success) {
-      router.push("/");
-    }
-    return success;
+    return register(username, password, email, language, currency);
   };
 
   return <LoginForm onLogin={handleLogin} onRegister={handleRegister} />;

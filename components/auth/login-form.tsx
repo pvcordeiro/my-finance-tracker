@@ -95,7 +95,12 @@ export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
             language,
             currency
           );
-          if (!success) setSuccessMessage(t("auth.checkEmailToVerify"));
+          if (success) {
+            setSuccessMessage(t("auth.checkEmailToVerify"));
+            setIsRegisterMode(false);
+            setPassword("");
+            setConfirmPassword("");
+          }
         } catch (registerError: unknown) {
           if (
             registerError &&

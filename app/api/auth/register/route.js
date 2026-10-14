@@ -3,12 +3,6 @@ import crypto from "node:crypto";
 import { getDatabase, hashPassword } from "../../../../lib/database.js";
 import { registerSchema } from "../../../../lib/validations.ts";
 import { rateLimit, getClientIp } from "../../../../lib/rate-limit.ts";
-import {
-  createSession,
-  SESSION_COOKIE_NAME,
-  getDeviceInfo,
-  createSecureSessionCookie,
-} from "../../../../lib/session.js";
 import { accountActionEmail, emailConfigured, publicAppUrl, sendAccountEmail, validateSenderConfiguration } from "../../../../lib/email.js";
 import { verifyRequestOrigin } from "../../../../lib/session.js";
 import { currencyCodes } from "../../../../lib/i18n.ts";
@@ -130,25 +124,10 @@ export async function POST(request) {
       }
     }
 
-    const deviceInfo = getDeviceInfo(request);
-    const sessionToken = process.env.ALLOW_UNVERIFIED_REGISTRATION === "true" ? createSession(userId, deviceInfo) : null;
-
-    const groups = db.prepare(
-      `SELECT ug.group_id, g.name
-       FROM user_groups ug
-       JOIN groups g ON ug.group_id = g.id
-       WHERE ug.user_id = ?
-       ORDER BY ug.joined_at ASC`
-    ).all(userId) ?? [];
-
-    const current_group_id = groups.length > 0 ? groups[0].group_id : null;
-
     const response = NextResponse.json({
-      user: process.env.ALLOW_UNVERIFIED_REGISTRATION === "true" ? { id: userId, username, groups, current_group_id } : null,
-      message: process.env.ALLOW_UNVERIFIED_REGISTRATION === "true" ? "User created successfully" : "Check your email to verify your account before signing in.",
+      user: null,
+      message: "Check your email to verify your account before signing in.",
     });
-
-    if (sessionToken) createSecureSessionCookie(request, response, sessionToken);
 
     return response;
   } catch (error) {
