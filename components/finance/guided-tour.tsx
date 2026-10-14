@@ -400,7 +400,7 @@ export function GuidedTour() {
         const anchorCenterY = anchor.top + anchor.height / 2;
         const clamp = (value: number, max: number, size: number) =>
           Math.max(16, Math.min(value, max - size - 16));
-        if (isAdminTour && (stepIndex === 0 || stepIndex === 1)) {
+        if (isAdminTour && (!mobileLayout || stepIndex === 0 || stepIndex === 1)) {
           const footerTop = document.querySelector<HTMLElement>("[data-tour-fixed-footer]")?.getBoundingClientRect().top ?? viewportHeight;
           const bottom = Math.min(viewportHeight - 16, footerTop - 16);
           const top = Math.max(16, bottom - panelHeight);

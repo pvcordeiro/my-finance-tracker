@@ -278,7 +278,9 @@ export function EntryEditDialog({
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <label className="text-sm font-medium">
-                  {t("entries.monthlyAmounts")}
+                  {isRecurrent
+                    ? t("entries.annualTotal")
+                    : t("entries.monthlyAmounts")}
                 </label>
                 <span
                   className={cn(
@@ -296,79 +298,81 @@ export function EntryEditDialog({
                   />
                 </span>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                {rollingMonths.map((month, index) => (
-                  <div key={month} className="space-y-2">
-                    <label className="text-xs font-medium text-muted-foreground block">
-                      {month}{(localEntry.resolved?.[index] || localEntry.dismissed?.[index]) && <span className="ml-1.5 text-finance-positive">{t("entries.resolvedShort")}</span>}
-                    </label>
-                    <div className="relative">
-                      <CurrencyAmountInput
-                        currencySymbol={currencySymbol}
-                        type="number"
-                        inputMode="decimal"
-                        step="0.01"
-                        placeholder="0"
-                      value={localEntry.resolved?.[index] || localEntry.dismissed?.[index] ? "" : localEntry.amounts[index] || ""}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                           const regex =
-                             currencyFractionDigits === 0
-                               ? /^\d*$/
-                               : new RegExp(`^\\d*\\.?\\d{0,${currencyFractionDigits}}$`);
-                          if (value === "" || regex.test(value)) {
-                            const newAmount = Number.parseFloat(value) || 0;
-                            const newAmounts = [...localEntry.amounts];
-                            newAmounts[index] = newAmount;
-                            setLocalEntry({
-                              ...localEntry,
-                              amounts: newAmounts,
-                            });
-                            onUpdateEntry(
-                              localEntry.id,
-                              "amount",
-                              newAmount,
-                              index
-                            );
-                            setChangedFields((prev) =>
-                              new Set(prev).add(
-                                `${localEntry.id}-amount-${index}`
-                              )
-                            );
-                          }
-                        }}
-                        onBlur={() => {
-                          const fieldKey = `${localEntry.id}-amount-${index}`;
-                          if (changedFields.has(fieldKey)) {
-                            Promise.resolve(
-                              onCommitAmount(
+              {!isRecurrent && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {rollingMonths.map((month, index) => (
+                    <div key={month} className="space-y-2">
+                      <label className="text-xs font-medium text-muted-foreground block">
+                        {month}{(localEntry.resolved?.[index] || localEntry.dismissed?.[index]) && <span className="ml-1.5 text-finance-positive">{t("entries.resolvedShort")}</span>}
+                      </label>
+                      <div className="relative">
+                        <CurrencyAmountInput
+                          currencySymbol={currencySymbol}
+                          type="number"
+                          inputMode="decimal"
+                          step="0.01"
+                          placeholder="0"
+                          value={localEntry.resolved?.[index] || localEntry.dismissed?.[index] ? "" : localEntry.amounts[index] || ""}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            const regex =
+                              currencyFractionDigits === 0
+                                ? /^\d*$/
+                                : new RegExp(`^\\d*\\.?\\d{0,${currencyFractionDigits}}$`);
+                            if (value === "" || regex.test(value)) {
+                              const newAmount = Number.parseFloat(value) || 0;
+                              const newAmounts = [...localEntry.amounts];
+                              newAmounts[index] = newAmount;
+                              setLocalEntry({
+                                ...localEntry,
+                                amounts: newAmounts,
+                              });
+                              onUpdateEntry(
                                 localEntry.id,
-                                index,
-                                localEntry.amounts[index] || 0
-                              )
-                            ).then((ok) => {
-                              if (ok) markSaved(fieldKey);
-                            });
-                            setChangedFields((prev) => {
-                              const ns = new Set(prev);
-                              ns.delete(fieldKey);
-                              return ns;
-                            });
-                          }
-                        }}
-                        onFocus={(e) => {
-                          scrollInputIntoView(e.target as HTMLElement);
-                        }}
-                        className={cn(
-                          "transition-all duration-200",
-                          savedFields.has(`${localEntry.id}-amount-${index}`) &&
-                            "flash-success"
-                        )}
-                      />
+                                "amount",
+                                newAmount,
+                                index
+                              );
+                              setChangedFields((prev) =>
+                                new Set(prev).add(
+                                  `${localEntry.id}-amount-${index}`
+                                )
+                              );
+                            }
+                          }}
+                          onBlur={() => {
+                            const fieldKey = `${localEntry.id}-amount-${index}`;
+                            if (changedFields.has(fieldKey)) {
+                              Promise.resolve(
+                                onCommitAmount(
+                                  localEntry.id,
+                                  index,
+                                  localEntry.amounts[index] || 0
+                                )
+                              ).then((ok) => {
+                                if (ok) markSaved(fieldKey);
+                              });
+                              setChangedFields((prev) => {
+                                const ns = new Set(prev);
+                                ns.delete(fieldKey);
+                                return ns;
+                              });
+                            }
+                          }}
+                          onFocus={(e) => {
+                            scrollInputIntoView(e.target as HTMLElement);
+                          }}
+                          className={cn(
+                            "transition-all duration-200",
+                            savedFields.has(`${localEntry.id}-amount-${index}`) &&
+                              "flash-success"
+                          )}
+                        />
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </DialogContent>
