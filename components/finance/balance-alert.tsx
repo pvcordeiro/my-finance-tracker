@@ -108,6 +108,7 @@ export function BalanceAlert({ projectedMonths, tourPreview = false }: BalanceAl
       const data = await response.json();
       setThreshold(data.minimumBalanceAlert);
       setSetupRequired(false);
+      window.dispatchEvent(new Event("minimumBalanceAlertSaved"));
     } catch (error) {
       console.error("Failed to save minimum balance alert:", error);
       setSaveError(true);

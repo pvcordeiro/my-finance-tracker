@@ -8,6 +8,7 @@ import {
   User,
   Eye,
   EyeOff,
+  Download,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { usePrivacy } from "@/hooks/use-privacy";
@@ -55,6 +56,34 @@ export function DashboardHeader({
   const isOnline = useOnline();
   const [languageDialogOpen, setLanguageDialogOpen] = useState(false);
   const [groupDialogOpen, setGroupDialogOpen] = useState(false);
+  const [canInstallApp, setCanInstallApp] = useState(false);
+
+  useEffect(() => {
+    const displayMode = window.matchMedia("(display-mode: standalone)");
+    const updateInstalledState = () => {
+      const isInstalled =
+        displayMode.matches ||
+        (navigator as Navigator & { standalone?: boolean }).standalone === true;
+      setCanInstallApp(!isInstalled);
+    };
+    const handleAvailabilityChange = (event: Event) => {
+      if ((event as CustomEvent<boolean>).detail === false) {
+        updateInstalledState();
+      } else {
+        setCanInstallApp(true);
+      }
+    };
+    window.addEventListener("pwaInstallAvailabilityChanged", handleAvailabilityChange);
+    displayMode.addEventListener("change", updateInstalledState);
+    window.addEventListener("appinstalled", updateInstalledState);
+    updateInstalledState();
+    window.dispatchEvent(new Event("pwaInstallAvailabilityRequest"));
+    return () => {
+      window.removeEventListener("pwaInstallAvailabilityChanged", handleAvailabilityChange);
+      displayMode.removeEventListener("change", updateInstalledState);
+      window.removeEventListener("appinstalled", updateInstalledState);
+    };
+  }, []);
 
   const handleLogout = async () => {
     await logout();
@@ -193,6 +222,15 @@ export function DashboardHeader({
                 >
                   <LanguageCurrencySelector showInDropdown />
                 </DropdownMenuItem>
+                {canInstallApp && (
+                  <DropdownMenuItem
+                    onClick={() => window.dispatchEvent(new Event("openPwaInstallPrompt"))}
+                    className="cursor-pointer"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    {t("pwa.install")}
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={handleLogout}

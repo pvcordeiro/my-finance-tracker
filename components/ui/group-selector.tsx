@@ -11,6 +11,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -88,21 +89,34 @@ export function GroupSelectorDialog({ open, onOpenChange }: GroupSelectorProps) 
   const { user, refreshUser } = useAuth();
   const isOnline = useOnline();
   const [switchingGroupId, setSwitchingGroupId] = useState<number | null>(null);
+  const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (open && user?.current_group_id != null) {
+      setSelectedGroupId(user.current_group_id);
+    }
+  }, [open, user?.current_group_id]);
 
   if (!user?.groups || user.groups.length <= 1) return null;
   const groups = user.groups;
 
-  const handleGroupSwitch = async (groupId: number) => {
-    if (!isOnline || switchingGroupId !== null || groupId === user.current_group_id) {
+  const handleGroupSwitch = async () => {
+    if (
+      !isOnline ||
+      switchingGroupId !== null ||
+      selectedGroupId === null ||
+      selectedGroupId === user.current_group_id
+    ) {
+      if (selectedGroupId === user.current_group_id) onOpenChange(false);
       return;
     }
 
-    setSwitchingGroupId(groupId);
+    setSwitchingGroupId(selectedGroupId);
     try {
       const response = await fetch("/api/switch-group", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ groupId }),
+        body: JSON.stringify({ groupId: selectedGroupId }),
         credentials: "include",
       });
 
@@ -114,10 +128,11 @@ export function GroupSelectorDialog({ open, onOpenChange }: GroupSelectorProps) 
       await refreshUser();
       toast.success(
         `${t("settings.switchedTo")} ${
-          groups.find((group) => group.group_id === groupId)?.name ||
+          groups.find((group) => group.group_id === selectedGroupId)?.name ||
           t("settings.selectedGroup")
         }`
       );
+      onOpenChange(false);
     } catch (error) {
       console.error("Error switching group:", error);
       toast.error(t("settings.errorSwitching"));
@@ -128,14 +143,20 @@ export function GroupSelectorDialog({ open, onOpenChange }: GroupSelectorProps) 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100vw-2rem)] min-w-0 max-h-[85dvh] overflow-x-hidden overflow-y-auto sm:max-w-md">
+      <DialogContent
+        className="w-[calc(100vw-2rem)] min-w-0 max-h-[85dvh] overflow-x-hidden overflow-y-auto sm:max-w-md"
+        hideCloseButton
+        onEscapeKeyDown={(event) => event.preventDefault()}
+        onPointerDownOutside={(event) => event.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle>{t("settings.groupSelection")}</DialogTitle>
           <DialogDescription>{t("settings.groupSelectionDescription")}</DialogDescription>
         </DialogHeader>
-          <div className="min-w-0 space-y-2">
+        <div className="min-w-0 space-y-2">
           {groups.map((group) => {
             const isCurrent = group.group_id === user.current_group_id;
+            const isSelected = group.group_id === selectedGroupId;
             const isSwitching = switchingGroupId === group.group_id;
 
             return (
@@ -144,11 +165,12 @@ export function GroupSelectorDialog({ open, onOpenChange }: GroupSelectorProps) 
                 type="button"
                 variant="outline"
                 className={`group min-h-12 min-w-0 w-full justify-start gap-3 overflow-hidden whitespace-nowrap px-3 py-3 text-left focus-visible:ring-0 focus-visible:ring-offset-0 sm:px-4 ${
-                  isCurrent ? "border-primary bg-primary/5 hover:bg-primary/10" : ""
+                  isSelected ? "border-primary bg-primary/5 hover:bg-primary/10" : ""
                 }`}
                 disabled={!isOnline || switchingGroupId !== null}
-                onClick={() => void handleGroupSwitch(group.group_id)}
+                onClick={() => setSelectedGroupId(group.group_id)}
                 aria-current={isCurrent ? "true" : undefined}
+                aria-pressed={isSelected}
                 aria-label={`${group.name}${isCurrent ? `, ${t("settings.current")}` : ""}`}
               >
                 <Users className="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -158,15 +180,24 @@ export function GroupSelectorDialog({ open, onOpenChange }: GroupSelectorProps) 
                     {t("common.loading")}
                   </span>
                 ) : isCurrent ? (
-                  <span className="flex shrink-0 items-center gap-1 text-xs font-medium text-primary-contrast">
-                    <Check className="h-4 w-4" />
+                  <span className="shrink-0 text-xs font-medium text-muted-foreground">
                     {t("settings.current")}
                   </span>
                 ) : null}
+                {isSelected && <Check className="h-4 w-4 shrink-0 text-primary-contrast" />}
               </Button>
             );
           })}
         </div>
+        <DialogFooter>
+          <Button
+            type="button"
+            onClick={() => void handleGroupSwitch()}
+            disabled={!isOnline || switchingGroupId !== null || selectedGroupId === null}
+          >
+            {t("common.confirm")}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
