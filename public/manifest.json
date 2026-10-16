@@ -2,8 +2,17 @@
   "name": "Finance Tracker",
   "short_name": "Finance Tracker",
   "description": "Track income, manage expenses, and forecast your future balance",
+  "id": "/?source=pwa",
   "start_url": "/?source=pwa",
+  "scope": "/",
   "display": "standalone",
+  "related_applications": [
+    {
+      "platform": "webapp",
+      "id": "/?source=pwa",
+      "url": "/manifest.json"
+    }
+  ],
   "background_color": "#ffffff",
   "theme_color": "#000000",
   "orientation": "portrait-primary",

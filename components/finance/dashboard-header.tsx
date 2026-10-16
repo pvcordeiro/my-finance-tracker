@@ -35,6 +35,7 @@ import {
   GroupSelectorMenuItem,
 } from "@/components/ui/group-selector";
 import { FinanceLogo } from "@/components/ui/finance-logo";
+import { isPwaInstalled } from "@/lib/pwa";
 
 interface DashboardHeaderProps {
   title?: string;
@@ -77,17 +78,16 @@ export function DashboardHeader({
 
   useEffect(() => {
     const displayMode = window.matchMedia("(display-mode: standalone)");
-    const updateInstalledState = () => {
-      const isInstalled =
-        displayMode.matches ||
-        (navigator as Navigator & { standalone?: boolean }).standalone === true;
-      setCanInstallApp(!isInstalled);
+    let active = true;
+    const updateInstalledState = async () => {
+      const installed = await isPwaInstalled();
+      if (active) setCanInstallApp(!installed);
     };
     const handleAvailabilityChange = (event: Event) => {
       if ((event as CustomEvent<boolean>).detail === false) {
-        updateInstalledState();
+        setCanInstallApp(false);
       } else {
-        setCanInstallApp(true);
+        void updateInstalledState();
       }
     };
     window.addEventListener("pwaInstallAvailabilityChanged", handleAvailabilityChange);
@@ -96,6 +96,7 @@ export function DashboardHeader({
     updateInstalledState();
     window.dispatchEvent(new Event("pwaInstallAvailabilityRequest"));
     return () => {
+      active = false;
       window.removeEventListener("pwaInstallAvailabilityChanged", handleAvailabilityChange);
       displayMode.removeEventListener("change", updateInstalledState);
       window.removeEventListener("appinstalled", updateInstalledState);

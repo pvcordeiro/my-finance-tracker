@@ -6,6 +6,7 @@ import { Download, Smartphone } from "lucide-react";
 import { useLanguage } from "@/hooks/use-language";
 import { useAuth } from "@/hooks/use-auth";
 import { usePathname } from "next/navigation";
+import { isPwaInstalled } from "@/lib/pwa";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -41,13 +42,6 @@ function getInstallInstructionsKey(): InstallInstructionsKey {
   return "pwa.installInstructionsOther";
 }
 
-function isAppInstalled() {
-  return (
-    window.matchMedia("(display-mode: standalone)").matches ||
-    (navigator as Navigator & { standalone?: boolean }).standalone === true
-  );
-}
-
 export function PWAInstallPrompt() {
   const { t } = useLanguage();
   const { user } = useAuth();
@@ -69,14 +63,18 @@ export function PWAInstallPrompt() {
   };
 
   useEffect(() => {
-    const reportAvailability = () => {
-      reportInstallAvailability(!isAppInstalled());
+    let active = true;
+    const reportAvailability = async () => {
+      const installed = await isPwaInstalled();
+      if (active) reportInstallAvailability(!installed);
     };
     const openPrompt = () => {
-      if (isAppInstalled()) return;
-      setShowManualInstallHelp(false);
-      setVisible(true);
-      requestAnimationFrame(() => setAnimating(true));
+      void isPwaInstalled().then((installed) => {
+        if (installed) return;
+        setShowManualInstallHelp(false);
+        setVisible(true);
+        requestAnimationFrame(() => setAnimating(true));
+      });
     };
     window.addEventListener(AVAILABILITY_REQUEST_EVENT, reportAvailability);
     window.addEventListener(OPEN_EVENT, openPrompt);
@@ -84,6 +82,7 @@ export function PWAInstallPrompt() {
     displayMode.addEventListener("change", reportAvailability);
     reportAvailability();
     return () => {
+      active = false;
       window.removeEventListener(AVAILABILITY_REQUEST_EVENT, reportAvailability);
       window.removeEventListener(OPEN_EVENT, openPrompt);
       displayMode.removeEventListener("change", reportAvailability);
@@ -106,17 +105,21 @@ export function PWAInstallPrompt() {
   useEffect(() => {
     if (
       typeof window === "undefined" ||
-      !("serviceWorker" in navigator) ||
-      isAppInstalled()
+      !("serviceWorker" in navigator)
     ) {
       return;
     }
 
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
-      const prompt = e as BeforeInstallPromptEvent;
-      setDeferredPrompt(prompt);
-      reportInstallAvailability(!isAppInstalled());
+      void isPwaInstalled().then((installed) => {
+        if (installed) {
+          reportInstallAvailability(false);
+          return;
+        }
+        setDeferredPrompt(e as BeforeInstallPromptEvent);
+        reportInstallAvailability(true);
+      });
     };
     const handleAppInstalled = () => {
       setDeferredPrompt(null);
@@ -126,15 +129,24 @@ export function PWAInstallPrompt() {
       localStorage.setItem(DISMISSED_KEY, "1");
       reportInstallAvailability(false);
     };
+    const handleDisplayModeChange = () => {
+      void isPwaInstalled().then((installed) => {
+        if (installed) handleAppInstalled();
+        else reportInstallAvailability(true);
+      });
+    };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
     window.addEventListener("appinstalled", handleAppInstalled);
+    const displayMode = window.matchMedia("(display-mode: standalone)");
+    displayMode.addEventListener("change", handleDisplayModeChange);
     return () => {
       window.removeEventListener(
         "beforeinstallprompt",
         handleBeforeInstallPrompt
       );
       window.removeEventListener("appinstalled", handleAppInstalled);
+      displayMode.removeEventListener("change", handleDisplayModeChange);
     };
   }, []);
 
@@ -173,7 +185,9 @@ export function PWAInstallPrompt() {
     setAnimating(false);
     setTimeout(() => setVisible(false), 320);
     localStorage.setItem(DISMISSED_KEY, "1");
-    reportInstallAvailability(Boolean(deferredPrompt) && !isAppInstalled());
+    void isPwaInstalled().then((installed) => {
+      reportInstallAvailability(Boolean(deferredPrompt) && !installed);
+    });
   };
 
   const install = async () => {
