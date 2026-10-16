@@ -1,10 +1,24 @@
 "use client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { FinanceData } from "@/hooks/use-finance-data";
 import { PrivacyNumber } from "@/components/ui/privacy-number";
 import { useLanguage } from "@/hooks/use-language";
 import { BalanceAlert } from "@/components/finance/balance-alert";
+import { buildMonthlyForecast } from "@/lib/finance-forecast";
+
+interface MonthlySummaryRow {
+  month: string;
+  calendarMonth: number;
+  monthIndex: number;
+  year: number;
+  income: number;
+  expenses: number;
+  net: number;
+  balance: number | null;
+  isCurrentMonth: boolean;
+  isForecast: boolean;
+}
 
 interface SummaryTableProps {
   data: FinanceData;
@@ -89,10 +103,7 @@ export function SummaryTable({ data, tourPreview = false }: SummaryTableProps) {
 
   let annualIncome = 0;
   let annualExpenses = 0;
-  let runningBalance = 0;
-  let prevBalance = 0;
-
-  const monthlyData = months.map((month, index) => {
+  const monthlyData: MonthlySummaryRow[] = buildMonthlyForecast(months.map((month, index) => {
     let totalIncome = 0;
     let totalExpenses = 0;
 
@@ -110,58 +121,46 @@ export function SummaryTable({ data, tourPreview = false }: SummaryTableProps) {
       });
     }
 
-    let bankAmount = 0;
-    if (month.year === currentYear && month.month === currentMonth) {
-      bankAmount = data.bankAmount || 0;
-    }
-
-    const net = totalIncome - totalExpenses;
-
-    if (
-      month.year < currentYear ||
-      (month.year === currentYear && month.month < currentMonth)
-    ) {
-      prevBalance += net;
-      runningBalance = prevBalance;
-    } else if (month.year === currentYear && month.month === currentMonth) {
-      runningBalance = prevBalance + net + bankAmount;
-    } else {
-      runningBalance += net;
-    }
-
     annualIncome += totalIncome;
     annualExpenses += totalExpenses;
 
     return {
-      month: month.label,
       year: month.year,
       income: totalIncome,
       expenses: totalExpenses,
-      net,
-      balance: runningBalance,
-      isCurrentMonth:
-        month.year === currentYear && month.month === currentMonth,
+      month: month.label,
+      calendarMonth: month.month,
+      monthIndex: index,
+      isCurrentMonth: month.year === currentYear && month.month === currentMonth,
     };
-  });
+  }), data.bankAmount || 0, currentYear, currentMonth);
 
-  const finalBalance = monthlyData[monthlyData.length - 1]?.balance || 0;
+  const finalBalance = monthlyData[monthlyData.length - 1]?.balance ?? data.bankAmount ?? 0;
   const currentBalance =
-    monthlyData.find((m) => m.isCurrentMonth)?.balance || 0;
-  const nextMonthBalance = monthlyData[1]?.balance || 0;
+    monthlyData.find((m) => m.isCurrentMonth)?.balance ?? data.bankAmount ?? 0;
+  const nextMonthBalance = monthlyData[1]?.balance ?? data.bankAmount ?? 0;
 
   return (
     <div className="space-y-4 sm:space-y-6">
       <div data-tour="tour-alert">
         <BalanceAlert
           tourPreview={tourPreview}
-          projectedMonths={monthlyData.map(({ month, year, balance }) => ({
+          projectedMonths={monthlyData.filter((row) => row.isForecast).map(({ month, year, balance }) => ({
             label: month,
             year,
-            balance,
+            balance: balance ?? 0,
           }))}
         />
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-border rounded-xl overflow-hidden border border-border">
+      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border sm:grid-cols-4 xl:grid-cols-5">
+        <div className="col-span-2 bg-card px-4 py-4 sm:col-span-1 sm:px-4 sm:py-4">
+          <p className="mb-1 text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground sm:text-left">
+            {t("dashboard.actualBalance")}
+          </p>
+          <p className={cn("truncate text-center text-xl font-bold tabular-nums sm:text-left sm:text-2xl", (data.bankAmount || 0) >= 0 ? "text-foreground" : "text-finance-negative")}>
+            <PrivacyNumber value={data.bankAmount || 0} />
+          </p>
+        </div>
         <div className="bg-card px-3 py-3 sm:px-4 sm:py-4">
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
             {t("dashboard.currentMonth")}
@@ -215,16 +214,19 @@ export function SummaryTable({ data, tourPreview = false }: SummaryTableProps) {
 
       <Card>
         <CardHeader className="pb-3 sm:pb-6">
-          <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
-            {t("dashboard.monthlyFinancialSummary")}
-          </CardTitle>
+          <div>
+            <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+              {t("dashboard.monthlyFinancialSummary")}
+            </CardTitle>
+            <CardDescription className="mt-1">{t("dashboard.forecastBasedOnPlan")}</CardDescription>
+          </div>
         </CardHeader>
         <CardContent className="p-0 sm:p-6 sm:pt-0">
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-xs sm:text-sm whitespace-nowrap">
               <thead>
                 <tr className="border-b bg-muted/50">
-                  <th className="text-left px-3 py-2 font-semibold">
+                  <th className="sticky left-0 z-20 border-r border-border bg-muted text-left px-3 py-2 font-semibold shadow-[1px_0_0_hsl(var(--border))]">
                     {t("dashboard.month")}
                   </th>
                   <th className="text-right px-3 py-2 font-semibold text-finance-positive">
@@ -234,21 +236,24 @@ export function SummaryTable({ data, tourPreview = false }: SummaryTableProps) {
                     {t("dashboard.expenses")}
                   </th>
                   <th className="text-right pl-3 pr-4 py-2 font-semibold">
-                    {t("dashboard.balance")}
+                    {t("dashboard.net")}
+                  </th>
+                  <th className="text-right pl-3 pr-4 py-2 font-semibold">
+                    {t("dashboard.projectedBalance")}
                   </th>
                 </tr>
               </thead>
               <tbody>
                 {monthlyData.map((row) => (
                   <tr
-                    key={row.month}
+                    key={`${row.year}-${row.calendarMonth}`}
                     className={cn(
                       "border-b hover:bg-muted/30 transition-colors",
                       row.isCurrentMonth && "bg-primary/5 border-primary/20"
                     )}
                   >
-                    <td className={cn("px-3 py-2 font-medium", row.isCurrentMonth && "text-primary-contrast")}>
-                      {row.month}
+                    <td className={cn("sticky left-0 z-10 border-r border-border bg-card px-3 py-2 font-medium shadow-[1px_0_0_hsl(var(--border))]", row.isCurrentMonth ? "bg-[hsl(var(--background))] text-primary-contrast" : "bg-card")}>
+                      {row.month} {row.year}
                     </td>
                     <td className="px-3 py-2 text-right text-finance-positive font-medium">
                       <PrivacyNumber value={row.income} format={compactNumber} />
@@ -256,27 +261,33 @@ export function SummaryTable({ data, tourPreview = false }: SummaryTableProps) {
                     <td className="px-3 py-2 text-right text-finance-negative font-medium">
                       <PrivacyNumber value={row.expenses} format={compactNumber} />
                     </td>
+                    <td className={cn("px-3 py-2 text-right font-medium", row.net >= 0 ? "text-finance-positive" : "text-finance-negative")}>
+                      <PrivacyNumber value={row.net} format={compactNumber} />
+                    </td>
                     <td
                       className={cn(
                         "pl-3 pr-4 py-2 text-right font-bold",
-                        row.balance >= 0
+                        (row.balance ?? 0) >= 0
                           ? "text-finance-positive"
                           : "text-finance-negative"
                       )}
                     >
-                      <PrivacyNumber value={row.balance} format={compactNumber} />
+                      {row.isForecast ? <PrivacyNumber value={row.balance ?? 0} format={compactNumber} /> : <span className="text-muted-foreground">—</span>}
                     </td>
                   </tr>
                 ))}
               </tbody>
               <tfoot>
                 <tr className="border-t-2 bg-muted/50 font-bold">
-                  <td className="px-3 py-2">{t("common.total")}</td>
+                  <td className="sticky left-0 z-10 border-r border-border bg-muted px-3 py-2 shadow-[1px_0_0_hsl(var(--border))]">{t("common.total")}</td>
                   <td className="px-3 py-2 text-right text-finance-positive">
                     <PrivacyNumber value={annualIncome} format={compactNumber} />
                   </td>
                   <td className="px-3 py-2 text-right text-finance-negative">
                     <PrivacyNumber value={annualExpenses} format={compactNumber} />
+                  </td>
+                  <td className={cn("px-3 py-2 text-right", annualIncome >= annualExpenses ? "text-finance-positive" : "text-finance-negative")}>
+                    <PrivacyNumber value={annualIncome - annualExpenses} format={compactNumber} />
                   </td>
                   <td
                     className={cn(

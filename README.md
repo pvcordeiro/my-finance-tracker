@@ -178,7 +178,7 @@ bun run start
 
 ### Group Management
 
-- **Multiple groups:** Support for households, families, or separate budgets
+- **Multiple groups:** Support for households, families, or separate finance plans
 - **Group switching:** Easily switch between groups if you're a member of multiple
 - **Shared finances:** Users in the same group see the same financial data
 - **Admin controls:** Admins can create, rename, and delete groups

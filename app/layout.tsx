@@ -28,12 +28,12 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.APP_URL || "http://localhost:3000"),
   title: "Finance Tracker - Take Control of Your Finances",
   description:
-    "Track income, manage expenses, and budget smarter with this modern finance tracker.",
+    "Track income, manage expenses, and forecast your future balance with this finance tracker.",
   manifest: "/manifest.json",
   openGraph: {
     title: "Finance Tracker - Take Control of Your Finances",
     description:
-      "Track income, manage expenses, and budget smarter with this modern finance tracker.",
+      "Track income, manage expenses, and forecast your future balance with this finance tracker.",
     type: "website",
     images: [
       {
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
     card: "summary",
     title: "Finance Tracker - Take Control of Your Finances",
     description:
-      "Track income, manage expenses, and budget smarter with this modern finance tracker.",
+      "Track income, manage expenses, and forecast your future balance with this finance tracker.",
     images: ["/icon-512.png"],
   },
   appleWebApp: {

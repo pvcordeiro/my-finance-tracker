@@ -30,12 +30,13 @@ function SummaryPageContent() {
     <div className="min-h-dvh finance-gradient page-nav-padding">
       <DashboardHeader />
       <main className="container mx-auto p-4 space-y-6">
-        <div className="flex items-center justify-between gap-2">
-          <div>
-            <h1 className="text-3xl font-bold text-primary-contrast">
-              {t("common.financialSummary")}
-            </h1>
-          </div>
+        <div>
+          <h1 className="text-3xl font-bold text-primary-contrast">
+            {t("common.financialSummary")}
+          </h1>
+          <p className="mt-1 text-muted-foreground">
+            {t("common.financialSummarySubtitle")}
+          </p>
         </div>
         {isLoading ? (
           <LoadingState message={t("common.loadingFinancialData")} />

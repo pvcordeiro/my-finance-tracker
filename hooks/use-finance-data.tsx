@@ -149,6 +149,15 @@ export function useFinanceData() {
   useEffect(() => {
     if (!user) return;
 
+    const handleBankAmountUpdated = (event: Event) => {
+      const amount = (event as CustomEvent<{ amount?: number }>).detail?.amount;
+      if (typeof amount === "number" && Number.isFinite(amount)) {
+        setData((previous) => ({ ...previous, bankAmount: amount }));
+        setOriginalData((previous) => ({ ...previous, bankAmount: amount }));
+      }
+    };
+    window.addEventListener("bankAmountUpdated", handleBankAmountUpdated);
+
     const handleGroupChanged = () => {
       setData(defaultData);
       setOriginalData(defaultData);
@@ -306,6 +315,7 @@ export function useFinanceData() {
     connect();
 
     return () => {
+      window.removeEventListener("bankAmountUpdated", handleBankAmountUpdated);
       isDestroyed = true;
       window.removeEventListener("userGroupChanged", handleGroupChanged);
       window.removeEventListener("online", handleOnline);

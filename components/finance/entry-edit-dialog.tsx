@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -20,7 +21,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { CurrencyAmountInput } from "@/components/ui/currency-amount-input";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
+import { Trash2, XCircle } from "lucide-react";
 import { PrivacyNumber } from "@/components/ui/privacy-number";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/hooks/use-language";
@@ -183,16 +184,23 @@ export function EntryEditDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent ref={dialogRef} className="max-w-2xl max-h-[85dvh] overflow-y-auto flex flex-col">
-          <DialogHeader className="relative">            <Button
+        <DialogContent ref={dialogRef} hideCloseButton className="max-w-2xl max-h-[85dvh] overflow-y-auto flex flex-col">
+          <DialogHeader className="relative">
+            <Button
               variant="ghost"
               size="icon"
               onClick={() => setDeleteDialogOpen(true)}
               className="absolute left-0 top-0 text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8"
-              aria-label="Delete entry"
+              aria-label={t("entries.deleteEntry")}
             >
               <Trash2 className="w-4 h-4" />
             </Button>
+            <DialogClose
+              aria-label={t("common.close")}
+              className="absolute right-0 top-0 !m-0 inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground opacity-70 transition-opacity hover:bg-accent hover:text-foreground hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <XCircle className="h-4 w-4" />
+            </DialogClose>
             <DialogTitle className="text-center">
               {type === "income"
                 ? t("entries.editIncome")
@@ -203,10 +211,11 @@ export function EntryEditDialog({
           <div className="space-y-6 mt-4 px-1 pb-1">
             {/* Description */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">
+              <label htmlFor={`entry-description-${localEntry.id}`} className="text-sm font-medium">
                 {t("entries.description")}
               </label>
               <Input
+                id={`entry-description-${localEntry.id}`}
                 ref={descriptionInputRef}
                 placeholder={t("entries.description")}
                 value={localEntry.description}
@@ -261,8 +270,9 @@ export function EntryEditDialog({
             </div>
             {isRecurrent && (
               <div className="space-y-2">
-                <label className="text-sm font-medium">{t("entries.recurringMonthlyAmount")}</label>
+                <label htmlFor={`entry-recurring-amount-${localEntry.id}`} className="text-sm font-medium">{t("entries.recurringMonthlyAmount")}</label>
                 <CurrencyAmountInput
+                  id={`entry-recurring-amount-${localEntry.id}`}
                   currencySymbol={currencySymbol}
                   type="number"
                   inputMode="decimal"
@@ -302,11 +312,12 @@ export function EntryEditDialog({
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                   {rollingMonths.map((month, index) => (
                     <div key={month} className="space-y-2">
-                      <label className="text-xs font-medium text-muted-foreground block">
+                      <label htmlFor={`entry-${localEntry.id}-month-${index}`} className="text-xs font-medium text-muted-foreground block">
                         {month}{(localEntry.resolved?.[index] || localEntry.dismissed?.[index]) && <span className="ml-1.5 text-finance-positive">{t("entries.resolvedShort")}</span>}
                       </label>
                       <div className="relative">
                         <CurrencyAmountInput
+                          id={`entry-${localEntry.id}-month-${index}`}
                           currencySymbol={currencySymbol}
                           type="number"
                           inputMode="decimal"

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Edit, FileSpreadsheet, UserRound } from "lucide-react";
+import { BarChart3, Edit, FileSpreadsheet, Settings } from "lucide-react";
 import { useLanguage } from "@/hooks/use-language";
 import { useOnline } from "@/hooks/use-online";
 import { cn } from "@/lib/utils";
@@ -37,9 +37,9 @@ export function AppNavigation({ placement }: AppNavigationProps) {
     },
     {
       href: "/user",
-      label: t("settings.accountSettings"),
+      label: t("navigation.settings"),
       compactLabel: t("navigation.settings"),
-      icon: UserRound,
+      icon: Settings,
       offlineDisabled: true,
     },
   ];

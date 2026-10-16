@@ -242,6 +242,9 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
       return amounts.reduce((sum, amount) => sum + (amount || 0), 0);
     };
 
+    const calculateRemainingTotal = (entry: FinanceEntry) =>
+      (entry.pendingAmounts || entry.amounts).reduce((sum, amount) => sum + (amount || 0), 0);
+
     const handleAddEntry = () => {
       if (!isOpen) {
         onToggle();
@@ -434,37 +437,30 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
                     else entryCardRefs.current.delete(entry.id);
                   }}
                   className={cn(
-                    "flex items-center justify-between rounded-lg border border-border px-3 py-2.5 transition-colors",
-                    !readOnly && "cursor-pointer",
+                    "flex min-w-0 items-center gap-2 rounded-lg border border-border px-2 py-2 transition-colors sm:gap-3 sm:px-3 sm:py-2.5",
                     "hover:border-primary/40 hover:bg-muted/40",
                     flashingEntries.has(entry.id) &&
                       (type === "income" ? "flash-success" : "flash-error")
                   )}
-                  onClick={() => { if (!readOnly) handleEntryClick(entry); }}
                 >
-                  <div className="flex flex-col pr-2 max-w-[60%] sm:max-w-[70%]">
-                    <span className="font-medium text-sm sm:text-base truncate">
-                      <PrivacyText
-                        value={
-                          entry.description || t("entries.noDescription")
-                        }
-                      />
+                  <button
+                    type="button"
+                    onClick={() => { if (!readOnly) handleEntryClick(entry); }}
+                    disabled={readOnly}
+                    aria-label={`${t("common.edit")} ${entry.description || t("entries.noDescription")}`}
+                    className="flex min-w-0 flex-1 flex-col items-start rounded-md py-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default"
+                  >
+                    <span className="flex w-full min-w-0 items-center gap-1.5">
+                      <span className="min-w-0 max-w-[calc(100%-5rem)] truncate font-medium text-sm sm:text-base">
+                        <PrivacyText value={entry.description || t("entries.noDescription")} />
+                      </span>
+                      {entry.recurrent && <span className="shrink-0 rounded-full bg-primary/10 px-1.5 py-0.5 text-[9px] font-medium text-primary-contrast sm:px-2 sm:text-[10px]">{t("entries.recurrentBadge")}</span>}
                     </span>
-                    <span
-                      className={cn(
-                        "mt-0.5 font-semibold text-sm sm:text-base transition-colors",
-                        type === "income"
-                          ? "text-finance-positive"
-                          : "text-finance-negative"
-                      )}
-                    >
-                      <PrivacyNumber
-                          value={calculateTotal(entry.amounts)}
-                      />
-                      {entry.recurrent && <span className="ml-2 inline-flex rounded-full bg-primary/10 px-2 py-0.5 align-middle text-[10px] font-medium text-primary-contrast">{t("entries.recurrentBadge")}</span>}
+                    <span className={cn("mt-0.5 max-w-full truncate font-semibold text-sm tabular-nums transition-colors sm:text-base", type === "income" ? "text-finance-positive" : "text-finance-negative")}>
+                      <PrivacyNumber value={calculateRemainingTotal(entry)} />
                     </span>
-                  </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
+                  </button>
+                  <div className="flex shrink-0 items-center">
                     <TooltipProvider delayDuration={400}>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -477,7 +473,7 @@ export const EntryForm = forwardRef<HTMLDivElement, EntryFormProps>(
                               const index = getNextUnresolvedOccurrence(entry)?.monthIndex ?? -1;
                               if (index >= 0) handleResolveCurrentMonth(e, entry);
                             }}
-                            className="text-muted-foreground hover:text-foreground hover:bg-muted h-8 w-8 p-0 touch-manipulation"
+                            className="h-11 w-11 p-0 text-muted-foreground hover:bg-muted hover:text-foreground touch-manipulation"
                             aria-label={t("entries.markCurrentMonth")}
                     disabled={readOnly || (
                               !entry.amounts.some(

@@ -1,5 +1,5 @@
 "use client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   BarChart,
   Bar,
@@ -16,6 +16,7 @@ import type { FinanceData } from "@/hooks/use-finance-data";
 import { usePrivacy } from "@/hooks/use-privacy";
 import { useLanguage } from "@/hooks/use-language";
 import { Button } from "@/components/ui/button";
+import { buildMonthlyForecast } from "@/lib/finance-forecast";
 
 interface FinancialChartProps {
   data: FinanceData;
@@ -127,8 +128,10 @@ export function FinancialChart({ data, tourPreview = false }: FinancialChartProp
   }
 
   const months = getRollingMonths();
-  let runningBalance = 0;
-  const chartData = months.map((month, idx) => {
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
+  const chartData = buildMonthlyForecast(months.map((month, idx) => {
     let income = 0;
     let expenses = 0;
 
@@ -144,19 +147,15 @@ export function FinancialChart({ data, tourPreview = false }: FinancialChartProp
       });
     }
 
-    let net = income - expenses;
-    if (idx === 0) {
-      net += data.bankAmount || 0;
-    }
-    runningBalance += net;
-
     return {
       month: month.label,
+      year: new Date(new Date().getFullYear(), new Date().getMonth() + idx, 1).getFullYear(),
+      calendarMonth: new Date(new Date().getFullYear(), new Date().getMonth() + idx, 1).getMonth() + 1,
+      monthIndex: idx,
       income,
       expenses,
-      net: runningBalance,
     };
-  });
+  }), data.bankAmount || 0, currentYear, currentMonth);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -224,6 +223,7 @@ export function FinancialChart({ data, tourPreview = false }: FinancialChartProp
       <Card>
         <CardHeader>
           <CardTitle>{t("dashboard.monthlyNetBalance")}</CardTitle>
+          <CardDescription>{t("dashboard.forecastBasedOnPlan")}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
@@ -235,7 +235,17 @@ export function FinancialChart({ data, tourPreview = false }: FinancialChartProp
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                  <XAxis dataKey="month" className="text-xs" />
+                  <XAxis
+                    dataKey="month"
+                    className="text-xs"
+                    tickFormatter={(label, index) => {
+                      const row = chartData[index];
+                      const previous = chartData[index - 1];
+                      return index === 0 || row?.year !== previous?.year
+                        ? `${label} '${String(row?.year || "").slice(-2)}`
+                        : label;
+                    }}
+                  />
                   <YAxis className="text-xs" tickFormatter={formatYAxis} />
                   <Tooltip
                     formatter={(value) => [
@@ -252,12 +262,12 @@ export function FinancialChart({ data, tourPreview = false }: FinancialChartProp
                     }}
                   />
                   <Legend
-                    formatter={() => t("dashboard.balance")}
+                    formatter={() => t("dashboard.projectedBalance")}
                     wrapperStyle={{ fontSize: "0.75rem" }}
                   />
                   <Line
                     type="monotone"
-                    dataKey="net"
+                    dataKey="balance"
                     stroke="hsl(var(--primary))"
                     strokeWidth={3}
                     dot={{
