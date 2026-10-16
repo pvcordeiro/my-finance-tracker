@@ -5,9 +5,9 @@
   "license": "MIT",
   "scripts": {
     "build": "next build",
-    "dev": "next dev",
+    "dev": "bun --bun run next dev",
     "lint": "next lint",
-    "start": "next start",
+    "start": "bun --bun run next start",
     "update-ip-country": "bun scripts/update-ip-country.js",
     "test": "bun test"
   },

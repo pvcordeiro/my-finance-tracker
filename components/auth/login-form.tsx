@@ -44,6 +44,7 @@ export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isRegisterMode, setIsRegisterMode] = useState(false);
   const [allowRegistration, setAllowRegistration] = useState(true);
+  const [smtpEnabled, setSmtpEnabled] = useState(true);
   const [checkingRegistration, setCheckingRegistration] = useState(true);
   const [languageDialogOpen, setLanguageDialogOpen] = useState(false);
   const [email, setEmail] = useState("");
@@ -57,10 +58,12 @@ export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
         if (response.ok) {
           const data = await response.json();
           setAllowRegistration(data.allowRegistration);
+          setSmtpEnabled(data.smtpEnabled !== false);
         }
       } catch (error) {
         console.error("Failed to check registration status:", error);
         setAllowRegistration(true);
+        setSmtpEnabled(true);
       } finally {
         setCheckingRegistration(false);
       }
@@ -96,7 +99,9 @@ export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
             currency
           );
           if (success) {
-            setSuccessMessage(t("auth.checkEmailToVerify"));
+            setSuccessMessage(
+              smtpEnabled ? t("auth.checkEmailToVerify") : t("auth.accountCreated")
+            );
             setIsRegisterMode(false);
             setPassword("");
             setConfirmPassword("");
@@ -150,25 +155,27 @@ export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
         </Button>
       </div>
       <Card className="w-full max-w-md shadow-lg">
-        <CardHeader className="text-center space-y-4">
-          <FinanceLogo className="mx-auto h-12 w-12" />
-          <div>
-            <CardTitle className="text-2xl font-bold">
-              {isRegisterMode ? t("auth.registerTitle") : t("auth.loginTitle")}
-            </CardTitle>
-            <CardDescription>
-              {isRegisterMode
-                ? t("auth.registerDescription")
-                : t("auth.loginDescription")}
-            </CardDescription>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {resetOpen ? (
+        {!resetOpen && (
+          <CardHeader className="text-center space-y-4">
+            <FinanceLogo className="mx-auto h-12 w-12" />
+            <div>
+              <CardTitle className="text-2xl font-bold">
+                {isRegisterMode ? t("auth.registerTitle") : t("auth.loginTitle")}
+              </CardTitle>
+              <CardDescription>
+                {isRegisterMode
+                  ? t("auth.registerDescription")
+                  : t("auth.loginDescription")}
+              </CardDescription>
+            </div>
+          </CardHeader>
+        )}
+        <CardContent className={resetOpen && smtpEnabled ? "pt-6" : undefined}>
+          {resetOpen && smtpEnabled ? (
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">{resetSent ? t("auth.resetIfRegistered") : t("auth.resetDescription")}</p>
               {!resetSent && <div className="space-y-2"><Label htmlFor="reset-email">{t("auth.email")}</Label><Input id="reset-email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required />{error && <p role="alert" className="text-sm text-destructive">{error}</p>}</div>}
-              {!resetSent && <Button type="button" className="w-full" disabled={!email || isLoading} onClick={async () => {
+              {!resetSent && <Button type="button" variant="default" className="w-full" disabled={!email || isLoading} onClick={async () => {
                 setIsLoading(true);
                 try {
                   const response = await fetch("/api/auth/password-reset", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }), credentials: "include" });
@@ -177,7 +184,7 @@ export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
                 } catch { setError(t("common.error")); }
                 finally { setIsLoading(false); }
               }}>{isLoading ? t("common.loading") : t("auth.sendResetLink")}</Button>}
-              <Button type="button" variant="ghost" className="w-full" onClick={() => { setResetOpen(false); setResetSent(false); setError(""); }}>{t("auth.backToSignIn")}</Button>
+              <Button type="button" variant="outline" className="w-full" onClick={() => { setResetOpen(false); setResetSent(false); setError(""); }}>{t("auth.backToSignIn")}</Button>
             </div>
           ) : isRegisterMode && !allowRegistration ? (
             <div className="space-y-4">
@@ -199,7 +206,7 @@ export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
-              {isRegisterMode && (
+              {isRegisterMode && smtpEnabled && (
                 <div className="space-y-2">
                   <Label htmlFor="register-email">{t("auth.email")}</Label>
                   <Input
@@ -214,13 +221,21 @@ export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
                 </div>
               )}
               <div className="space-y-2">
-                <Label htmlFor="username">{isRegisterMode ? t("auth.username") : t("auth.loginIdentifier")}</Label>
+                <Label htmlFor="username">
+                  {isRegisterMode || !smtpEnabled
+                    ? t("auth.username")
+                    : t("auth.loginIdentifier")}
+                </Label>
                 <Input
                   id="username"
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder={isRegisterMode ? t("auth.enterUsername") : t("auth.enterLoginIdentifier")}
+                  placeholder={
+                    isRegisterMode || !smtpEnabled
+                      ? t("auth.enterUsername")
+                      : t("auth.enterLoginIdentifier")
+                  }
                   required
                   className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
                 />
@@ -308,7 +323,7 @@ export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
                 )}
               </Button>
               <div className="text-center">
-                {!isRegisterMode && <Button type="button" variant="link" className="block mx-auto text-sm" onClick={() => setResetOpen(true)}>{t("auth.forgotPassword")}</Button>}
+                {!isRegisterMode && smtpEnabled && <Button type="button" variant="link" className="block mx-auto text-sm" onClick={() => setResetOpen(true)}>{t("auth.forgotPassword")}</Button>}
                 <Button
                   type="button"
                   variant="ghost"

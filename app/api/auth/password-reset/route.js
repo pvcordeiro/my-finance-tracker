@@ -2,7 +2,7 @@ import crypto from "node:crypto";
 import { NextResponse } from "next/server";
 import { getDatabase, hashPassword } from "@/lib/database";
 import { getClientIp, rateLimit } from "@/lib/rate-limit.ts";
-import { accountActionEmail, emailConfigured, publicAppUrl, sendAccountEmail, validateSenderConfiguration } from "@/lib/email";
+import { accountActionEmail, emailConfigured, publicAppUrl, sendAccountEmail, smtpEnabled, validateSenderConfiguration } from "@/lib/email";
 import { z } from "zod";
 import { verifyRequestOrigin } from "@/lib/session";
 
@@ -20,7 +20,7 @@ export async function POST(request) {
     if (!rateLimit(`password-reset:${clientIp}`, { maxRequests: 5, windowMs: 60 * 60 * 1000 })) {
       return NextResponse.json(generic, { status: 200 });
     }
-    if (!emailConfigured() || !process.env.APP_URL) return NextResponse.json(generic);
+    if (!smtpEnabled() || !emailConfigured() || !process.env.APP_URL) return NextResponse.json(generic);
     validateSenderConfiguration();
     const body = await request.json();
     const parsed = requestSchema.safeParse(body);
@@ -69,6 +69,7 @@ export async function POST(request) {
 export async function PUT(request) {
   try {
     if (!verifyRequestOrigin(request)) return NextResponse.json({ error: "Invalid request origin." }, { status: 403 });
+    if (!smtpEnabled()) return NextResponse.json({ error: "Password reset is disabled." }, { status: 503 });
     if (!rateLimit(`password-reset-complete:${getClientIp(request)}`, { maxRequests: 10, windowMs: 60 * 60 * 1000 })) {
       return NextResponse.json({ error: "Too many attempts. Request a new reset link later." }, { status: 429 });
     }

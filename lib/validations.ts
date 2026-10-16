@@ -10,7 +10,7 @@ export const loginSchema = z.object({
 export const registerSchema = z.object({
   username: z.string().min(1, "Username is required").max(50),
   password: z.string().min(8, "Password must be at least 8 characters").max(200),
-  email: z.string().email().max(254),
+  email: z.string().email().max(254).optional(),
   language: z.string().optional(),
   currency: z.enum(currencyCodes).optional(),
 });

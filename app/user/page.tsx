@@ -71,6 +71,7 @@ export default function UserSettingsPage() {
   const [languageDialogOpen, setLanguageDialogOpen] = useState(false);
   const [currentAccent, setCurrentAccent] = useState<string>("blue");
   const [switchingGroup, setSwitchingGroup] = useState(false);
+  const [smtpEnabled, setSmtpEnabled] = useState(true);
 
   const handleLanguageChange = (newLanguage: "en" | "pt") => {
     setLanguage(newLanguage);
@@ -126,6 +127,15 @@ export default function UserSettingsPage() {
     }
     await refreshData();
   };
+
+  useEffect(() => {
+    fetch("/api/auth/registration-status", { cache: "no-store" })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((status) => {
+        if (status) setSmtpEnabled(status.smtpEnabled !== false);
+      })
+      .catch(() => setSmtpEnabled(true));
+  }, []);
 
   useEffect(() => {
     fetch("/api/user/accent-color", {
@@ -377,13 +387,17 @@ export default function UserSettingsPage() {
         </div>
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-2 xl:items-stretch">
           <MinimumBalanceAlertSettings />
-          <Card>
-            <CardHeader>
-              <CardTitle>{t("auth.recoveryEmail")}</CardTitle>
-              <CardDescription>{t("auth.recoveryEmailDescription")}</CardDescription>
-            </CardHeader>
-            <CardContent><EmailRecoverySettings /></CardContent>
-          </Card>
+          {smtpEnabled && (
+            <Card>
+              <CardHeader>
+                <CardTitle>{t("auth.recoveryEmail")}</CardTitle>
+                <CardDescription>{t("auth.recoveryEmailDescription")}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <EmailRecoverySettings />
+              </CardContent>
+            </Card>
+          )}
         </div>
         {user && user.groups && user.groups.length > 1 && (
           <Card data-tour="tour-group-selection">

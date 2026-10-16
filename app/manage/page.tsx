@@ -78,6 +78,10 @@ function HomePageContent() {
     entryId: string;
     token: number;
   } | null>(null);
+  const [desktopHeaderHeight, setDesktopHeaderHeight] = useState(0);
+  const updateDesktopHeaderHeight = useCallback((height: number) => {
+    setDesktopHeaderHeight(height);
+  }, []);
 
   useEffect(() => {
     if (searchParams.get("tab") === "management") {
@@ -389,9 +393,12 @@ function HomePageContent() {
   }
 
   return (
-    <div className="min-h-dvh finance-gradient page-nav-padding lg:flex lg:h-dvh lg:flex-col lg:overflow-hidden">
-      <DashboardHeader />
-      <main className="container mx-auto px-4 pt-0 pb-4 space-y-6 lg:flex lg:min-h-0 lg:flex-1 lg:flex-col lg:overflow-hidden lg:pb-0">
+    <div className="min-h-dvh finance-gradient page-nav-padding lg:relative lg:h-dvh lg:overflow-hidden">
+      <DashboardHeader
+        desktopOverlay
+        onDesktopHeightChange={updateDesktopHeaderHeight}
+      />
+      <main className="container mx-auto px-4 pt-0 pb-4 space-y-6 lg:absolute lg:inset-0 lg:flex lg:min-h-0 lg:flex-col lg:overflow-hidden lg:pb-0">
         <Tabs
           defaultValue="main"
           className="space-y-6 lg:flex lg:min-h-0 lg:flex-1 lg:flex-col lg:space-y-0"
@@ -402,7 +409,8 @@ function HomePageContent() {
           >
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:h-full lg:min-h-0">
               {/* Left Column - Bank Amount */}
-              <div className="space-y-4 pt-2 lg:overflow-y-auto lg:pr-1 lg:h-full lg:min-h-0 lg:pt-4 lg:pb-4">
+              <div className="space-y-4 pt-2 lg:overflow-y-auto lg:pr-1 lg:h-full lg:min-h-0 lg:pb-4">
+                <div aria-hidden="true" className="hidden lg:block" style={{ height: desktopHeaderHeight }} />
                 <PendingOccurrences occurrences={visibleData.pending || []} onResolve={resolveOccurrence} onDismiss={dismissOccurrence} isOpen={pendingOpen} onOpenChange={setPendingOpen} tourReadOnly={isGuidedTourActive} tourAutoExpand={pendingOpen} />
                 <BankAmount
                   data-tour="tour-balance"
@@ -427,7 +435,8 @@ function HomePageContent() {
                 />
               </div>
               {/* Right Column - Income and Expenses */}
-              <div className="space-y-4 pt-2 lg:overflow-y-auto lg:pl-1 lg:h-full lg:min-h-0 lg:pt-4 lg:pb-4">
+              <div className="space-y-4 pt-2 lg:overflow-y-auto lg:pl-1 lg:h-full lg:min-h-0 lg:pb-4">
+                <div aria-hidden="true" className="hidden lg:block" style={{ height: desktopHeaderHeight }} />
                 <EntryForm
                   data-tour="tour-income"
                   tourCompact={isGuidedTourActive}

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getDatabase } from "../../../../lib/database.js";
+import { smtpEnabled } from "../../../../lib/email.js";
 
 export async function GET() {
   try {
@@ -10,7 +11,7 @@ export async function GET() {
 
     const allowRegistration = registrationSetting?.value === "true";
 
-    return NextResponse.json({ allowRegistration });
+    return NextResponse.json({ allowRegistration, smtpEnabled: smtpEnabled() });
   } catch (error) {
     console.error("Error checking registration status:", error?.stack || error);
     return NextResponse.json(

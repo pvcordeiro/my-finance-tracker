@@ -46,7 +46,7 @@ export async function POST(request) {
     const user = db.prepare(
       `SELECT * FROM users
        WHERE ((username = ? COLLATE NOCASE AND (pending_email IS NULL OR email_verified_at IS NOT NULL))
-         OR (email = ? COLLATE NOCASE AND email_verified_at IS NOT NULL))
+          OR (email = ? COLLATE NOCASE AND email_verified_at IS NOT NULL))
        ORDER BY CASE WHEN email = ? COLLATE NOCASE AND email_verified_at IS NOT NULL THEN 0 ELSE 1 END
        LIMIT 1`
     ).get(identifier, identifier, identifier);

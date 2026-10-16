@@ -1,23 +1,11 @@
 services:
   my-finance-tracker:
     container_name: my-finance-tracker
+    image: pvcordeiro/my-finance-tracker:latest
     ports:
-      - "${PORT:-4242}:3000"
+      - "${HOST_PORT:-4242}:3000"
     volumes:
       - ./data:/app/data
-    environment:
-      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-changeme}
-      - ALLOW_REGISTRATION=${ALLOW_REGISTRATION:-false}
-      - ALLOW_UNVERIFIED_REGISTRATION=${ALLOW_UNVERIFIED_REGISTRATION:-false}
-      - TRUST_PROXY=${TRUST_PROXY:-true}
-      - NODE_ENV=${NODE_ENV:-production}
-      - APP_URL=${APP_URL:-}
-      - BREVO_SMTP_HOST=${BREVO_SMTP_HOST:-smtp-relay.brevo.com}
-      - BREVO_SMTP_PORT=${BREVO_SMTP_PORT:-587}
-      - BREVO_SMTP_SECURE=${BREVO_SMTP_SECURE:-false}
-      - BREVO_SMTP_USER=${BREVO_SMTP_USER:-}
-      - BREVO_SMTP_KEY=${BREVO_SMTP_KEY:-}
-      - EMAIL_FROM=${EMAIL_FROM:-}
-      - EMAIL_FROM_NAME=${EMAIL_FROM_NAME:-My Finance Tracker}
+    env_file:
+      - .env
     restart: unless-stopped

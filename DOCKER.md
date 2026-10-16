@@ -1,186 +1,134 @@
-# My Finance Tracker - Docker Image
+# Docker deployment
 
-A modern, self-hosted personal finance tracker built with Next.js 15, React 19, and Bun runtime. Track income, expenses, and bank balances with a beautiful mobile-friendly interface.
+This guide covers running My Finance Tracker as a Docker container. The default Compose setup keeps the database on your host and reads application settings from one `.env` file.
 
-## 🚀 Quick Start
+## Docker Compose (recommended)
 
-### Single Command Setup
+Create a deployment directory and download the Compose file and environment template:
 
-```bash
+```sh
+mkdir -p ~/finance-tracker
+cd ~/finance-tracker
+curl -fsSLO https://raw.githubusercontent.com/pvcordeiro/my-finance-tracker/main/docker-compose.yml
+curl -fsSLO https://raw.githubusercontent.com/pvcordeiro/my-finance-tracker/main/.env.example
+mv .env.example .env
+```
+
+Open `.env` and replace the example administrator username and password before exposing the app. Those credentials are used when the database is first created; changing them later in `.env` does not change an existing account. If you want account verification and password resets, configure SMTP as described in [SMTP setup](SMTP_SETUP.md). If email is not needed, set `ENABLE_SMTP="false"` and remove the SMTP credentials.
+
+Start the service:
+
+```sh
+docker compose up -d
+```
+
+Open [http://localhost:4242](http://localhost:4242). The Compose file mounts `./data` into the container, so your SQLite database remains on the host when you update or recreate the container.
+
+To use another host port, set `HOST_PORT` in `.env`. For example, `HOST_PORT="8080"` makes the app available at `http://localhost:8080`. This changes the port on your machine; the app continues to listen on port `3000` inside the container.
+
+## Run the container directly
+
+For a single-container setup, create a `.env` file as above, then run:
+
+```sh
 docker run -d \
   --name my-finance-tracker \
   --restart unless-stopped \
   -p 4242:3000 \
-  -v ~/finance-data:/app/data \
-  -e ADMIN_USERNAME=admin \
-  -e ADMIN_PASSWORD=changeme \
+  -v "$HOME/finance-tracker-data:/app/data" \
+  --env-file .env \
   pvcordeiro/my-finance-tracker:latest
 ```
 
-Visit: http://localhost:4242
+The `/app/data` mount is important: without it, the database is stored inside the container and can be lost when that container is removed.
 
-### Recommended: Docker Compose
+## Configuration
 
-```yaml
-services:
-  my-finance-tracker:
-    image: pvcordeiro/my-finance-tracker:latest
-    ports:
-      - "4242:3000"
-    volumes:
-      - ./finance-data:/app/data
-    environment:
-      - ADMIN_USERNAME=admin
-      - ADMIN_PASSWORD=changeme
-    restart: unless-stopped
+The repository includes a commented example in [`.env.example`](.env.example). These are the main settings:
+
+| Variable | Default | What it controls |
+| --- | --- | --- |
+| `HOST_PORT` | `4242` | Host port exposed by Docker Compose. |
+| `ADMIN_USERNAME` | `admin` | Username for the first administrator account. Change before exposing the app. |
+| `ADMIN_PASSWORD` | `changeme` | Password for the first administrator account. Change before exposing the app. |
+| `ALLOW_REGISTRATION` | `false` | Initial registration setting for a new database. After setup, manage registration in the admin panel. |
+| `ENABLE_SMTP` | `true` | Enables verification email, password resets, and recovery-email changes. Set to `false` to run without email. |
+| `APP_URL` | — | Public HTTPS origin used to create verification and reset links. Needed when SMTP email is enabled. |
+| `SMTP_HOST` | — | SMTP server hostname. |
+| `SMTP_PORT` | `587` | SMTP server port. |
+| `SMTP_SECURE` | `false` | Set to `true` for a direct TLS connection. |
+| `SMTP_USER` | — | SMTP authentication username. |
+| `SMTP_PASSWORD` | — | SMTP authentication password or key. |
+| `EMAIL_FROM` | — | Sender address accepted by your provider. |
+| `EMAIL_FROM_NAME` | `My Finance Tracker` | Sender display name. |
+| `TRUST_PROXY` | `true` | Whether to trust proxy-provided client IP headers. Keep your reverse proxy configured to replace incoming forwarded headers. |
+| `NODE_ENV` | `production` in the container | Runtime mode. Normally leave this to the container image. |
+
+For the full SMTP setup and no-email behavior, see [SMTP_SETUP.md](SMTP_SETUP.md).
+
+The initial values for registration and balance history are read when the database is created. After setup, manage registration and balance-history settings from the admin panel.
+
+## Updating
+
+Pull the current image and recreate the service:
+
+```sh
+docker compose pull
+docker compose up -d
 ```
 
-```bash
-docker-compose up -d
+Your `.env` and `data/` directory remain on the host and are not replaced by this operation.
+
+## Backups and restore
+
+Stop the service briefly for a simple consistent copy, then archive the data directory:
+
+```sh
+docker compose stop
+tar -czf "finance-data-$(date +%Y-%m-%d).tar.gz" data
+docker compose start
 ```
 
-## 📋 Key Features
+To restore, stop the app, replace the contents of `data/` with the backup, and start the app again. Keep backups somewhere other than the machine hosting the tracker.
 
-- 📊 **Financial Tracking** - Income, expenses, bank balances with 12-month rolling view
-- 📈 **Visual Analytics** - Interactive charts and monthly/yearly summaries
-- 👥 **Multi-User** - Individual accounts with group/household support
-- 🔐 **Secure Auth** - Session-based authentication with multi-session management
-- 🛡️ **Admin Panel** - User, group, and system settings management
-- 🌓 **Themes** - Dark/Light/System with customizable accent colors
-- 👁️ **Privacy Mode** - Hide sensitive financial data
-- 📱 **Mobile-Friendly** - Optimized responsive interface
-- ⚡ **Fast** - Built with Bun runtime for excellent performance
-- 🔄 **Real-time** - Server-Sent Events for live data updates
+## Common commands
 
-## 🔧 Configuration
-
-### Environment Variables
-
-| Variable                 | Default              | Description                                                    |
-| ------------------------ | -------------------- | -------------------------------------------------------------- |
-| `ADMIN_USERNAME`         | `admin`              | Initial admin username                                         |
-| `ADMIN_PASSWORD`         | `changeme`           | Initial admin password (change immediately!)                   |
-| `ALLOW_REGISTRATION`     | `false`              | Allow new user registration (enable only while inviting users) |
-| `ENABLE_BALANCE_HISTORY` | `true`               | Enable transaction history display                             |
-| `APP_URL`                | —                    | Public HTTPS origin used in verification/reset links           |
-| `BREVO_SMTP_HOST`        | Brevo host           | SMTP relay host                                                |
-| `BREVO_SMTP_PORT`        | `587`                | SMTP port                                                      |
-| `BREVO_SMTP_USER`        | —                    | Brevo SMTP login                                               |
-| `BREVO_SMTP_KEY`         | —                    | Brevo SMTP key (not the Brevo API key)                         |
-| `EMAIL_FROM`             | —                    | Sender address verified and enabled in your Brevo account      |
-
-### Session location data
-
-On startup, session locations are resolved locally from DB-IP's country-level ranges. If the ranges are missing, the container downloads and imports them automatically (internet access is required on first startup). Refresh the database monthly with:
-
-```bash
-docker-compose exec my-finance-tracker bun scripts/update-ip-country.js
+```sh
+docker compose logs -f       # Follow application logs
+docker compose ps            # Check service status
+docker compose up -d --force-recreate  # Apply .env changes
+docker compose down          # Stop and remove the container
 ```
 
-The data is licensed under CC BY 4.0; the Account Settings page includes the required DB-IP attribution link. Locations are approximate and may not be available for private, local, or unlisted IP addresses.
-| `EMAIL_FROM_NAME`        | `My Finance Tracker` | Friendly display name shown to recipients                      |
+The default Compose file uses a host directory for the database, so `docker compose down` leaves your data in `./data`. If you customize the file to use Docker-managed volumes, check the volume behavior before removing them. Keep a separate backup either way.
 
-### Volumes
+## Troubleshooting
 
-- `/app/data` - SQLite database and persistent data storage
+### The container does not start
 
-## 💾 Data Management
+Check the logs with `docker compose logs`. Confirm that the `.env` file exists beside `docker-compose.yml` and that your Docker daemon is running.
 
-### Backup
+### The app is unreachable
 
-```bash
-# Create backup
-docker-compose exec finance-tracker tar -czf /app/data/backup.tar.gz -C /app/data finance.db
+Check `docker compose ps`, confirm the host port in `.env`, and check the host firewall. If you use a reverse proxy, make sure it forwards traffic to the mapped host port.
 
-# Copy to host
-docker cp finance-tracker:/app/data/backup.tar.gz ./backup-$(date +%Y%m%d).tar.gz
+### Data is not persisting
+
+Confirm that the `./data:/app/data` mount is present and that Docker can write to the host `data/` directory.
+
+### Session locations show IP addresses
+
+The container attempts to download the country lookup data on first startup. If it could not do so, check that the host has internet access, then retry:
+
+```sh
+docker compose exec my-finance-tracker bun /app/scripts/update-ip-country.js
 ```
 
-Or simply backup your mounted volume:
+Location data is approximate. Local, private, and unlisted IP addresses may not resolve to a country.
 
-```bash
-tar -czf backup-$(date +%Y%m%d).tar.gz finance-data/
-```
+## Related guides
 
-### Restore
-
-```bash
-# Stop container
-docker-compose down
-
-# Restore data
-tar -xzf backup.tar.gz
-
-# Start container
-docker-compose up -d
-```
-
-## 🔒 Security Best Practices
-
-1. **Change Default Password** - Immediately change the default admin password after first login
-2. **Disable Registration** - Go into admin panel and disable account creation after creating the necessary accounts
-3. **Regular Backups** - Schedule regular backups of your data volume
-4. **Keep Updated** - Pull latest image regularly for security updates
-5. **Keep SMTP secrets private** - Add Brevo SMTP values to `.env` on the host and never commit them
-6. **Configure your proxy** - Use HTTPS and configure the reverse proxy to replace forwarded IP headers rather than append or trust client-supplied values
-
-## 📦 Available Tags
-
-- `latest` - Latest stable release
-- `main` - Latest build from main branch
-- `main-<commit>` - Specific commit builds
-- `v<version>` - Specific version releases
-
-## 🐳 Common Commands
-
-```bash
-# View logs
-docker-compose logs -f
-
-# Update to latest
-docker-compose pull && docker-compose up -d
-
-# Stop
-docker-compose down
-
-# Stop and remove volumes (⚠️ deletes all data)
-docker-compose down -v
-
-# View container stats
-docker stats finance-tracker
-
-# Access container shell
-docker-compose exec finance-tracker sh
-```
-
-## 🏗️ Architecture
-
-- **Runtime:** Bun (fast JavaScript runtime)
-- **Framework:** Next.js 15 with React 19
-- **Database:** SQLite (embedded, no external DB needed)
-- **UI:** Tailwind CSS, Radix UI, shadcn/ui
-- **Real-time:** Server-Sent Events (SSE)
-- **Ports:** External 4242 → Internal 3000 (configurable)
-
-## 🔍 Troubleshooting
-
-### Container won't start
-
-```bash
-# Check logs
-docker-compose logs finance-tracker
-
-# Verify volume permissions
-ls -la finance-data/
-```
-
-### Cannot access application
-
-- Ensure port 4242 is not in use: `lsof -i :4242`
-- Check firewall settings
-- Verify container is running: `docker ps`
-
-### Data not persisting
-
-- Confirm volume is correctly mounted
-- Check file permissions in mounted directory
+- [SMTP setup](SMTP_SETUP.md)
+- [User guide](USER_GUIDE.md)
+- [Development guide](DEVELOPMENT.md)
+- [Project README](README.md)

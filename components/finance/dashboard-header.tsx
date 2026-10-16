@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   LogOut,
@@ -40,12 +40,16 @@ interface DashboardHeaderProps {
   title?: string;
   subtitle?: string;
   showPrivacyToggle?: boolean;
+  desktopOverlay?: boolean;
+  onDesktopHeightChange?: (height: number) => void;
 }
 
 export function DashboardHeader({
   title,
   subtitle,
   showPrivacyToggle = true,
+  desktopOverlay = false,
+  onDesktopHeightChange,
 }: DashboardHeaderProps) {
   const { user, logout } = useAuth();
   const { privacyMode, isLoading: privacyLoading } = usePrivacy();
@@ -57,6 +61,19 @@ export function DashboardHeader({
   const [languageDialogOpen, setLanguageDialogOpen] = useState(false);
   const [groupDialogOpen, setGroupDialogOpen] = useState(false);
   const [canInstallApp, setCanInstallApp] = useState(false);
+  const headerRef = useRef<HTMLElement | null>(null);
+
+  useLayoutEffect(() => {
+    if (!desktopOverlay || !onDesktopHeightChange || !headerRef.current) return;
+
+    const header = headerRef.current;
+    const updateHeight = () => onDesktopHeightChange(header.getBoundingClientRect().height);
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(header);
+    updateHeight();
+
+    return () => observer.disconnect();
+  }, [desktopOverlay, onDesktopHeightChange]);
 
   useEffect(() => {
     const displayMode = window.matchMedia("(display-mode: standalone)");
@@ -126,8 +143,9 @@ export function DashboardHeader({
 
   return (
     <header
+      ref={headerRef}
       data-tour-fixed-header
-      className="bg-background/90 backdrop-blur-sm border-b border-border/50 sticky z-50"
+      className={`bg-background/90 backdrop-blur-sm border-b border-border/50 sticky z-50 ${desktopOverlay ? "lg:absolute lg:inset-x-0 lg:top-0" : ""}`}
       style={{
         top: isOnline ? 0 : OFFLINE_BANNER_HEIGHT,
         marginTop: isOnline ? 0 : OFFLINE_BANNER_HEIGHT,

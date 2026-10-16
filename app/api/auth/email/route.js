@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { getDatabase } from "@/lib/database";
 import { getSessionFromRequest, validateSession, verifyRequestOrigin } from "@/lib/session";
 import { rateLimit, getClientIp } from "@/lib/rate-limit.ts";
-import { accountActionEmail, emailConfigured, publicAppUrl, sendAccountEmail, validateSenderConfiguration } from "@/lib/email";
+import { accountActionEmail, emailConfigured, publicAppUrl, sendAccountEmail, smtpEnabled, validateSenderConfiguration } from "@/lib/email";
 
 const unexpiredToken = "expires_at > strftime('%Y-%m-%dT%H:%M:%fZ', 'now')";
 
@@ -20,7 +20,7 @@ export async function POST(request) {
     const sessionToken = getSessionFromRequest(request);
     const session = validateSession(sessionToken);
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    if (!emailConfigured()) return NextResponse.json({ error: "Email delivery is not configured" }, { status: 503 });
+    if (!smtpEnabled() || !emailConfigured()) return NextResponse.json({ error: "Email delivery is not configured" }, { status: 503 });
     validateSenderConfiguration();
     if (!rateLimit(`email-verify:${session.id}:${getClientIp(request)}`, { maxRequests: 3, windowMs: 60 * 60 * 1000 })) {
       return NextResponse.json({ error: "Please wait before requesting another verification email." }, { status: 429 });
@@ -100,6 +100,7 @@ export async function GET(request) {
         pendingVerified: false,
       });
     }
+    if (!smtpEnabled()) return noStoreJson({ error: "Email verification is disabled." }, { status: 503 });
     if (token.length < 32 || token.length > 128) return noStoreJson({ error: "Invalid or expired verification link." }, { status: 400 });
     const hash = crypto.createHash("sha256").update(token).digest("hex");
     const valid = getDatabase().prepare(`SELECT 1 FROM auth_tokens WHERE token_hash = ? AND purpose = 'verify-email' AND ${unexpiredToken}`).get(hash);
@@ -114,6 +115,7 @@ export async function GET(request) {
 export async function PUT(request) {
   try {
     if (!verifyRequestOrigin(request)) return noStoreJson({ error: "Invalid request origin." }, { status: 403 });
+    if (!smtpEnabled()) return noStoreJson({ error: "Email verification is disabled." }, { status: 503 });
     const { token = "" } = await request.json();
     if (typeof token !== "string" || token.length < 32 || token.length > 128) return noStoreJson({ error: "Invalid or expired verification link." }, { status: 400 });
     const hash = crypto.createHash("sha256").update(token).digest("hex");
