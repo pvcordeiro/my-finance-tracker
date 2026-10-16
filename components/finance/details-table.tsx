@@ -53,6 +53,34 @@ interface DetailsSpreadsheetProps {
   currentYear: number;
 }
 
+function FullscreenToggle({
+  active,
+  disabled,
+  enterLabel,
+  exitLabel,
+  onClick,
+}: {
+  active: boolean;
+  disabled: boolean;
+  enterLabel: string;
+  exitLabel: string;
+  onClick: () => void;
+}) {
+  const label = active ? exitLabel : enterLabel;
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      onClick={onClick}
+      disabled={disabled}
+      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-card p-0 text-foreground shadow-sm transition hover:bg-accent active:scale-[0.97] disabled:opacity-50"
+    >
+      {active ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+    </button>
+  );
+}
+
 function SpreadsheetDescription({ value }: { value: string }) {
   return (
     <span className="block truncate" title={value}>
@@ -476,21 +504,6 @@ export function DetailsTable({ data, tourPreview = false, readOnly = false }: De
         isFullscreen && "fixed inset-0 z-50 m-0 h-[100dvh] w-screen space-y-2 overflow-auto bg-background p-2 sm:space-y-3 sm:p-3"
       )}
     >
-      <div className="flex items-center justify-between gap-2 pb-1">
-      <h1 className="min-w-0 text-2xl font-bold text-primary-contrast sm:text-3xl">{t("details.title")}</h1>
-      {supportsFullscreen && <div className={cn("flex shrink-0 justify-end", !isFullscreen && "md:hidden", isFullscreen && "sticky top-0 z-40 -mx-2 -mt-2 bg-background/95 px-2 py-1 backdrop-blur sm:-mx-3 sm:-mt-3 sm:px-3")}>
-        <button
-          type="button"
-          aria-label={isFullscreen ? t("entries.exitFullscreen") : t("details.viewAllMonths")}
-          title={isFullscreen ? t("entries.exitFullscreen") : t("details.viewAllMonths")}
-          onClick={() => { if (!readOnly) void (isFullscreen ? exitFullscreen() : enterFullscreen()); }}
-          disabled={readOnly}
-          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-border bg-card p-0 text-foreground shadow-sm transition hover:bg-accent active:scale-[0.97] disabled:opacity-50"
-        >
-          {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-        </button>
-      </div>}
-      </div>
       {/* Income Details */}
       <Card
         data-tour="tour-details-income"
@@ -499,13 +512,20 @@ export function DetailsTable({ data, tourPreview = false, readOnly = false }: De
           isFullscreen && "shrink-0 rounded-md border-border shadow-none"
         )}
       >
-        <CardHeader className={cn("flex flex-row items-start justify-between gap-2", isFullscreen && "py-1.5 sm:py-2")}>
-          <CardTitle className="flex items-center gap-2 text-finance-positive">
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-finance-positive/10 ring-1 ring-finance-positive/30">
+        <CardHeader className={cn("flex flex-row items-center justify-between gap-2", isFullscreen && "py-1.5 sm:py-2")}>
+          <CardTitle className="flex min-w-0 flex-1 items-center gap-2 text-finance-positive">
+            <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-finance-positive/10 ring-1 ring-finance-positive/30">
               <TrendingUp className="w-4 h-4" />
             </span>
-            <span className="tracking-tight">{t("entries.incomeDetails")}</span>
+            <span className="min-w-0 truncate tracking-tight">{t("entries.incomeDetails")}</span>
           </CardTitle>
+          {supportsFullscreen && <div className="shrink-0 md:hidden"><FullscreenToggle
+            active={isFullscreen}
+            disabled={readOnly}
+            enterLabel={t("details.viewAllMonths")}
+            exitLabel={t("entries.exitFullscreen")}
+            onClick={() => { if (!readOnly) void (isFullscreen ? exitFullscreen() : enterFullscreen()); }}
+          /></div>}
         </CardHeader>
         <CardContent className={cn(isFullscreen && "p-0 sm:p-0")}>
           {!isFullscreen && <MobileMonthCarousel
@@ -636,15 +656,22 @@ export function DetailsTable({ data, tourPreview = false, readOnly = false }: De
           isFullscreen && "shrink-0 rounded-md border-border shadow-none"
         )}
       >
-        <CardHeader className={cn("flex flex-row items-start justify-between gap-2", isFullscreen && "py-1.5 sm:py-2")}>
-          <CardTitle className="flex items-center gap-2 text-finance-negative">
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-finance-negative/10 ring-1 ring-finance-negative/30">
+        <CardHeader className={cn("flex flex-row items-center justify-between gap-2", isFullscreen && "py-1.5 sm:py-2")}>
+          <CardTitle className="flex min-w-0 flex-1 items-center gap-2 text-finance-negative">
+            <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-finance-negative/10 ring-1 ring-finance-negative/30">
               <TrendingDown className="w-4 h-4" />
             </span>
-            <span className="tracking-tight">
+            <span className="min-w-0 truncate tracking-tight">
               {t("entries.expenseDetails")}
             </span>
           </CardTitle>
+          {supportsFullscreen && <div className="shrink-0 md:hidden"><FullscreenToggle
+            active={isFullscreen}
+            disabled={readOnly}
+            enterLabel={t("details.viewAllMonths")}
+            exitLabel={t("entries.exitFullscreen")}
+            onClick={() => { if (!readOnly) void (isFullscreen ? exitFullscreen() : enterFullscreen()); }}
+          /></div>}
         </CardHeader>
         <CardContent className={cn(isFullscreen && "p-0 sm:p-0")}>
           {!isFullscreen && <MobileMonthCarousel
