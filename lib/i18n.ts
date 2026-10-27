@@ -120,11 +120,19 @@ export const translations = {
       emailVerificationTitle: "Email verification",
       verifyingEmail: "Verifying your email address…",
       emailConfirmed: "Email confirmed",
-      emailConfirmedDescription: "Your email is confirmed. You can close this tab.",
+      emailConfirmedDescription: "Your email is confirmed. You can close this page.",
       emailVerificationInvalidOrExpired:
         "This verification link is invalid, expired, or has already been used.",
       emailVerificationFailed:
         "We couldn't verify your email. Please try again.",
+      chooseNewPassword: "Choose a new password",
+      passwordResetSuccess: "Your password was changed. Sign in again on your devices.",
+      goToSignIn: "Go to sign in",
+      passwordRequirements: "Use at least 8 characters.",
+      resetPassword: "Reset password",
+      updatingPassword: "Updating…",
+      resetLinkInvalid: "This reset link is invalid or expired. Request a new one and try again.",
+      resetFailed: "Could not reset your password. Please try again.",
     },
     dashboard: {
       title: "Finance Tracker",
@@ -794,11 +802,19 @@ export const translations = {
       emailVerificationTitle: "Verificação de e-mail",
       verifyingEmail: "Verificando seu endereço de e-mail…",
       emailConfirmed: "E-mail confirmado",
-      emailConfirmedDescription: "Seu e-mail foi confirmado. Você pode fechar esta aba.",
+      emailConfirmedDescription: "Seu e-mail foi confirmado. Você pode fechar esta página.",
       emailVerificationInvalidOrExpired:
         "Este link de verificação é inválido, expirou ou já foi usado.",
       emailVerificationFailed:
         "Não foi possível verificar seu e-mail. Tente novamente.",
+      chooseNewPassword: "Escolha uma nova senha",
+      passwordResetSuccess: "Sua senha foi alterada. Entre novamente nos seus dispositivos.",
+      goToSignIn: "Ir para o login",
+      passwordRequirements: "Use pelo menos 8 caracteres.",
+      resetPassword: "Redefinir senha",
+      updatingPassword: "Atualizando…",
+      resetLinkInvalid: "Este link de redefinição é inválido ou expirou. Solicite um novo e tente novamente.",
+      resetFailed: "Não foi possível redefinir sua senha. Tente novamente.",
     },
     dashboard: {
       title: "Controle Financeiro",

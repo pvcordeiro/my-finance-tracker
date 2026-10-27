@@ -81,7 +81,7 @@ export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
     try {
       if (isRegisterMode) {
         if (password !== confirmPassword) {
-          setError("Passwords do not match.");
+          setError(t("auth.passwordsDoNotMatch"));
           setIsLoading(false);
           return;
         }
@@ -276,7 +276,7 @@ export function LoginForm({ onLogin, onRegister }: LoginFormProps) {
                   </Label>
                   <Input
                     id="confirmPassword"
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder={t("auth.confirmPasswordPlaceholder")}
