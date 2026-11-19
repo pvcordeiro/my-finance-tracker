@@ -139,9 +139,8 @@ function CreditPageContent() {
     setEditingPurchaseId(null);
     setSelectedCard(card);
     setDescription(""); setAmount(""); setIsInstallment(false); setInstallmentCount("2");
-    const firstBillingDate = new Date(currentYear, currentMonth, 1);
-    setFirstMonth(String(firstBillingDate.getMonth() + 1));
-    setFirstYear(String(firstBillingDate.getFullYear()));
+    setFirstMonth("");
+    setFirstYear("");
     setPurchaseOpen(true);
   };
 
