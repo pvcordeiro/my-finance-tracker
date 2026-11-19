@@ -12,6 +12,39 @@ export interface FinanceData {
   incomes: FinanceEntry[];
   expenses: FinanceEntry[];
   pending?: PendingOccurrence[];
+  creditCards?: CreditCard[];
+}
+
+export interface CreditInstallment {
+  year: number;
+  month: number;
+  amount: number;
+  resolved: boolean;
+  dismissed: boolean;
+  inForecast?: boolean;
+}
+
+export interface CreditPurchase {
+  id: string;
+  description: string;
+  purchaseAmount: number;
+  installmentAmount: number;
+  installmentCount: number;
+  startYear: number;
+  startMonth: number;
+  cancelled: boolean;
+  hasPaidInstallments: boolean;
+  installments: CreditInstallment[];
+}
+
+export interface CreditCard {
+  id: string;
+  name: string;
+  entryId: string;
+  creditLimit: number;
+  outstandingCredit: number;
+  availableCredit: number;
+  purchases: CreditPurchase[];
 }
 
 export interface PendingOccurrence {
@@ -30,6 +63,7 @@ const defaultData: FinanceData = {
   incomes: [],
   expenses: [],
   pending: [],
+  creditCards: [],
 };
 
 const DATA_CACHE_KEY = "finance-tracker-data-cache";
@@ -199,6 +233,11 @@ export function useFinanceData() {
               credentials: "include",
               cache: "no-store",
             });
+            const cardsResponse = await fetch("/api/credit-cards", {
+              credentials: "include",
+              cache: "no-store",
+            });
+            const cardsData = cardsResponse.ok ? await cardsResponse.json() : null;
 
             if (entriesResponse.ok) {
               const entriesData = await entriesResponse.json();
@@ -208,11 +247,13 @@ export function useFinanceData() {
                 .filter((entry: any) => entry.type === "income")
                 .map((entry: any) => ({
                   id: entry.id.toString(),
-                  description: entry.name,
+                  description: entry.description || entry.name,
                   amounts: entry.amounts,
                   resolved: entry.resolved,
                   recurrent: entry.recurrent,
                   recurrenceAmount: entry.recurrence_amount,
+                  isCreditCard: Boolean(entry.isCreditCard),
+                  cardId: entry.cardId,
                   occurrenceIds: entry.occurrenceIds,
                   dismissed: entry.dismissed,
                 }));
@@ -221,11 +262,13 @@ export function useFinanceData() {
                 .filter((entry: any) => entry.type === "expense")
                 .map((entry: any) => ({
                   id: entry.id.toString(),
-                  description: entry.name,
+                  description: entry.description || entry.name,
                   amounts: entry.amounts,
                   resolved: entry.resolved,
                   recurrent: entry.recurrent,
                   recurrenceAmount: entry.recurrence_amount,
+                  isCreditCard: Boolean(entry.isCreditCard),
+                  cardId: entry.cardId,
                   occurrenceIds: entry.occurrenceIds,
                   dismissed: entry.dismissed,
                 }));
@@ -277,6 +320,7 @@ export function useFinanceData() {
                   incomes,
                   expenses,
                   pending: eventData.pending || prev.pending,
+                  creditCards: cardsData?.cards || prev.creditCards || [],
                 };
               });
 
@@ -284,9 +328,17 @@ export function useFinanceData() {
                 ...prev,
                 incomes,
                 expenses,
+                creditCards: cardsData?.cards || prev.creditCards || [],
               }));
 
               setHasEntryChanges(false);
+              saveDataToLocalStorage({
+                bankAmount: data.bankAmount,
+                incomes,
+                expenses,
+                pending: entriesData.pending || [],
+                creditCards: cardsData?.cards || data.creditCards || [],
+              });
             }
           }
         } catch (error) {
@@ -370,30 +422,40 @@ export function useFinanceData() {
 
       const entriesData = await entriesResponse.json();
 
+      const cardsResponse = await fetch("/api/credit-cards", {
+        credentials: "include",
+        cache: "no-store",
+      });
+      const cardsData = cardsResponse.ok ? await cardsResponse.json() : { cards: [] };
+
       const entries = entriesData?.entries || [];
 
       const incomes = entries
         .filter((entry: any) => entry.type === "income")
-        .map((entry: any) => ({
-          id: entry.id.toString(),
-          description: entry.name,
+                .map((entry: any) => ({
+                  id: entry.id.toString(),
+                  description: entry.description || entry.name,
           amounts: entry.amounts,
           resolved: entry.resolved,
           recurrent: entry.recurrent,
           recurrenceAmount: entry.recurrence_amount,
+          isCreditCard: Boolean(entry.isCreditCard),
+          cardId: entry.cardId,
           occurrenceIds: entry.occurrenceIds,
           dismissed: entry.dismissed,
         }));
 
       const expenses = entries
         .filter((entry: any) => entry.type === "expense")
-        .map((entry: any) => ({
-          id: entry.id.toString(),
-          description: entry.name,
+                .map((entry: any) => ({
+                  id: entry.id.toString(),
+                  description: entry.description || entry.name,
           amounts: entry.amounts,
           resolved: entry.resolved,
           recurrent: entry.recurrent,
           recurrenceAmount: entry.recurrence_amount,
+          isCreditCard: Boolean(entry.isCreditCard),
+          cardId: entry.cardId,
           occurrenceIds: entry.occurrenceIds,
           dismissed: entry.dismissed,
         }));
@@ -403,6 +465,7 @@ export function useFinanceData() {
         incomes,
         expenses,
         pending: entriesData?.pending || [],
+        creditCards: cardsData.cards || [],
       };
 
       setData(loadedData);
@@ -681,6 +744,13 @@ export function useFinanceData() {
       if (typeof result.bankAmount === "number") {
         setData((previous) => ({ ...previous, bankAmount: result.bankAmount }));
         setOriginalData((previous) => ({ ...previous, bankAmount: result.bankAmount }));
+      } else if (data.expenses.find((entry) => entry.id === occurrence.entryId)?.isCreditCard) {
+        const bankResponse = await fetch("/api/bank-amount", { credentials: "include", cache: "no-store" });
+        if (bankResponse.ok) {
+          const bankData = await bankResponse.json();
+          setData((previous) => ({ ...previous, bankAmount: Number(bankData.amount) || 0 }));
+          setOriginalData((previous) => ({ ...previous, bankAmount: Number(bankData.amount) || 0 }));
+        }
       }
     } catch (error) {
       console.error("Failed to resolve pending occurrence:", error);
@@ -746,6 +816,13 @@ export function useFinanceData() {
       if (typeof result.bankAmount === "number") {
         setData((previous) => ({ ...previous, bankAmount: result.bankAmount }));
         setOriginalData((previous) => ({ ...previous, bankAmount: result.bankAmount }));
+      } else if (data.expenses.find((entry) => entry.id === entryId)?.isCreditCard) {
+        const bankResponse = await fetch("/api/bank-amount", { credentials: "include", cache: "no-store" });
+        if (bankResponse.ok) {
+          const bankData = await bankResponse.json();
+          setData((previous) => ({ ...previous, bankAmount: Number(bankData.amount) || 0 }));
+          setOriginalData((previous) => ({ ...previous, bankAmount: Number(bankData.amount) || 0 }));
+        }
       }
     } catch (error) {
       console.error("Failed to resolve month:", error);

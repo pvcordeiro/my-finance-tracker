@@ -5,9 +5,65 @@ const amounts = (value: number, offsets: Record<number, number> = {}) =>
 
 const resolved = Array.from({ length: 12 }, () => false);
 const dismissed = Array.from({ length: 12 }, () => false);
-
 const now = new Date();
 const previousMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+const rollingSlots = Array.from({ length: 12 }, (_, index) => {
+  const date = new Date(now.getFullYear(), now.getMonth() + index, 1);
+  return { year: date.getFullYear(), month: date.getMonth() + 1 };
+});
+
+const installmentSchedule = Array.from({ length: 6 }, (_, index) => {
+  const date = new Date(now.getFullYear(), now.getMonth() + 2 + index, 1);
+  return { year: date.getFullYear(), month: date.getMonth() + 1 };
+});
+const oneTimeBillDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+const guidedPurchases = [
+  {
+    id: "tour-credit-purchase-installments",
+    description: "Wireless headphones",
+    purchaseAmount: 240,
+    installmentAmount: 40,
+    installmentCount: 6,
+    startYear: installmentSchedule[0].year,
+    startMonth: installmentSchedule[0].month,
+    cancelled: false,
+    hasPaidInstallments: false,
+    installments: installmentSchedule.map((slot) => ({
+      ...slot,
+      amount: 40,
+      resolved: false,
+      dismissed: false,
+      inForecast: true,
+    })),
+  },
+  {
+    id: "tour-credit-purchase-one-time",
+    description: "Grocery shop",
+    purchaseAmount: 85,
+    installmentAmount: 85,
+    installmentCount: 1,
+    startYear: oneTimeBillDate.getFullYear(),
+    startMonth: oneTimeBillDate.getMonth() + 1,
+    cancelled: false,
+    hasPaidInstallments: false,
+    installments: [{
+      year: oneTimeBillDate.getFullYear(),
+      month: oneTimeBillDate.getMonth() + 1,
+      amount: 85,
+      resolved: false,
+      dismissed: false,
+      inForecast: true,
+    }],
+  },
+];
+
+const creditExpenses = rollingSlots.map((slot) => guidedPurchases.reduce(
+  (total, purchase) => total + purchase.installments
+    .filter((installment) => installment.year === slot.year && installment.month === slot.month)
+    .reduce((sum, installment) => sum + installment.amount, 0),
+  0
+));
 
 /** A read-only, consistent finance dataset shown only while the guided tour is active. */
 export const guidedTourFinanceData: FinanceData = {
@@ -60,7 +116,26 @@ export const guidedTourFinanceData: FinanceData = {
       resolved,
       dismissed,
     },
+    {
+      id: "tour-credit-entry",
+      description: "Everyday card",
+      amounts: creditExpenses,
+      resolved,
+      dismissed,
+      isCreditCard: true,
+      cardId: "tour-credit-card",
+      occurrenceIds: Array.from({ length: 12 }, (_, index) => 900 + index),
+    },
   ],
+  creditCards: [{
+    id: "tour-credit-card",
+    name: "Everyday card",
+    entryId: "tour-credit-entry",
+    creditLimit: 2500,
+    outstandingCredit: guidedPurchases.reduce((total, purchase) => total + purchase.installments.reduce((sum, installment) => sum + installment.amount, 0), 0),
+    availableCredit: 2500 - guidedPurchases.reduce((total, purchase) => total + purchase.installments.reduce((sum, installment) => sum + installment.amount, 0), 0),
+    purchases: guidedPurchases,
+  }],
   pending: [
     {
       entryId: "tour-pending-utility",

@@ -81,10 +81,12 @@ function FullscreenToggle({
   );
 }
 
-function SpreadsheetDescription({ value }: { value: string }) {
+function SpreadsheetDescription({ value, isCreditCard = false }: { value: string; isCreditCard?: boolean }) {
+  const { t } = useLanguage();
   return (
-    <span className="block truncate" title={value}>
-      <PrivacyText value={value} />
+    <span className="flex min-w-0 items-center gap-1" title={value}>
+      <span className="min-w-0 truncate"><PrivacyText value={value} /></span>
+      {isCreditCard && <span className="shrink-0 rounded-full bg-primary/10 px-1.5 py-0.5 text-[8px] font-medium leading-none text-primary-contrast">{t("credit.badge")}</span>}
     </span>
   );
 }
@@ -127,7 +129,7 @@ function DetailsSpreadsheet({ data, months, currentMonth, currentYear }: Details
             </tr>
             {section.entries.map((entry) => <tr key={entry.id} className="border-b border-border/80 even:bg-muted/20">
               <th scope="row" className="sticky left-0 z-10 w-[95px] min-w-[95px] max-w-[95px] border-r border-border bg-card px-1.5 py-1 text-left font-medium">
-                <SpreadsheetDescription value={entry.description || t("entries.noDescription")} />
+                <SpreadsheetDescription value={entry.description || t("entries.noDescription")} isCreditCard={entry.isCreditCard} />
               </th>
               {months.map((month, index) => {
                 const amount = entry.amounts[index] || 0;
@@ -288,10 +290,11 @@ function MobileMonthCarousel({
                       key={entry.id}
                       className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 border-t border-border px-3 py-2.5 text-sm"
                     >
-                      <span className="min-w-0 truncate font-medium">
+                      <span className="flex min-w-0 items-center gap-1 font-medium">
                         <PrivacyText
                           value={entry.description || t("entries.noDescription")}
                         />
+                        {entry.isCreditCard && <span className="shrink-0 rounded-full bg-primary/10 px-1.5 py-0.5 text-[9px] font-medium leading-none text-primary-contrast">{t("credit.badge")}</span>}
                       </span>
                       {amount > 0 ? (
                         <span className={cn("font-semibold tabular-nums", colorClass)}>
@@ -341,6 +344,9 @@ export function DetailsTable({ data, tourPreview = false, readOnly = false }: De
   }, []);
 
   const displayData = tourPreview ? guidedTourFinanceData : data;
+  const expensesByCreditPriority = [...displayData.expenses].sort(
+    (left, right) => Number(Boolean(right.isCreditCard)) - Number(Boolean(left.isCreditCard))
+  );
 
   const getMonthLabel = (monthIndex: number): string => {
     const monthKeys = [
@@ -589,7 +595,7 @@ export function DetailsTable({ data, tourPreview = false, readOnly = false }: De
                 </tr>
               </thead>
               <tbody className="[&_tr:nth-child(even)]:bg-muted/50">
-                {data.incomes.map((income) => (
+                {displayData.incomes.map((income) => (
                   <tr
                     key={income.id}
                     className="border-b border-border hover:bg-muted/70 transition-colors group"
@@ -631,7 +637,7 @@ export function DetailsTable({ data, tourPreview = false, readOnly = false }: De
                     })}
                   </tr>
                 ))}
-                {data.incomes.length === 0 && (
+                {displayData.incomes.length === 0 && (
                   <tr>
                     <td
                       colSpan={13}
@@ -735,18 +741,17 @@ export function DetailsTable({ data, tourPreview = false, readOnly = false }: De
                 </tr>
               </thead>
               <tbody className="[&_tr:nth-child(even)]:bg-muted/30">
-                {data.expenses.map((expense) => (
+                {expensesByCreditPriority.map((expense) => (
                   <tr
                     key={expense.id}
                     className="border-b border-border hover:bg-muted/50 transition-colors group"
                   >
                     <td className={cn("sticky left-0 z-10 w-[200px] min-w-[200px] max-w-[200px] border-r border-border bg-muted px-2 py-2 font-medium text-soft-shadow-strong", isFullscreen && "px-1.5 py-1 text-[10px] sm:text-xs")}>
                       <span className="block truncate text-foreground" title={expense.description || t("entries.noDescription")}>
-                        <PrivacyText
-                          value={
-                            expense.description || t("entries.noDescription")
-                          }
-                        />
+                        <span className="flex min-w-0 items-center gap-1">
+                          <span className="min-w-0 truncate"><PrivacyText value={expense.description || t("entries.noDescription")} /></span>
+                          {expense.isCreditCard && <span className="shrink-0 rounded-full bg-primary/10 px-1.5 py-0.5 text-[9px] font-medium leading-none text-primary-contrast">{t("credit.badge")}</span>}
+                        </span>
                       </span>
                     </td>
                     {months.map((month, idx) => {
@@ -777,7 +782,7 @@ export function DetailsTable({ data, tourPreview = false, readOnly = false }: De
                     })}
                   </tr>
                 ))}
-                {data.expenses.length === 0 && (
+                {displayData.expenses.length === 0 && (
                   <tr>
                     <td
                       colSpan={13}

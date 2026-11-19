@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Edit, FileSpreadsheet, Settings } from "lucide-react";
+import { BarChart3, CreditCard, Edit, FileSpreadsheet, Settings } from "lucide-react";
 import { useLanguage } from "@/hooks/use-language";
 import { useOnline } from "@/hooks/use-online";
 import { cn } from "@/lib/utils";
@@ -21,6 +21,12 @@ export function AppNavigation({ placement }: AppNavigationProps) {
       href: "/manage",
       label: t("navigation.manage"),
       icon: Edit,
+      offlineDisabled: true,
+    },
+    {
+      href: "/credit",
+      label: t("navigation.credit"),
+      icon: CreditCard,
       offlineDisabled: true,
     },
     {

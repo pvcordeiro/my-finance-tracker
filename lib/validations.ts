@@ -32,7 +32,7 @@ export const entrySchema = z.object({
 });
 
 export const bankAmountSchema = z.object({
-  amount: z.number().min(0, "Bank amount cannot be negative"),
+  amount: z.number().finite().min(-1_000_000_000).max(1_000_000_000),
 });
 
 export const userIdSchema = z.object({

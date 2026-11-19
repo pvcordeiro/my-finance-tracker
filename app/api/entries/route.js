@@ -7,8 +7,10 @@ import {
 } from "../../../lib/auth-middleware.js";
 import { notifyEntryChange } from "../../../lib/sse-notifications.js";
 import { notifyBankAmountChange } from "../../../lib/sse-notifications.js";
-import { applyOccurrenceToBalance, backfillLegacyRollingAmounts } from "../../../lib/rolling-months.js";
+import { backfillLegacyRollingAmounts } from "../../../lib/rolling-months.js";
 import { buildResolutionResponse } from "../../../lib/rolling-months.js";
+import { getCreditCardExpenseEntries, syncCreditCardBills } from "../../../lib/credit-cards.js";
+import { resolveEntryOccurrence } from "../../../lib/entry-resolution.js";
 
 export const GET = withAuth(async (request) => {
   try {
@@ -28,9 +30,10 @@ export const GET = withAuth(async (request) => {
       const date = new Date(currentYear, currentMonth - 1 + index, 1);
       return { year: date.getFullYear(), month: date.getMonth() + 1 };
     });
+    syncCreditCardBills(db, groupId);
 
     const recurrentEntries = db.prepare(
-      "SELECT id, recurrence_amount FROM entries WHERE group_id = ? AND recurrent = 1"
+      "SELECT id, recurrence_amount FROM entries WHERE group_id = ? AND recurrent = 1 AND is_credit_card = 0"
     ).all(groupId) ?? [];
     const ensureRecurringOccurrences = db.transaction(() => {
       for (const entry of recurrentEntries) {
@@ -72,7 +75,7 @@ export const GET = withAuth(async (request) => {
       INSERT OR IGNORE INTO entry_occurrences (entry_id, year, month, amount, is_resolved, is_dismissed)
       SELECT e.id, ea.year, ea.month, ea.amount, 1, 0
       FROM entries e JOIN entry_amounts ea ON ea.entry_id = e.id
-      WHERE e.group_id = ?
+      WHERE e.group_id = ? AND e.is_credit_card = 0
     `).run(groupId);
 
     const entriesMap = new Map();
@@ -84,7 +87,7 @@ export const GET = withAuth(async (request) => {
       FROM entries e
       LEFT JOIN entry_occurrences o ON e.id = o.entry_id
       LEFT JOIN entry_amounts ea ON e.id = ea.entry_id AND ea.year = o.year AND ea.month = o.month
-      WHERE e.group_id = ?
+      WHERE e.group_id = ? AND e.is_credit_card = 0
       ORDER BY e.created_at DESC, o.year ASC, o.month ASC
     `).all(groupId) ?? [];
 
@@ -135,7 +138,7 @@ export const GET = withAuth(async (request) => {
       SELECT ea.entry_id, ea.month, ea.amount
       FROM entry_amounts ea
       JOIN entries e ON e.id = ea.entry_id
-      WHERE e.group_id = ?
+      WHERE e.group_id = ? AND e.is_credit_card = 0
       ORDER BY ea.year DESC, ea.updated_at DESC
     `).all(groupId) ?? [];
     const legacyByEntry = new Map();
@@ -192,11 +195,20 @@ export const GET = withAuth(async (request) => {
     });
 
     const entries = Array.from(entriesMap.values());
+    const creditCardEntries = getCreditCardExpenseEntries(db, groupId, nextMonths);
     const pending = db.prepare(`
       SELECT e.id AS entry_id, e.name, e.type, o.id AS occurrence_id, o.year, o.month, o.amount
       FROM entry_occurrences o
       JOIN entries e ON e.id = o.entry_id
-      WHERE e.group_id = ? AND o.is_resolved = 0 AND o.is_dismissed = 0 AND o.amount != 0
+      WHERE e.group_id = ? AND e.is_credit_card = 0 AND o.is_resolved = 0 AND o.is_dismissed = 0 AND o.amount != 0
+        AND (o.year < ? OR (o.year = ? AND o.month < ?))
+      ORDER BY o.year ASC, o.month ASC, e.name COLLATE NOCASE ASC
+    `).all(groupId, currentYear, currentYear, currentMonth) ?? [];
+    const cardPending = db.prepare(`
+      SELECT e.id AS entry_id, e.name, e.type, o.id AS occurrence_id, o.year, o.month, o.amount
+      FROM entry_occurrences o JOIN entries e ON e.id = o.entry_id
+      WHERE e.group_id = ? AND e.is_credit_card = 1
+        AND o.is_resolved = 0 AND o.is_dismissed = 0 AND o.amount != 0
         AND (o.year < ? OR (o.year = ? AND o.month < ?))
       ORDER BY o.year ASC, o.month ASC, e.name COLLATE NOCASE ASC
     `).all(groupId, currentYear, currentYear, currentMonth) ?? [];
@@ -206,8 +218,14 @@ export const GET = withAuth(async (request) => {
     ).get(groupId);
 
     return NextResponse.json({
-      entries,
-      pending: pending.map((row) => ({
+      entries: [...entries, ...creditCardEntries.map((entry) => ({
+        ...entry,
+        name: entry.name,
+        type: "expense",
+        recurrent: false,
+        recurrence_amount: 0,
+      }))],
+      pending: [...pending, ...cardPending].map((row) => ({
         entryId: String(row.entry_id),
         description: row.name,
         type: row.type,
@@ -378,7 +396,7 @@ export const DELETE = withAuth(async (request) => {
     const db = getDatabase();
 
     const entry = db.prepare(
-      "SELECT id FROM entries WHERE id = ? AND group_id = ?"
+      "SELECT id, is_credit_card FROM entries WHERE id = ? AND group_id = ?"
     ).get(entryId, groupId);
 
     if (!entry) {
@@ -386,6 +404,9 @@ export const DELETE = withAuth(async (request) => {
         { error: "Entry not found or access denied" },
         { status: 404 }
       );
+    }
+    if (entry.is_credit_card) {
+      return NextResponse.json({ error: "Managed card expenses can only be changed from Credit cards." }, { status: 400 });
     }
 
     const result = db.prepare(
@@ -432,11 +453,14 @@ export const PATCH = withAuth(async (request) => {
     const db = getDatabase();
 
     const entry = db.prepare(
-      "SELECT id FROM entries WHERE id = ? AND group_id = ?"
+      "SELECT id, is_credit_card FROM entries WHERE id = ? AND group_id = ?"
     ).get(id, groupId);
 
     if (!entry) {
       return NextResponse.json({ error: "Entry not found" }, { status: 404 });
+    }
+    if (entry.is_credit_card && (name !== undefined || recurrent !== undefined || (month !== undefined && amount !== undefined))) {
+      return NextResponse.json({ error: "Managed card expenses can only be changed from Credit cards." }, { status: 400 });
     }
 
     const updates = {};
@@ -519,60 +543,30 @@ export const PATCH = withAuth(async (request) => {
       updates.amount = numericAmount;
     }
 
-    if (is_resolved !== undefined) {
+      if (is_resolved !== undefined) {
       const numericMonth = Number(month);
       const numericYear = Number(year);
-      if (!Number.isInteger(numericMonth) || numericMonth < 1 || numericMonth > 12 || !Number.isInteger(numericYear)) {
+      if (!Number.isInteger(numericMonth) || numericMonth < 1 || numericMonth > 12 || !Number.isInteger(numericYear) || numericYear < 1900 || numericYear > 9999 || typeof is_resolved !== "boolean") {
         return NextResponse.json({ error: "Valid month and year are required" }, { status: 400 });
       }
       if (is_resolved) {
-        const applyResolution = db.transaction(() => {
-          const target = occurrence_id !== undefined
-            ? db.prepare(`
-                SELECT o.id, o.entry_id, o.year, o.month, o.amount, o.is_resolved, e.type, e.name
-                FROM entry_occurrences o JOIN entries e ON e.id = o.entry_id
-                WHERE o.id = ? AND o.entry_id = ? AND e.group_id = ?
-              `).get(occurrence_id, id, groupId)
-            : db.prepare(`
-                SELECT o.id, o.entry_id, o.year, o.month, o.amount, o.is_resolved, e.type, e.name
-                FROM entry_occurrences o JOIN entries e ON e.id = o.entry_id
-                WHERE o.entry_id = ? AND o.year = ? AND o.month = ? AND e.group_id = ?
-              `).get(id, numericYear, numericMonth, groupId);
-          if (!target || target.year !== numericYear || target.month !== numericMonth) {
-            return { error: "Occurrence not found" };
-          }
-          if (target.is_resolved) {
-            const current = db.prepare("SELECT amount FROM bank_amounts WHERE group_id = ? ORDER BY updated_at DESC LIMIT 1").get(groupId);
-            return { alreadyResolved: true, bankAmount: Number(current?.amount) || 0 };
-          }
-
-          let amountToApply = Number(target.amount) || 0;
-          if (amountToApply === 0) {
-            amountToApply = Number(db.prepare("SELECT amount FROM entry_amounts WHERE entry_id = ? AND year = ? AND month = ?").get(id, numericYear, numericMonth)?.amount) || 0;
-          }
-          const current = db.prepare("SELECT amount FROM bank_amounts WHERE group_id = ? ORDER BY updated_at DESC LIMIT 1").get(groupId);
-          const oldAmount = Number(current?.amount) || 0;
-          const { nextBalance: newAmount, appliedDelta: actualDelta } = applyOccurrenceToBalance(oldAmount, target.type, amountToApply);
-
-          const resolved = db.prepare("UPDATE entry_occurrences SET is_resolved = 1, amount = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND is_resolved = 0").run(target.id);
-          if (!resolved.changes) return { alreadyResolved: true, bankAmount: oldAmount };
-          db.prepare("UPDATE entry_amounts SET amount = 0, updated_at = CURRENT_TIMESTAMP WHERE entry_id = ? AND year = ? AND month = ?").run(id, numericYear, numericMonth);
-
-          if (actualDelta !== 0) {
-            db.prepare("INSERT INTO bank_amounts (group_id, user_id, amount, updated_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)").run(groupId, user.id, newAmount);
-            db.prepare(`INSERT INTO balance_history (group_id, user_id, old_amount, new_amount, delta, note, created_at)
-              VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`)
-              .run(groupId, user.id, oldAmount, newAmount, actualDelta, `Resolved ${target.type}: ${target.name}`);
-          }
-          return { alreadyResolved: false, bankAmount: newAmount, operationType: actualDelta >= 0 ? "add" : "subtract" };
+        const result = resolveEntryOccurrence(db, {
+          groupId,
+          userId: user.id,
+          entryId: id,
+          year: numericYear,
+          month: numericMonth,
+          occurrenceId: occurrence_id,
         });
-        const result = applyResolution();
         if (result.error) return NextResponse.json({ error: result.error }, { status: 404 });
         bankUpdate = result;
-        if (!result.alreadyResolved && result.bankAmount !== undefined) {
+        if (!result.alreadyResolved) {
           notifyBankAmountChange(groupId, result.bankAmount, result.operationType);
         }
       } else {
+        if (entry.is_credit_card) {
+          return NextResponse.json({ error: "Use the card page to reopen a settled card bill." }, { status: 400 });
+        }
         const entryAmount = db.prepare(`SELECT amount FROM entry_amounts WHERE entry_id = ? AND year = ? AND month = ?`).get(id, numericYear, numericMonth);
         db.prepare(`
           INSERT INTO entry_occurrences (entry_id, year, month, amount, is_resolved)
@@ -588,7 +582,7 @@ export const PATCH = withAuth(async (request) => {
       updates.year = numericYear;
     }
 
-    if (body?.is_dismissed !== undefined) {
+      if (body?.is_dismissed !== undefined) {
       const numericMonth = Number(month);
       const numericYear = Number(year);
       if (!Number.isInteger(numericMonth) || numericMonth < 1 || numericMonth > 12 || !Number.isInteger(numericYear)) {
@@ -603,6 +597,22 @@ export const PATCH = withAuth(async (request) => {
       } else {
         db.prepare("UPDATE entry_occurrences SET is_dismissed = ?, amount = CASE WHEN ? = 1 THEN 0 ELSE COALESCE((SELECT amount FROM entry_amounts WHERE entry_id = ? AND year = ? AND month = ?), amount) END, updated_at = CURRENT_TIMESTAMP WHERE entry_id = ? AND year = ? AND month = ?").run(body.is_dismissed ? 1 : 0, body.is_dismissed ? 1 : 0, id, numericYear, numericMonth, id, numericYear, numericMonth);
         if (body.is_dismissed) db.prepare("UPDATE entry_amounts SET amount = 0, updated_at = CURRENT_TIMESTAMP WHERE entry_id = ? AND year = ? AND month = ?").run(id, numericYear, numericMonth);
+      }
+      const cardEntry = db.prepare("SELECT id FROM entries WHERE id = ? AND is_credit_card = 1").get(id);
+      if (cardEntry) {
+        const reopenedAfterPaid = Boolean(db.prepare("SELECT is_resolved FROM entry_occurrences WHERE entry_id = ? AND year = ? AND month = ?").get(id, numericYear, numericMonth)?.is_resolved);
+        const shouldReopen = !reopenedAfterPaid || body.is_dismissed;
+        if (body.is_dismissed) db.prepare(`UPDATE credit_installments SET is_paid = 0
+          WHERE purchase_id IN (SELECT p.id FROM credit_purchases p JOIN credit_cards c ON c.id = p.card_id WHERE c.entry_id = ?)
+            AND year = ? AND month = ?`).run(id, numericYear, numericMonth);
+        const unpaidAmount = Number(db.prepare(`SELECT COALESCE(SUM(i.amount), 0) AS amount
+          FROM credit_installments i JOIN credit_purchases p ON p.id = i.purchase_id
+          JOIN credit_cards c ON c.id = p.card_id WHERE c.entry_id = ? AND i.year = ? AND i.month = ? AND i.is_paid = 0`).get(id, numericYear, numericMonth)?.amount) || 0;
+        db.prepare(`UPDATE entry_occurrences SET amount = ?, is_dismissed = ?, is_resolved = CASE WHEN ? = 1 THEN 0 ELSE is_resolved END, updated_at = CURRENT_TIMESTAMP
+          WHERE entry_id = ? AND year = ? AND month = ?`).run(body.is_dismissed ? 0 : unpaidAmount, body.is_dismissed ? 1 : 0, shouldReopen ? 1 : 0, id, numericYear, numericMonth);
+        db.prepare(`UPDATE entry_amounts SET amount = ? WHERE entry_id = ? AND year = ? AND month = ?`).run(body.is_dismissed ? 0 : unpaidAmount, id, numericYear, numericMonth);
+        updates.amount = body.is_dismissed ? 0 : unpaidAmount;
+        updates.is_dismissed = Boolean(body.is_dismissed);
       }
       updates.is_dismissed = Boolean(body.is_dismissed);
       updates.month = numericMonth;

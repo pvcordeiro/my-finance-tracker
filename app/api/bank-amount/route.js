@@ -18,7 +18,7 @@ export const GET = withAuth(async (request) => {
 
     const db = getDatabase();
     const bankAmount = db.prepare(
-      "SELECT amount, updated_at, user_id FROM bank_amounts WHERE group_id = ? ORDER BY updated_at DESC LIMIT 1"
+      "SELECT amount, updated_at, user_id FROM bank_amounts WHERE group_id = ? ORDER BY id DESC LIMIT 1"
     ).get(groupId);
 
     return NextResponse.json({
@@ -65,19 +65,22 @@ export const POST = withAuth(async (request) => {
   if (operation === "adjust") {
     const delta = typeof body.delta === "number" ? body.delta : 0;
 
-    if (delta === 0) {
+    if (!Number.isFinite(delta) || delta === 0 || Math.abs(delta) > 1_000_000_000) {
       return NextResponse.json(
-        { error: "Delta must be non-zero" },
+        { error: "Delta must be a non-zero amount within the supported range" },
         { status: 400 }
       );
     }
 
     const currentRow = db.prepare(
-      "SELECT amount FROM bank_amounts WHERE group_id = ? ORDER BY updated_at DESC LIMIT 1"
+      "SELECT amount FROM bank_amounts WHERE group_id = ? ORDER BY id DESC LIMIT 1"
     ).get(groupId);
 
     const currentAmount = currentRow?.amount || 0;
-    const newAmount = Math.max(0, currentAmount + delta);
+    const newAmount = currentAmount + delta;
+    if (!Number.isFinite(newAmount) || Math.abs(newAmount) > 1_000_000_000) {
+      return NextResponse.json({ error: "Adjusted balance is outside the supported range" }, { status: 400 });
+    }
 
     db.prepare(
       `INSERT INTO bank_amounts (group_id, user_id, amount, updated_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)`
@@ -85,7 +88,7 @@ export const POST = withAuth(async (request) => {
 
     db.prepare(
       `INSERT INTO balance_history (group_id, user_id, old_amount, new_amount, delta, note, created_at) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`
-    ).run(groupId, user.id, currentAmount, newAmount, delta, note);
+    ).run(groupId, user.id, currentAmount, newAmount, newAmount - currentAmount, note);
 
     const operationType = delta > 0 ? "add" : "subtract";
     notifyBankAmountChange(groupId, newAmount, operationType);
@@ -103,7 +106,7 @@ export const POST = withAuth(async (request) => {
     const { amount } = validation.data;
 
     const currentRow = db.prepare(
-      "SELECT amount FROM bank_amounts WHERE group_id = ? ORDER BY updated_at DESC LIMIT 1"
+      "SELECT amount FROM bank_amounts WHERE group_id = ? ORDER BY id DESC LIMIT 1"
     ).get(groupId);
 
     const currentAmount = currentRow?.amount || 0;

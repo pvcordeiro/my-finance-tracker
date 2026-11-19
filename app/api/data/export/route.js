@@ -21,7 +21,7 @@ export const GET = withAuth(async (request) => {
     const db = getDatabase();
 
     const bankAmount = db.prepare(
-      "SELECT amount FROM bank_amounts WHERE group_id = ? ORDER BY updated_at DESC LIMIT 1"
+      "SELECT amount FROM bank_amounts WHERE group_id = ? ORDER BY id DESC LIMIT 1"
     ).get(groupId);
 
     const entryRows = db.prepare(`
@@ -39,7 +39,7 @@ export const GET = withAuth(async (request) => {
         ON o.entry_id = e.id AND o.year = slots.year AND o.month = slots.month
       LEFT JOIN entry_amounts ea
         ON ea.entry_id = e.id AND ea.year = slots.year AND ea.month = slots.month
-      WHERE e.group_id = ?
+      WHERE e.group_id = ? AND e.is_credit_card = 0
       ORDER BY e.type, e.name COLLATE NOCASE, slots.year, slots.month
     `).all(groupId) ?? [];
 
@@ -115,8 +115,49 @@ export const GET = withAuth(async (request) => {
     }
 
     const csv = serializeFinanceBackup({
-      bankAmount: Math.max(0, Number(bankAmount?.amount) || 0),
+      bankAmount: Number(bankAmount?.amount) || 0,
       entries: Array.from(entriesById.values()),
+      creditCards: db.prepare("SELECT id, name, credit_limit FROM credit_cards WHERE group_id = ? ORDER BY name COLLATE NOCASE").all(groupId).map((card) => {
+        const bills = db.prepare(`
+          SELECT o.year, o.month, o.is_resolved, o.is_dismissed
+          FROM entry_occurrences o
+          WHERE o.entry_id = (SELECT entry_id FROM credit_cards WHERE id = ?)
+          ORDER BY o.year, o.month
+        `).all(card.id).map((bill) => ({
+          year: bill.year,
+          month: bill.month,
+          resolved: Boolean(bill.is_resolved),
+          dismissed: Boolean(bill.is_dismissed),
+        }));
+        const purchases = db.prepare(`
+          SELECT p.id, p.description, p.purchase_amount, p.installment_amount,
+            p.installment_count, p.start_year, p.start_month, p.cancelled_at,
+            i.year, i.month, i.amount, i.is_paid
+          FROM credit_purchases p LEFT JOIN credit_installments i ON i.purchase_id = p.id
+          WHERE p.card_id = ? ORDER BY p.created_at, i.year, i.month
+        `).all(card.id);
+        const purchasesById = new Map();
+        for (const row of purchases) {
+          if (!purchasesById.has(row.id)) purchasesById.set(row.id, {
+            backupKey: String(row.id),
+            description: row.description,
+            purchaseAmount: Number(row.purchase_amount) || 0,
+            installmentAmount: Number(row.installment_amount) || 0,
+            installmentCount: row.installment_count,
+            startYear: row.start_year,
+            startMonth: row.start_month,
+            cancelled: Boolean(row.cancelled_at),
+            installments: [],
+          });
+          if (row.year !== null) purchasesById.get(row.id).installments.push({
+            year: row.year,
+            month: row.month,
+            amount: Number(row.amount) || 0,
+            paid: Boolean(row.is_paid),
+          });
+        }
+        return { name: card.name, creditLimit: Number(card.credit_limit) || 0, bills, purchases: Array.from(purchasesById.values()) };
+      }),
     });
 
     return new NextResponse(csv, {

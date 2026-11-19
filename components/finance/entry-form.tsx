@@ -50,6 +50,9 @@ export interface FinanceEntry {
   recurrenceAmount?: number;
   occurrenceIds?: (number | null)[];
   dismissed?: boolean[];
+  isCreditCard?: boolean;
+  cardId?: string;
+  name?: string;
 }
 
 interface EntryFormProps {

@@ -253,7 +253,7 @@ export function SummaryTable({ data, tourPreview = false }: SummaryTableProps) {
                     )}
                   >
                     <td className={cn("sticky left-0 z-10 border-r border-border bg-card px-3 py-2 font-medium shadow-[1px_0_0_hsl(var(--border))]", row.isCurrentMonth ? "bg-[hsl(var(--background))] text-primary-contrast" : "bg-card")}>
-                      {row.month} {row.year}
+                      {row.month}
                     </td>
                     <td className="px-3 py-2 text-right text-finance-positive font-medium">
                       <PrivacyNumber value={row.income} format={compactNumber} />

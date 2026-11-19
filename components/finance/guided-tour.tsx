@@ -23,6 +23,8 @@ const steps: GuidedTourStep[] = [
   { path: "/manage", targets: ["tour-income", "tour-expenses"], title: "guidedTour.recurringTitle", body: "guidedTour.recurringBody" },
   { path: "/manage", targets: ["tour-pending"], title: "guidedTour.pendingTitle", body: "guidedTour.pendingBody" },
   { path: "/manage", targets: ["tour-privacy"], title: "guidedTour.privacyTitle", body: "guidedTour.privacyBody" },
+  { path: "/credit", targets: ["tour-credit-limit"], title: "guidedTour.creditLimitTitle", body: "guidedTour.creditLimitBody" },
+  { path: "/credit", targets: ["tour-credit-purchases"], title: "guidedTour.creditPurchasesTitle", body: "guidedTour.creditPurchasesBody" },
   { path: "/", targets: ["tour-alert"], title: "guidedTour.alertTitle", body: "guidedTour.alertBody" },
   { path: "/details", targets: ["tour-details-income", "tour-details-expenses"], title: "guidedTour.detailsTitle", body: "guidedTour.detailsBody" },
   { path: "/user", targets: ["tour-appearance"], title: "guidedTour.appearanceTitle", body: "guidedTour.appearanceBody" },
@@ -261,6 +263,8 @@ export function GuidedTour() {
         "guidedTour.privacyTitle": "tour-privacy",
         "guidedTour.alertTitle": "tour-alert",
         "guidedTour.detailsTitle": "tour-details-income",
+        "guidedTour.creditLimitTitle": "tour-credit-limit",
+        "guidedTour.creditPurchasesTitle": "tour-credit-purchases",
         "guidedTour.appearanceTitle": "tour-appearance",
         "guidedTour.dataTitle": "tour-data-management",
         "guidedTour.sessionsTitle": "tour-active-sessions",
@@ -269,6 +273,15 @@ export function GuidedTour() {
       const stepTarget = resolvedTargets.find((target) => target.dataset.tour === mobileTargetByStep[activeStep.title]);
       const primaryTarget = stepTarget ?? resolvedTargets[0];
       const mobileLayout = window.innerWidth < 768;
+      const currentTourTarget = primaryTarget.dataset.tour;
+      if (currentTourTarget === "tour-credit-purchases") {
+        const toggle = document.querySelector<HTMLButtonElement>('[data-tour="tour-credit-purchases-toggle"]');
+        if (toggle && toggle.getAttribute("aria-expanded") !== "true") {
+          toggle.click();
+          frame = window.requestAnimationFrame(locate);
+          return;
+        }
+      }
       const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       const targetBoundsBeforeScroll = primaryTarget.getBoundingClientRect();
       const headerBottom = document.querySelector("header")?.getBoundingClientRect().bottom ?? 64;
@@ -343,6 +356,8 @@ export function GuidedTour() {
             if (activeStep.title === "guidedTour.balanceTitle") return tourTarget === "tour-balance";
             if (activeStep.title === "guidedTour.recurringTitle") return tourTarget === "tour-income" || tourTarget === "tour-expenses";
             if (activeStep.title === "guidedTour.detailsTitle") return tourTarget === "tour-details-income" || tourTarget === "tour-details-expenses";
+            if (activeStep.title === "guidedTour.creditLimitTitle") return tourTarget === "tour-credit-limit";
+            if (activeStep.title === "guidedTour.creditPurchasesTitle") return tourTarget === "tour-credit-purchases";
             if (activeStep.title === "guidedTour.appearanceTitle") return tourTarget === "tour-appearance";
             if (activeStep.title === "guidedTour.dataTitle") return tourTarget === "tour-data-management";
             if (activeStep.title === "guidedTour.sessionsTitle") return tourTarget === "tour-active-sessions";

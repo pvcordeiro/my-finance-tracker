@@ -411,7 +411,7 @@ function HomePageContent() {
               {/* Left Column - Bank Amount */}
               <div className="space-y-4 pt-2 lg:overflow-y-auto lg:pr-1 lg:h-full lg:min-h-0 lg:pb-4">
                 <div aria-hidden="true" className="hidden lg:block" style={{ height: desktopHeaderHeight }} />
-                <PendingOccurrences occurrences={visibleData.pending || []} onResolve={resolveOccurrence} onDismiss={dismissOccurrence} isOpen={pendingOpen} onOpenChange={setPendingOpen} tourReadOnly={isGuidedTourActive} tourAutoExpand={pendingOpen} />
+                <PendingOccurrences occurrences={(visibleData.pending || []).filter((item) => !visibleData.expenses.some((entry) => entry.id === item.entryId && entry.isCreditCard))} onResolve={resolveOccurrence} onDismiss={dismissOccurrence} isOpen={pendingOpen} onOpenChange={setPendingOpen} tourReadOnly={isGuidedTourActive} tourAutoExpand={pendingOpen} />
                 <BankAmount
                   data-tour="tour-balance"
                   readOnly={isGuidedTourActive}
@@ -550,7 +550,7 @@ function HomePageContent() {
                   readOnly={isGuidedTourActive}
                   ref={expenseSectionRef}
                   title={t("entries.expenses")}
-                  entries={visibleData.expenses}
+                  entries={visibleData.expenses.filter((entry) => !entry.isCreditCard)}
                   onAddEntry={() => addEntry("expenses")}
                   onGuidedAddEntry={handleGuidedAddExpense}
                   onUpdateEntry={(id, field, value, monthIndex) =>
