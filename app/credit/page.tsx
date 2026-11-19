@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { DashboardHeader } from "@/components/finance/dashboard-header";
 import { PendingOccurrences } from "@/components/finance/pending-occurrences";
 import { AuthGate } from "@/components/auth/auth-gate";
@@ -55,6 +55,43 @@ function CreditPageContent() {
   const [deletePending, setDeletePending] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [expandedSchedules, setExpandedSchedules] = useState<Record<string, boolean>>({});
+  const addCardDialogRef = useRef<HTMLDivElement>(null);
+  const purchaseDialogRef = useRef<HTMLDivElement>(null);
+  const editCardDialogRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const anyFormDialogOpen = addCardOpen || purchaseOpen || Boolean(renameId);
+    if (!anyFormDialogOpen) return;
+    const visualViewport = window.visualViewport;
+    if (!visualViewport) return;
+
+    const reposition = () => {
+      const dialog = addCardOpen
+        ? addCardDialogRef.current
+        : purchaseOpen
+          ? purchaseDialogRef.current
+          : editCardDialogRef.current;
+      if (!dialog) return;
+      dialog.style.top = `${visualViewport.offsetTop + visualViewport.height / 2}px`;
+      dialog.style.transform = "translateX(-50%) translateY(-50%)";
+      dialog.style.maxHeight = `${visualViewport.height * 0.92}px`;
+    };
+
+    visualViewport.addEventListener("resize", reposition);
+    visualViewport.addEventListener("scroll", reposition);
+    reposition();
+
+    return () => {
+      visualViewport.removeEventListener("resize", reposition);
+      visualViewport.removeEventListener("scroll", reposition);
+      for (const dialog of [addCardDialogRef.current, purchaseDialogRef.current, editCardDialogRef.current]) {
+        if (!dialog) continue;
+        dialog.style.top = "";
+        dialog.style.transform = "";
+        dialog.style.maxHeight = "";
+      }
+    };
+  }, [addCardOpen, purchaseOpen, renameId]);
 
   const monthKeys = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
   const now = new Date();
@@ -342,7 +379,7 @@ function CreditPageContent() {
       </main>
 
       <Dialog open={!isGuidedTourActive && purchaseOpen} onOpenChange={setPurchaseOpen}>
-        <DialogContent className="min-w-0 overflow-y-auto">
+        <DialogContent ref={purchaseDialogRef} className="min-w-0 max-h-[85dvh] overflow-y-auto">
           <DialogHeader><DialogTitle>{t(editingPurchaseId ? "credit.editPurchase" : "credit.newPurchase")}{selectedCard ? ` · ${selectedCard.name}` : ""}</DialogTitle></DialogHeader>
           <form onSubmit={addPurchase} autoComplete="off" className="space-y-4">
             <div className="space-y-2"><Label htmlFor="purchase-description">{t("entries.description")}</Label><Input id="purchase-description" autoFocus required maxLength={160} value={description} onChange={(event) => setDescription(event.target.value)} placeholder={t("credit.purchasePlaceholder")} /></div>
@@ -385,7 +422,7 @@ function CreditPageContent() {
       </Dialog>
 
       <Dialog open={!isGuidedTourActive && addCardOpen} onOpenChange={setAddCardOpen}>
-        <DialogContent>
+        <DialogContent ref={addCardDialogRef} className="max-h-[85dvh] overflow-y-auto">
           <DialogHeader><DialogTitle>{t("credit.addCard")}</DialogTitle></DialogHeader>
           <form onSubmit={async (event) => { if (await addCard(event)) setAddCardOpen(false); }} className="space-y-4">
             <div className="space-y-2"><Label htmlFor="new-card-name">{t("credit.cardName")}</Label><Input id="new-card-name" autoFocus placeholder={t("credit.cardNamePlaceholder")} value={cardName} maxLength={100} onChange={(event) => setCardName(event.target.value)} /></div>
@@ -396,7 +433,7 @@ function CreditPageContent() {
       </Dialog>
 
       <Dialog open={!isGuidedTourActive && Boolean(renameId)} onOpenChange={(open) => { if (!open) setRenameId(null); }}>
-        <DialogContent><DialogHeader><DialogTitle>{t("credit.renameCard")}</DialogTitle></DialogHeader>
+        <DialogContent ref={editCardDialogRef} className="max-h-[85dvh] overflow-y-auto"><DialogHeader><DialogTitle>{t("credit.renameCard")}</DialogTitle></DialogHeader>
           <form onSubmit={saveRename} className="space-y-4"><div className="space-y-2"><Label htmlFor="rename-card">{t("credit.cardName")}</Label><Input id="rename-card" autoFocus maxLength={100} value={renameValue} onChange={(event) => setRenameValue(event.target.value)} /></div><div className="space-y-2"><Label htmlFor="rename-card-limit">{t("credit.totalLimit")} ({currencySymbol})</Label><Input id="rename-card-limit" type="number" min="0" max="1000000000" step={currencyFractionDigits === 0 ? "1" : "0.01"} required value={renameLimit} onChange={(event) => setRenameLimit(event.target.value)} /></div><DialogFooter className="flex-row gap-2 sm:gap-2"><Button type="button" variant="outline" className="flex-1" onClick={() => setRenameId(null)}>{t("common.cancel")}</Button><Button type="submit" className="flex-1" disabled={!renameValue.trim() || !validateLimit(renameLimit)}>{t("common.save")}</Button></DialogFooter></form>
         </DialogContent>
       </Dialog>

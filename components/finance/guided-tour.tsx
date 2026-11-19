@@ -213,6 +213,20 @@ export function GuidedTour() {
   }, [active, stepIndex, isAdminTour]);
 
   useEffect(() => {
+    if (!active) return;
+    const panel = panelRef.current;
+    if (!panel) return;
+
+    const preventPanelScroll = (event: Event) => event.preventDefault();
+    panel.addEventListener("wheel", preventPanelScroll, { passive: false });
+    panel.addEventListener("touchmove", preventPanelScroll, { passive: false });
+    return () => {
+      panel.removeEventListener("wheel", preventPanelScroll);
+      panel.removeEventListener("touchmove", preventPanelScroll);
+    };
+  }, [active, stepIndex]);
+
+  useEffect(() => {
     if (!active || pathname !== activeStep.path) return;
     const routeReady = window.setTimeout(() => {
       window.dispatchEvent(new CustomEvent("guidedTourStepReady", { detail: [...activeStep.targets] }));
@@ -762,7 +776,7 @@ export function GuidedTour() {
             first.focus();
           }
         }}
-        className="pointer-events-auto fixed z-[102] max-h-[70dvh] w-[calc(100%-2rem)] max-w-md overflow-y-auto rounded-2xl border border-border bg-card p-5 shadow-2xl sm:p-6"
+        className="pointer-events-auto fixed z-[102] max-h-[70dvh] w-[calc(100%-2rem)] max-w-md overflow-hidden overscroll-none rounded-2xl border border-border bg-card p-5 shadow-2xl sm:p-6"
         style={{
           top: "50%",
           left: "50%",
